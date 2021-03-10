@@ -5,71 +5,119 @@ options
 
 PARSER_BEGIN(Calculator)
 
+public class Calculator {
+    public static void main(String[] args) throws ParseException {
+        System.out.println("Parser for a calculator that accepts expressions with integers, +,-,*,/,(, and ).");
+        System.out.println("Write anarithmetic expression");
+        Calculator myCalc = new Calculator(System.in);
+        SimpleNode root = myCalc.Expression(); // returns reference to root node
+        root.dump("");  // prints the tree on the screen
 
-public class Calculator
-{
-    public static void main(String args[]) throws ParseException {
-      	System.out.println("Write an arithmetic expression:");
-		Calculator myCalc = new Calculator(System.in);
-		SimpleNode root = myCalc.Expression(); // returns reference to root node
-        	
-		root.dump(""); // prints the tree on the screen
-
-		//System.out.println("Expression value: "+myCalc.eval(root));
+        System.out.println("Expression value: " + myCalc.eval(root));
     }
-	
+
+    int eval(SimpleNode node){
+        if(node.jjtGetNumChildren() == 0) // leaf node with integer value
+            return node.val;
+        else if (node.jjtGetNumChildren() == 1) // only one child
+            return this.eval((SimpleNode) node.jjtGetChild(0));
+
+        SimpleNode lhs = (SimpleNode) node.jjtGetChild(0); // left child
+        SimpleNode rhs = (SimpleNode) node.jjtGetChild(1); // right child
+
+        switch(node.id){
+             case CalculatorTreeConstants.JJTADD : return eval(lhs) + eval(rhs);
+             case CalculatorTreeConstants.JJTSUB : return eval(lhs) - eval(rhs);
+             case CalculatorTreeConstants.JJTMUL : return eval(lhs) * eval(rhs);
+             case CalculatorTreeConstants.JJTDIV : return eval(lhs) / eval(rhs);
+             default: //abort
+                System.out.println("Ilegal operator!");
+                System.exit(1);
+        }
+        return 0;
+    }
 }
 
 PARSER_END(Calculator)
 
 SKIP :
 {
-	" " | "\r" | "\t"
+    " " | "\t" | "\r"
 }
 
-TOKEN:
+TOKEN :
 {
-    	< INTEGER: (["0"-"9"])+ >
-	|   < LF: "\n" >
+      < LF : "\n" >
+    | < IMPORT : "import" >
+    | < DOT : ".">
+    | < SEMICOLON : ";">
+    | < CLASS : "class">
+    | < EXTENDS : "extends">
+    | < OPENCURLY : "{">
+    | < CLOSECURLY : "}">
+    | < PUBLIC : "public">
+    | < OPENPAR : "(">
+    | < CLOSEPAR : ")">
+    | < COMMA : ",">
+    | < RETURN : "return">
+    | < STATIC : "static">
+    | < VOID : "void">
+    | < MAIN : "main">
+    | < STRING : "String">
+    | < OPENBRACKET : "[">
+    | < CLOSEBRACKET : "]">
+    | < INT : "int">
+    | < BOOL : "boolean">
+    | < IF : "if">
+    | < ELSE : "else">
+    | < WHILE : "while">
+    | < EQUAL : "=">
+    | < AND : "&&">
+    | < LESSTHAN : "<">
+    | < PLUS : "+">
+    | < MINUS : "-">
+    | < MULT : "*">
+    | < DIV : "/">
+    | < TRUE : "true">
+    | < FALSE : "false">
+    | < THIS : "this">
+    | < NEW : "new">
+    | < NOT : "!">
+    | < INTEGER : (["0"-"9"])+>
+    | < LITERAL : (["a"-"z", "A"-"Z", " "])+>
 }
+
+
 
 SimpleNode Expression(): {}
 {
-   Expr1() <LF>  {return jjtThis;} // Java code inside brackets
+    Expr1() <LF> { return jjtThis;} // Java code inside brackets
 }
 
 void Expr1() #void: {}
 {
-   Expr2(1) [
-   	("+" Expr2(1) #Add(2)
-   	| "-" Expr2(1) #Sub(2)
-   	)
-   	
-   ]
+    Expr2(1)
+    [
+     ("+" Expr2(1) #Add(2)
+     |"-" Expr2(1) #Sub(2))
+    ]
 }
 
-void Expr2(int sign) #void: {} // 1: positive; -1: negative, because of the ‘-‘ unitary operator
+void Expr2(int sign) #void: {} // 1:positive; -1:negative, because of the `-` unitary operator
 {
-   Expr3(sign)  [
-   ("*" Expr3(1) #Mul(2) 
-   | "/" Expr3(1) #Div(2)
-   )
-   
-   ]
-/*
-   Expr3(sign) [
-   ("*" #Mul(2)
-   | "/" #Div(2)
-   )
-   Expr3(1)
-   ]
-   */
-   
+    Expr3(sign)
+    ("*" Expr3(1) #Mul(2)
+    |"/" Expr3(1) #Div(2)
+    )?  // (...)? equivalent to [...]
+
 }
 
 void Expr3(int sign) #void: {Token t;}
 {
-    t=<INTEGER> {  jjtThis.val = sign *Integer.parseInt(t.image); } #Term
+    t=<INTEGER>
+    {
+        jjtThis.val = sign * Integer.parseInt(t.image);
+    } #Term
     | "-" Expr3(-1)
     | "(" Expr1() ")"
 }
