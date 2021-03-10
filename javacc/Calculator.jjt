@@ -83,8 +83,9 @@ TOKEN :
     | < THIS : "this">
     | < NEW : "new">
     | < NOT : "!">
+    | < LENGTH : "length" >
     | < INTEGER : (["0"-"9"])+>
-    | < LITERAL : (["a"-"z", "A"-"Z", " "])+>
+    | < IDENTIFIER : ["a"-"z", "A"-"Z", "$", "_"](["a"-"z", "A"-"Z", "0"-"9", "$", "_"])* >
 }
 
 
