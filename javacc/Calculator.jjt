@@ -65,7 +65,7 @@ TOKEN :
 
 SimpleNode Program(): {}
 {
-  (ImportDeclaration())* /*ClassDeclaration()*/ <ENDTEST> { return jjtThis; }
+  (ImportDeclaration())* ClassDeclaration() <ENDTEST> { return jjtThis; }
 }
 
 void ImportDeclaration() : {}
