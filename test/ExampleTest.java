@@ -13,11 +13,13 @@ public class ExampleTest {
 
     @Test
     public void testExpression() {
-        String testImport = "import test.nice;\nimport com.test.lol;\n" +
-                "class nice extends shit {\n" +
-                "int nice;" +
-                "\n}";
-
+        String testImport = "import ioPlus;\n" +
+                "class HelloWorld {\n" +
+                "\tpublic static void main(String[] args) {\n" +
+                "\t\tint i;\n" +
+                "i = 2 + 3;" +
+                "\t}\n" +
+                "}";
 
 		assertEquals("Program", TestUtils.parse(testImport).getRootNode().getKind());
 	}
