@@ -22,8 +22,8 @@ SKIP :
 
 TOKEN :
 {
-      < ENDTEST : "ENDTEST" >
-    | < IMPORT : "import" >
+
+     < IMPORT : "import" >
     | < DOT : ".">
     | < SEMICOLON : ";">
     | < CLASS : "class">
@@ -59,22 +59,34 @@ TOKEN :
     | < NEW : "new">
     | < NOT : "!">
     | < LENGTH : "length" >
-    | < INTEGER : (["0"-"9"])+>
+    | < INTEGERLITERAL : (["0"-"9"])+>
     | < IDENTIFIER : ["a"-"z", "A"-"Z", "$", "_"](["a"-"z", "A"-"Z", "0"-"9", "$", "_"])* >
 }
 
 SimpleNode Program(): {}
 {
-  (ImportDeclaration())* ClassDeclaration() <ENDTEST> { return jjtThis; }
+  (ImportDeclaration())* ClassDeclaration() <EOF> { return jjtThis; }
 }
 
 void ImportDeclaration() : {}
 {
-  <IMPORT> <IDENTIFIER> ID1() <SEMICOLON>
+  <IMPORT> <IDENTIFIER> (<DOT> <IDENTIFIER>)* <SEMICOLON>
 }
 
-void ID1() #void : {}
+void ClassDeclaration() : {}
 {
-  <DOT> <IDENTIFIER> [ID1()]
+  <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>] <OPENCURLY> (VarDeclaration())* /*(MethodDeclaration())**/ <CLOSECURLY>
 }
+
+void VarDeclaration() : {}
+{
+  Type() <IDENTIFIER> #Identifier <SEMICOLON>
+}
+
+void Type() : {}
+{
+  <BOOL> | <INT> [<OPENBRACKET><CLOSEBRACKET>] | <IDENTIFIER>
+}
+
+
 
