@@ -12,7 +12,7 @@ public class Main implements JmmParser {
 		
 		try {
 			Calculator myCalc = new Calculator(new StringReader(jmmCode));
-			SimpleNode root = myCalc.Expression(); // returns reference to root node
+			SimpleNode root = myCalc.Program(); // returns reference to root node
             	
     		root.dump(""); // prints the tree on the screen
     	

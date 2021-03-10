@@ -32,7 +32,6 @@ public class TestUtils {
 
 	public static JmmParserResult parse(String code) {
 		try {
-
 			// Get Parser class
 			String parserClassName = PARSER_CONFIG.getProperty("ParserClass");
 
