@@ -109,31 +109,39 @@ void Statement() : {}
 
 void Expression() #void : {}
 {
-  (<INTEGERLITERAL> #Term Exp1()) |
-  (<TRUE> Exp1()) |
-  (<FALSE> Exp1()) |
-  (<IDENTIFIER> Exp1()) |
-  (<THIS> Exp1()) |
-  (<NEW> Exp2()) |
-  (<NOT> Expression() Exp1()) |
-  (<OPENPAR> Expression() <CLOSEPAR> Exp1())
+  (
+    <INTEGERLITERAL> #Term |
+    <TRUE> |
+    <FALSE> |
+    <IDENTIFIER> |
+    <THIS> |
+    (<NEW> Exp2()) |
+    (<NOT> Expression()) |
+    (<OPENPAR> Expression()  <CLOSEPAR>)
+  )
+  Exp1()
 }
 
 void Exp1() #void : {}
 {
-  (<DOT> Exp3()) #MethodAccess |
-  ((<AND> | <LESSTHAN> | <PLUS> | <MINUS> | <MULT> | <DIV>) Expression() Exp1()) #BinaryOperation |
-  (<OPENBRACKET> Expression() <CLOSEBRACKET> Exp1())*
+  [
+    (
+      (<DOT> Exp3() #MethodAccess) |
+      ((<AND> | <LESSTHAN> | <PLUS> | <MINUS> | <MULT> | <DIV>) Expression()) #BinaryOperation |
+      (<OPENBRACKET> Expression() <CLOSEBRACKET>)
+    )
+    Exp1()
+  ]
 }
 
 void Exp2() #void : {}
 {
-  (<INT> <OPENBRACKET> Expression() <CLOSEBRACKET> Exp1()) #ArrayAccess |
-  (<IDENTIFIER> <OPENPAR> <CLOSEPAR> Exp1()) #FunctionCall
+  (<INT> <OPENBRACKET> Expression() <CLOSEBRACKET>) #ArrayAccess |
+  (<IDENTIFIER> <OPENPAR> <CLOSEPAR>) #FunctionCall
 }
 
 void Exp3() #void : {}
 {
-  (<LENGTH> Exp1()) #Length |
-  (<IDENTIFIER> <OPENPAR> [Expression() (<COMMA> Expression())*] <CLOSEPAR> Exp1()) #FunctionCall
+  <LENGTH> #Length |
+  (<IDENTIFIER> <OPENPAR> [Expression() (<COMMA> Expression())*] <CLOSEPAR>) #FunctionCall
 }
