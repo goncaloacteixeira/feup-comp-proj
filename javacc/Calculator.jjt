@@ -103,8 +103,8 @@ void Statement() : {}
   (<OPENCURLY> (Statement())* <CLOSECURLY>) |
   (<IF> <OPENPAR> Expression() <CLOSEPAR> Statement() <ELSE> Statement()) #IfElse |
   (<WHILE> <OPENPAR> Expression() <CLOSEPAR> Statement()) #While |
-  (Expression() <SEMICOLON>) #Expression |
-  (<IDENTIFIER> [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression() <SEMICOLON>) #Declaration
+  (<IDENTIFIER> [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression() <SEMICOLON>) #Declaration |
+  (Expression() <SEMICOLON>) #Expression
 }
 
 void Expression() #void : {}
@@ -121,9 +121,9 @@ void Expression() #void : {}
 
 void Exp1() #void : {}
 {
-  ((<AND> | <LESSTHAN> | <PLUS> | <MULT> | <DIV>) Expression() Exp1())* #BinaryOperation |
-  (<OPENBRACKET> Expression() <CLOSEBRACKET> Exp1())* |
-  (<DOT> Exp3()) #MethodAccess
+  (<DOT> Exp3()) #MethodAccess |
+  ((<AND> | <LESSTHAN> | <PLUS> | <MINUS> | <MULT> | <DIV>) Expression() Exp1()) #BinaryOperation |
+  (<OPENBRACKET> Expression() <CLOSEBRACKET> Exp1())*
 }
 
 void Exp2() #void : {}
