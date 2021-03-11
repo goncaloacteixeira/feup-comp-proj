@@ -103,13 +103,13 @@ void Statement() : {}
   (<OPENCURLY> (Statement())* <CLOSECURLY>) |
   (<IF> <OPENPAR> Expression() <CLOSEPAR> Statement() <ELSE> Statement()) #IfElse |
   (<WHILE> <OPENPAR> Expression() <CLOSEPAR> Statement()) #While |
-  (<IDENTIFIER> [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression() <SEMICOLON>) #Declaration |
+  (<IDENTIFIER> [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression() <SEMICOLON>) #Assignment |
   (Expression() <SEMICOLON>) #Expression
 }
 
 void Expression() #void : {}
 {
-  (<INTEGERLITERAL> Exp1()) |
+  (<INTEGERLITERAL> #Term Exp1()) |
   (<TRUE> Exp1()) |
   (<FALSE> Exp1()) |
   (<IDENTIFIER> Exp1()) |
