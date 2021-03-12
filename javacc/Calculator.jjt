@@ -1,6 +1,6 @@
 options
 {
-    LOOKAHEAD=2;
+    LOOKAHEAD=1;
 }
 
 PARSER_BEGIN(Calculator)
@@ -92,43 +92,55 @@ void MethodDeclaration() #void : {}
   <PUBLIC> MD1()
 }
 
-void MD1() #void : {}
+void Param() : {}
 {
-  (Type() <IDENTIFIER> <OPENPAR> [Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*] <CLOSEPAR> <OPENCURLY> (VarDeclaration())* (Statement())* <RETURN> Expression() <SEMICOLON> <CLOSECURLY>) #ClassMethod |
-  (<STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (VarDeclaration())* (Statement())* <CLOSECURLY>) #MainMethod
+  Type() <IDENTIFIER>
 }
 
-void Statement() : {}
+void Return() : {}
+{
+  <RETURN> Expression() <SEMICOLON>
+}
+
+void MD1() #void : {}
+{
+  (Type() <IDENTIFIER> <OPENPAR> [Param() (<COMMA> Param())*] <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY>) #ClassMethod |
+  (<STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* <CLOSECURLY>) #MainMethod
+}
+
+void Statement() #void : {}
 {
   (<OPENCURLY> (Statement())* <CLOSECURLY>) |
   (<IF> <OPENPAR> Expression() <CLOSEPAR> Statement() <ELSE> Statement()) #IfElse |
   (<WHILE> <OPENPAR> Expression() <CLOSEPAR> Statement()) #While |
-  (<IDENTIFIER> [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression() <SEMICOLON>) #Assignment |
-  (Expression() <SEMICOLON>) #Expression
+  LOOKAHEAD(2) (<IDENTIFIER> #Variable [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression() <SEMICOLON>) #Assignment |
+  (Expression() <SEMICOLON>)
 }
 
 void Expression() #void : {}
 {
   (
     <INTEGERLITERAL> #Term |
-    <TRUE> |
-    <FALSE> |
+    <TRUE> #Term |
+    <FALSE> #Term |
+    //! this is gonna need some work, method call should be inner on variable
     <IDENTIFIER> |
-    <THIS> |
+    <THIS> #Term |
     (<NEW> Exp2()) |
-    (<NOT> Expression()) |
+    (<NOT> Expression()) #Not |
     (<OPENPAR> Expression()  <CLOSEPAR>)
   )
   Exp1()
 }
 
+//! We need to branch things which are not related to each other
 void Exp1() #void : {}
 {
-  [
+  [LOOKAHEAD(2)
     (
-      (<DOT> Exp3() #MethodAccess) |
+      (<DOT> Exp3()) |
       ((<AND> | <LESSTHAN> | <PLUS> | <MINUS> | <MULT> | <DIV>) Expression()) #BinaryOperation |
-      (<OPENBRACKET> Expression() <CLOSEBRACKET>)
+      (<OPENBRACKET> Expression() <CLOSEBRACKET>) #ArrayAccess
     )
     Exp1()
   ]
@@ -136,12 +148,12 @@ void Exp1() #void : {}
 
 void Exp2() #void : {}
 {
-  (<INT> <OPENBRACKET> Expression() <CLOSEBRACKET>) #ArrayAccess |
-  (<IDENTIFIER> <OPENPAR> <CLOSEPAR>) #FunctionCall
+  (<INT> <OPENBRACKET> Expression() <CLOSEBRACKET>) #ArrayInit |
+  (<IDENTIFIER> <OPENPAR> <CLOSEPAR>) #MethodCall
 }
 
-void Exp3() #void : {}
+void Exp3() #MethodCall : {}
 {
-  <LENGTH> #Length |
-  (<IDENTIFIER> <OPENPAR> [Expression() (<COMMA> Expression())*] <CLOSEPAR>) #FunctionCall
+  <LENGTH> |
+  (<IDENTIFIER> <OPENPAR> [Expression() (<COMMA> Expression())*] <CLOSEPAR>)
 }
