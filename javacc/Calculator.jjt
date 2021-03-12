@@ -117,6 +117,146 @@ void Statement() #void : {}
   (Expression() <SEMICOLON>)
 }
 
+void Expression() : {}
+{
+  ConditionalAndExpression() [<EQUAL> Expression()]
+}
+
+void ConditionalAndExpression() : {}
+{
+  RelationalExpression() ( <AND>
+  RelationalExpression() )*
+}
+
+void RelationalExpression() : {}
+{
+  AdditiveExpression() ( <LESSTHAN> AdditiveExpression() )*
+}
+
+void AdditiveExpression() :
+{}
+{
+  MultiplicativeExpression() ( ( <PLUS> | <MINUS> )
+  MultiplicativeExpression() )*
+}
+
+void MultiplicativeExpression() :
+{}
+{
+  UnaryExpression() ( ( <MULT> | <DIV> )
+  UnaryExpression() )*
+}
+
+void UnaryExpression() :
+{}
+{
+  ( "+" | "-" ) UnaryExpression()
+|
+  UnaryExpressionNotPlusMinus()
+}
+
+void UnaryExpressionNotPlusMinus() :
+{}
+{
+  <NOT> UnaryExpression()
+|
+  PrimaryExpression()
+}
+
+void PrimaryExpression() :
+{}
+{
+  PrimaryPrefix() ( LOOKAHEAD(2) PrimarySuffix() )*
+}
+
+void PrimaryPrefix() :
+{}
+{
+  Literal()
+|
+  "this"      
+|
+  "." <IDENTIFIER>
+|
+  "(" Expression() ")"
+|
+  AllocationExpression()
+|
+  <IDENTIFIER>
+}
+
+void PrimarySuffix() :
+{}
+{
+  LOOKAHEAD(2)
+  "." "this"         
+|
+  LOOKAHEAD(2)
+  "." AllocationExpression()
+|
+  "[" Expression() "]"
+|
+  "." <IDENTIFIER>
+}
+
+void Literal() :
+{}
+{
+  <INTEGERLITERAL>
+|
+  BooleanLiteral()
+}
+
+void BooleanLiteral() :
+{}
+{
+  "true"
+|
+  "false"
+}
+
+void AllocationExpression() :
+{}
+{
+  LOOKAHEAD(2)
+  "new"
+    Type() ArrayDimsAndInits()
+|
+  "new"
+    Type() ArrayDimsAndInits()
+}
+
+/*
+ * The third LOOKAHEAD specification below is to parse to PrimarySuffix
+ * if there is an expression between the "[...]".
+ */
+void ArrayDimsAndInits() :
+{}
+{
+  LOOKAHEAD(2)
+  ( LOOKAHEAD(2) "[" Expression() "]" )+
+|
+  ( "[" "]" )+ ArrayInitializer()
+}
+
+void ArrayInitializer() :
+{}
+{
+  "{"
+    [ VariableInitializer() ( LOOKAHEAD(2) "," VariableInitializer() )* ] [ "," ] "}"
+}
+
+void VariableInitializer() :
+{}
+{
+  ArrayInitializer()
+|
+  Expression()
+}
+
+
+
+/*
 void Expression() #void : {}
 {
   (
@@ -156,4 +296,4 @@ void Exp3() #MethodCall : {}
 {
   <LENGTH> |
   (<IDENTIFIER> <OPENPAR> [Expression() (<COMMA> Expression())*] <CLOSEPAR>)
-}
+}*/
