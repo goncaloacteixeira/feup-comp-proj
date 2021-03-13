@@ -79,7 +79,7 @@ public class ParserTest {
         }
 	}
 
-	@Test
+	/*@Test
     public void testSyntacticalErrors() throws IOException {
         System.out.println("\nTesting Syntactical Errors");
         for (String filename : this.syntacticalErrorFiles) {
@@ -95,7 +95,7 @@ public class ParserTest {
                 System.out.print("  - PASSED\n");
             }
         }
-    }
+    }*/
 
     @Test
     public void testSemanticErrors() throws IOException {
