@@ -1,6 +1,7 @@
 import org.junit.Before;
 import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.JmmParserResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,7 +64,14 @@ public class ParserTest {
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
         String code = TestUtils.getJmmCode("MonteCarloPi.jmm");
-        assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
+
+        JmmParserResult result = TestUtils.parse(code);
+
+
+
+        System.out.println(result.getRootNode().toJson());
+
+        // assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
     }
 
     @Test
