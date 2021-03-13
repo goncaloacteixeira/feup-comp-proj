@@ -95,7 +95,7 @@ public class ParserTest {
                 System.out.print("  - PASSED\n");
             }
         }
-    }
+    }*/
 
     @Test
     public void testSemanticErrors() throws IOException {

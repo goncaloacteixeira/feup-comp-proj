@@ -1,7 +1,7 @@
 import MathUtils;
 import ioPlus;
 
-class MonteCarloPi {
+class MonteCarloPi extends idk{
 	public boolean performSingleEstimate() {
 		int rand1;
 		int rand2;

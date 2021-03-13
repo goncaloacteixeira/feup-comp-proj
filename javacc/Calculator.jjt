@@ -114,14 +114,21 @@ SimpleNode Program(): {}
   (ImportDeclaration())* ClassDeclaration() <EOF> { return jjtThis; }
 }
 
-void ImportDeclaration() : {}
+void ImportDeclaration() : {Token t;}
 {
-  <IMPORT> <IDENTIFIER> (<DOT> <IDENTIFIER>)* <SEMICOLON>
+  <IMPORT>
+  t=<IDENTIFIER> [ImportAux()] {jjtThis.name = t.image;}
+  <SEMICOLON>
 }
 
-void ClassDeclaration() : {}
+void ImportAux() : {Token t;}
 {
-  <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>] <OPENCURLY> (VarDeclaration())* (MethodDeclaration())* <CLOSECURLY>
+    <DOT> t=<IDENTIFIER> {jjtThis.name = t.image;} [ImportAux()]
+}
+
+void ClassDeclaration() : {Token t,t1;}
+{
+  <CLASS> t=<IDENTIFIER> {jjtThis.name = t.image;} [<EXTENDS> t1=<IDENTIFIER> {jjtThis.name = t1.image;} #ClassExtension] <OPENCURLY> (VarDeclaration())* (MethodDeclaration())* <CLOSECURLY>
 }
 
 void VarDeclaration() : {}
@@ -129,9 +136,13 @@ void VarDeclaration() : {}
   Type() <IDENTIFIER> <SEMICOLON>
 }
 
-void Type() #void : {}
+void Type() : {Token t;}
 {
-  <BOOL> | <INT> [<OPENBRACKET><CLOSEBRACKET>] | <IDENTIFIER>
+
+  t=<BOOL> {jjtThis.name = t.image;} #BooleanType
+  | LOOKAHEAD(2) t=<INT> {jjtThis.name = t.image;} #IntegerType
+  | t=<INT> <OPENBRACKET><CLOSEBRACKET> {jjtThis.name = t.image;} #IntegerArrayType
+  | t=<IDENTIFIER> {jjtThis.name = t.image;} #Object
 }
 
 void MethodDeclaration() #void : {}
@@ -139,9 +150,9 @@ void MethodDeclaration() #void : {}
   <PUBLIC> MD1()
 }
 
-void Param() : {}
+void Param() : {Token t;}
 {
-  Type() <IDENTIFIER>
+  Type() t=<IDENTIFIER> {jjtThis.name = t.image;}
 }
 
 void Return() : {}
@@ -149,9 +160,9 @@ void Return() : {}
   <RETURN> Expression() <SEMICOLON>
 }
 
-void MD1() #void : {}
+void MD1() #void : {Token t,t1,t2;}
 {
-  (Type() <IDENTIFIER> <OPENPAR> [Param() (<COMMA> Param())*] <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY>) #ClassMethod |
+  (Type() #TypeReturn t1=<IDENTIFIER> {jjtThis.name = t1.image;} #MethodName <OPENPAR> ([Param() (<COMMA> Param())*]) #MethodArguments <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY>) #ClassMethod |
   (<STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* <CLOSECURLY>) #MainMethod
 }
 

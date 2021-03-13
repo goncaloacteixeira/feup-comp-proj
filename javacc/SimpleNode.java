@@ -18,7 +18,7 @@ class SimpleNode implements Node, JmmNode {
   protected Calculator parser;
 
     // added
-    public int val;
+    protected String name;
     public Operator op = null;
 
   public SimpleNode(int i) {
@@ -102,7 +102,7 @@ class SimpleNode implements Node, JmmNode {
      you need to do. */
 
   public String toString() {
-    return CalculatorTreeConstants.jjtNodeName[id];
+    return name!=null ? CalculatorTreeConstants.jjtNodeName[id] + " ( " + name + " ) " : CalculatorTreeConstants.jjtNodeName[id];
   }
   public String toString(String prefix) { return prefix + toString(); }
 
