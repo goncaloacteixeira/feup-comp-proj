@@ -20,6 +20,38 @@ SKIP :
     " " | "\t" | "\r" | "\n"
 }
 
+MORE :
+{
+  "//" : IN_SINGLE_LINE_COMMENT |
+  <"/**" ~["/"]> : IN_FORMAL_COMMENT |
+  "/*" : IN_MULTI_LINE_COMMENT
+}
+
+<IN_SINGLE_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n"> : DEFAULT
+}
+
+<IN_FORMAL_COMMENT>
+SPECIAL_TOKEN :
+{
+  <FORMAL_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <MULTI_LINE_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
+MORE :
+{
+  < ~[] >
+}
+
+
 TOKEN :
 {
      < IMPORT : "import" >
@@ -159,7 +191,7 @@ void PrimarySuffix() : {}
 
 void FunctionCall() : {}
 {
-  <OPENPAR> Expression() (<COMMA> Expression())* <CLOSEPAR>
+  <OPENPAR> [Expression() (<COMMA> Expression())*] <CLOSEPAR>
 }
 
 void Literal() : {}
@@ -175,7 +207,7 @@ void BooleanLiteral() : {}
 
 void AllocationExpression() : {}
 {
-  <NEW> <INT> ArrayInit()
+  <NEW> ((<INT> ArrayInit()) | (<IDENTIFIER> <OPENPAR> <CLOSEPAR>))
 }
 
 
