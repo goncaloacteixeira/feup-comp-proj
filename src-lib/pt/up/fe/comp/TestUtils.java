@@ -1,12 +1,8 @@
 package pt.up.fe.comp;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 
@@ -28,6 +24,16 @@ public class TestUtils {
 		} catch(IOException e) {
 			throw new RuntimeException("Error while loading properties file '"+filename+"'", e);
 		}
+	}
+
+	public static String getJmmCode(final String filename) throws IOException {
+		File file = new File("test/fixtures/public/" + filename);
+		FileInputStream fis = new FileInputStream(file);
+		byte[] data = new byte[(int) file.length()];
+		fis.read(data);
+		fis.close();
+
+		return new String(data, StandardCharsets.UTF_8);
 	}
 
 	public static JmmParserResult parse(String code) {

@@ -186,7 +186,7 @@ void PrimaryPrefix() #void : {}
 
 void PrimarySuffix() #void : {}
 {
-  (<DOT> (<THIS> #DotExpression(2) | AllocationExpression() #DotExpression(2) | <IDENTIFIER> [MethodCall() #DotExpression(2)] | <LENGTH> #DotExpression(2))) | <OPENBRACKET> Expression() <CLOSEBRACKET> #ArrayAccess
+  (<DOT> (<THIS> #DotExpression(2) | AllocationExpression() #DotExpression(2) | <IDENTIFIER> [MethodCall() #DotExpression(2)] | (<LENGTH> #MethodCall) #DotExpression(2))) | <OPENBRACKET> Expression() <CLOSEBRACKET> #ArrayAccess
 }
 
 void MethodCall() : {}
