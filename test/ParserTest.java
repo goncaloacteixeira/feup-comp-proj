@@ -81,6 +81,7 @@ public class ParserTest {
             System.setOut(new PrintStream(new NullOutputStream()));
             try {
                 TestUtils.parse(code).getRootNode().getKind();
+                System.setOut(realSystemOut);
                 fail();
             } catch (Exception e) {
                 System.setOut(realSystemOut);
