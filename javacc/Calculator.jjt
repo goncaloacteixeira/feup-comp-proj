@@ -117,183 +117,90 @@ void Statement() #void : {}
   (Expression() <SEMICOLON>)
 }
 
-void Expression() : {}
-{
-  ConditionalAndExpression() [<EQUAL> Expression()]
-}
-
-void ConditionalAndExpression() : {}
-{
-  RelationalExpression() ( <AND>
-  RelationalExpression() )*
-}
-
-void RelationalExpression() : {}
-{
-  AdditiveExpression() ( <LESSTHAN> AdditiveExpression() )*
-}
-
-void AdditiveExpression() :
-{}
-{
-  MultiplicativeExpression() ( ( <PLUS> | <MINUS> )
-  MultiplicativeExpression() )*
-}
-
-void MultiplicativeExpression() :
-{}
-{
-  UnaryExpression() ( ( <MULT> | <DIV> )
-  UnaryExpression() )*
-}
-
-void UnaryExpression() :
-{}
-{
-  ( "+" | "-" ) UnaryExpression()
-|
-  UnaryExpressionNotPlusMinus()
-}
-
-void UnaryExpressionNotPlusMinus() :
-{}
-{
-  <NOT> UnaryExpression()
-|
-  PrimaryExpression()
-}
-
-void PrimaryExpression() :
-{}
-{
-  PrimaryPrefix() ( LOOKAHEAD(2) PrimarySuffix() )*
-}
-
-void PrimaryPrefix() :
-{}
-{
-  Literal()
-|
-  "this"      
-|
-  "." <IDENTIFIER>
-|
-  "(" Expression() ")"
-|
-  AllocationExpression()
-|
-  <IDENTIFIER>
-}
-
-void PrimarySuffix() :
-{}
-{
-  LOOKAHEAD(2)
-  "." "this"         
-|
-  LOOKAHEAD(2)
-  "." AllocationExpression()
-|
-  "[" Expression() "]"
-|
-  "." <IDENTIFIER>
-}
-
-void Literal() :
-{}
-{
-  <INTEGERLITERAL>
-|
-  BooleanLiteral()
-}
-
-void BooleanLiteral() :
-{}
-{
-  "true"
-|
-  "false"
-}
-
-void AllocationExpression() :
-{}
-{
-  LOOKAHEAD(2)
-  "new"
-    Type() ArrayDimsAndInits()
-|
-  "new"
-    Type() ArrayDimsAndInits()
-}
-
-/*
- * The third LOOKAHEAD specification below is to parse to PrimarySuffix
- * if there is an expression between the "[...]".
- */
-void ArrayDimsAndInits() :
-{}
-{
-  LOOKAHEAD(2)
-  ( LOOKAHEAD(2) "[" Expression() "]" )+
-|
-  ( "[" "]" )+ ArrayInitializer()
-}
-
-void ArrayInitializer() :
-{}
-{
-  "{"
-    [ VariableInitializer() ( LOOKAHEAD(2) "," VariableInitializer() )* ] [ "," ] "}"
-}
-
-void VariableInitializer() :
-{}
-{
-  ArrayInitializer()
-|
-  Expression()
-}
-
-
-
-/*
 void Expression() #void : {}
 {
-  (
-    <INTEGERLITERAL> #Term |
-    <TRUE> #Term |
-    <FALSE> #Term |
-    //! this is gonna need some work, method call should be inner on variable
-    <IDENTIFIER> |
-    <THIS> #Term |
-    (<NEW> Exp2()) |
-    (<NOT> Expression()) #Not |
-    (<OPENPAR> Expression()  <CLOSEPAR>)
-  )
-  Exp1()
+  Term() |
+  Variable() |
+  Init() |
+  Not() |
+  EnclosedExpression()
 }
 
-//! We need to branch things which are not related to each other
+void Term() : {}
+{
+  (
+    <INTEGERLITERAL> |
+    <TRUE> |
+    <FALSE>
+  ) Exp1()
+}
+
+void Variable() : {}
+{
+  (
+    <IDENTIFIER> |
+    <THIS>
+  ) Exp1()
+}
+
+void Init() #void : {}
+{
+  <NEW>
+  (
+    ArrayInit() |
+    ObjInit()
+  ) Exp1()
+}
+
+void ArrayInit() : {}
+{
+  <INT> <OPENBRACKET> Expression() <CLOSEBRACKET>
+}
+
+void ObjInit() : {}
+{
+  <IDENTIFIER> <OPENPAR> <CLOSEPAR>
+}
+
+void Not() : {}
+{
+  <NOT> Expression() Exp1()
+}
+
+void EnclosedExpression() : {}
+{
+  <OPENPAR> Expression() <CLOSEPAR> Exp1()
+}
+
 void Exp1() #void : {}
 {
-  [LOOKAHEAD(2)
+  [
+    LOOKAHEAD(2)
     (
-      (<DOT> Exp3()) |
-      ((<AND> | <LESSTHAN> | <PLUS> | <MINUS> | <MULT> | <DIV>) Expression()) #BinaryOperation |
-      (<OPENBRACKET> Expression() <CLOSEBRACKET>) #ArrayAccess
+      BinaryOperation() |
+      ArrayAccess() |
+      MethodCall()
     )
-    Exp1()
   ]
 }
 
-void Exp2() #void : {}
+void BinaryOperation() : {}
 {
-  (<INT> <OPENBRACKET> Expression() <CLOSEBRACKET>) #ArrayInit |
-  (<IDENTIFIER> <OPENPAR> <CLOSEPAR>) #MethodCall
+  (<AND> | <LESSTHAN> | <PLUS> | <MINUS> | <MULT> | <DIV>) Expression() Exp1()
 }
 
-void Exp3() #MethodCall : {}
+void ArrayAccess() : {}
+{
+  <OPENBRACKET> Expression() <CLOSEBRACKET> Exp1()
+}
+
+void MethodCall() : {}
+{
+  <DOT> Method() Exp1()
+}
+
+void Method() #void : {}
 {
   <LENGTH> |
   (<IDENTIFIER> <OPENPAR> [Expression() (<COMMA> Expression())*] <CLOSEPAR>)
-}*/
+}
