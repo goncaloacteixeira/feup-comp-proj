@@ -21,10 +21,34 @@ public class ExampleTest {
 
 
     @Test
-    public void testExpression() throws IOException {
+    public void findMax() throws IOException {
         String findMax = parse("FindMaximum.jmm");
 
 		assertEquals("Program", TestUtils.parse(findMax).getRootNode().getKind());
 	}
+
+	@Test
+    public void helloWorld() throws IOException {
+        String helloWorld = parse("HelloWorld.jmm");
+        assertEquals("Program", TestUtils.parse(helloWorld).getRootNode().getKind());
+    }
+
+    @Test
+    public void lazySort() throws IOException {
+        String lazySort = parse("Lazysort.jmm");
+        assertEquals("Program", TestUtils.parse(lazySort).getRootNode().getKind());
+    }
+
+    @Test
+    public void monteCarloPi() throws IOException {
+        String monteCarloPi = parse("MonteCarloPi.jmm");
+        assertEquals("Program", TestUtils.parse(monteCarloPi).getRootNode().getKind());
+    }
+
+    @Test
+    public void quickSort() throws IOException {
+        String quickSort = parse("QuickSort.jmm");
+        assertEquals("Program", TestUtils.parse(quickSort).getRootNode().getKind());
+    }
 
 }

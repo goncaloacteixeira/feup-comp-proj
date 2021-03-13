@@ -149,29 +149,29 @@ void Statement() #void : {}
   (Expression() <SEMICOLON>)
 }
 
-void Expression() : {}
+void Expression() #void : {}
 {
-  RelationalExpression() (<AND> RelationalExpression())*
+  RelationalExpression() (<AND> RelationalExpression() #AndExpression(2))*
 }
 
-void RelationalExpression() : {}
+void RelationalExpression() #void : {}
 {
-  AdditiveExpression() (<LESSTHAN> AdditiveExpression())*
+  AdditiveExpression() (<LESSTHAN> AdditiveExpression() #RelationalExpression(2))*
 }
 
-void AdditiveExpression() : {}
+void AdditiveExpression() #void : {}
 {
-  MultiplicationExpression() ((<PLUS> | <MINUS>) MultiplicationExpression())*
+  MultiplicativeExpression() ((<PLUS> | <MINUS>) MultiplicativeExpression() #AdditiveExpression(2))*
 }
 
-void MultiplicationExpression() : {}
+void MultiplicativeExpression() #void : {}
 {
-  NotExpression() ((<MULT> | <DIV>) NotExpression())*
+  NotExpression() ((<MULT> | <DIV>) NotExpression() #MultiplicativeExpression(2))*
 }
 
-void NotExpression() : {}
+void NotExpression() #void : {}
 {
-  <NOT> NotExpression() | PrimaryExpression()
+  <NOT> NotExpression() #NotExpression | PrimaryExpression()
 }
 
 void PrimaryExpression() : {}
@@ -181,7 +181,7 @@ void PrimaryExpression() : {}
 
 void PrimaryPrefix() : {}
 {
-  Literal() | <THIS> | ([<DOT>] <IDENTIFIER>) | (<OPENPAR> Expression() <CLOSEPAR>) | AllocationExpression()
+  Literal() #Term | <THIS> | <IDENTIFIER> #Variable | (<OPENPAR> Expression() <CLOSEPAR>) | AllocationExpression()
 }
 
 void PrimarySuffix() : {}
@@ -204,12 +204,10 @@ void BooleanLiteral() : {}
   <TRUE> | <FALSE>
 }
 
-
 void AllocationExpression() : {}
 {
   <NEW> ((<INT> ArrayInit()) | (<IDENTIFIER> <OPENPAR> <CLOSEPAR>))
 }
-
 
 void ArrayInit() : {}
 {
