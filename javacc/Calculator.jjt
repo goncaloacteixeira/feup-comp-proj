@@ -174,29 +174,29 @@ void NotExpression() #void : {}
   <NOT> NotExpression() #NotExpression | PrimaryExpression()
 }
 
-void PrimaryExpression() : {}
+void PrimaryExpression() #void : {}
 {
   PrimaryPrefix() (PrimarySuffix())*
 }
 
-void PrimaryPrefix() : {}
+void PrimaryPrefix() #void : {}
 {
-  Literal() #Term | <THIS> | <IDENTIFIER> #Variable | (<OPENPAR> Expression() <CLOSEPAR>) | AllocationExpression()
+  Literal() | <THIS> #Variable | <IDENTIFIER> #Variable | (<OPENPAR> Expression() <CLOSEPAR>) | AllocationExpression()
 }
 
-void PrimarySuffix() : {}
+void PrimarySuffix() #void : {}
 {
-  (<DOT> (<THIS> | AllocationExpression() | <IDENTIFIER> [FunctionCall()] | <LENGTH>)) | <OPENBRACKET> Expression() <CLOSEBRACKET>
+  (<DOT> (<THIS> #DotExpression(2) | AllocationExpression() #DotExpression(2) | <IDENTIFIER> [MethodCall() #DotExpression(2)] | <LENGTH> #DotExpression(2))) | <OPENBRACKET> Expression() <CLOSEBRACKET> #ArrayAccess
 }
 
-void FunctionCall() : {}
+void MethodCall() : {}
 {
   <OPENPAR> [Expression() (<COMMA> Expression())*] <CLOSEPAR>
 }
 
-void Literal() : {}
+void Literal() #void : {}
 {
-  <INTEGERLITERAL> | BooleanLiteral()
+  <INTEGERLITERAL> #IntegerLiteral | BooleanLiteral()
 }
 
 void BooleanLiteral() : {}
