@@ -109,7 +109,7 @@ class SimpleNode implements Node, JmmNode {
      you need to do. */
 
   public String toString() {
-    return CalculatorTreeConstants.jjtNodeName[id];
+    return CalculatorTreeConstants.jjtNodeName[id] + " " + this.attributes.toString();
   }
   public String toString(String prefix) { return prefix + toString(); }
 

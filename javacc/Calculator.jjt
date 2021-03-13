@@ -126,10 +126,10 @@ void ImportAux() : {Token t;}
     <DOT> t=<IDENTIFIER> {jjtThis.put("value", t.image);} [ImportAux()]
 }
 
-void ClassDeclaration() : {Token t,t1;}
+void ClassDeclaration() : {Token t,t1; SimpleNode n; }
 {
-  <CLASS> t=<IDENTIFIER> { jjtThis.put("value", t.image); }
-  [<EXTENDS> t1=<IDENTIFIER> { jjtThis.put("value", t1.image); } #ClassExtension]
+  <CLASS> t=<IDENTIFIER> { jjtThis.put("value", t.image); n = jjtThis; }
+  [<EXTENDS> t1=<IDENTIFIER> { n.put("extends", t1.image); }]
   <OPENCURLY> (VarDeclaration())* (MethodDeclaration())* <CLOSECURLY>
 }
 
@@ -220,7 +220,7 @@ void MultiplicativeExpression() #void : {Token t;}
 
 void NotExpression() #void : {}
 {
-  <NOT> NotExpression() #NotExpression | PrimaryExpression()
+  (<NOT> NotExpression()) #NotExpression | PrimaryExpression()
 }
 
 void PrimaryExpression() #void : {}
