@@ -118,37 +118,37 @@ SimpleNode Program(): {}
 void ImportDeclaration() : {Token t;}
 {
   <IMPORT>
-  t=<IDENTIFIER> [ImportAux()] {jjtThis.name = t.image;}
+  t=<IDENTIFIER> [ImportAux()] {jjtThis.put("value", t.image);}
   <SEMICOLON>
 }
 
 // ImportAux -> <DOT> <IDENTIFIER> [ImportAux]
 void ImportAux() : {Token t;}
 {
-    <DOT> t=<IDENTIFIER> {jjtThis.name = t.image;} [ImportAux()]
+    <DOT> t=<IDENTIFIER> {jjtThis.put("value", t.image);} [ImportAux()]
 }
 
-// ClassDeclaration -> <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>] <OPENCURLY> (VarDeclaration)* (MethodDeclaration)* <CLOSECURLY>
-void ClassDeclaration() : {Token t,t1;}
+// ClassDeclaration -> <CLASS> <IDENTIFIER>
+void ClassDeclaration() : {Token t,t1; SimpleNode n; }
 {
-  <CLASS> t=<IDENTIFIER> {jjtThis.name = t.image;}
-  [<EXTENDS> t1=<IDENTIFIER> {jjtThis.name = t1.image;} #ClassExtension]
+  <CLASS> t=<IDENTIFIER> { jjtThis.put("name", t.image); n = jjtThis; }
+  [<EXTENDS> t1=<IDENTIFIER> { n.put("extends", t1.image); }]
   <OPENCURLY> (VarDeclaration())* (MethodDeclaration())* <CLOSECURLY>
 }
 
 // VarDeclaration -> Type <IDENTIFIER> <SEMICOLON>
-void VarDeclaration() : {Token t;}
+void VarDeclaration() : {Token t; String type;}
 {
-  Type() t=<IDENTIFIER> {jjtThis.name = t.image;} <SEMICOLON>
+  type=Type() t=<IDENTIFIER> { jjtThis.put("type", type); jjtThis.put("identifier", t.image); } <SEMICOLON>
 }
 
 // Type -> <BOOL> | <INT> <OPENBRACKET><CLOSEBRACKET> | <INT> | <IDENTIFIER>
-void Type() : {Token t;}
+String Type() #void : {Token t;}
 {
-  (t=<BOOL>
-  | LOOKAHEAD(2) t=<INT> <OPENBRACKET><CLOSEBRACKET>
-  | t=<INT>
-  | t=<IDENTIFIER>) {jjtThis.name = t.image;}
+  t=<BOOL> { return t.image; }
+  | LOOKAHEAD(2) <INT> <OPENBRACKET><CLOSEBRACKET> { return "int[]"; }
+  | t=<INT> { return t.image; }
+  | t=<IDENTIFIER> { return t.image; }
 }
 
 // MethodDeclaration -> <PUBLIC> MD1
@@ -160,7 +160,7 @@ void MethodDeclaration() #void : {}
 // Param -> Type <IDENTIFIER>
 void Param() : {Token t;}
 {
-  Type() t=<IDENTIFIER> {jjtThis.name = t.image;}
+  Type() t=<IDENTIFIER> { jjtThis.put("value", t.image); }
 }
 
 // Return -> <RETURN> Expression <SEMICOLON>
@@ -171,9 +171,9 @@ void Return() : {}
 
 // MD1 -> Type() <IDENTIFIER> <OPENPAR> [Param (<COMMA> Param)*] <CLOSEPAR> <OPENCURLY> (VarDeclaration)* (Statement)* Return <CLOSECURLY>
 // MD1 -> <STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (VarDeclaration)* (Statement)* <CLOSECURLY>
-void MD1() #void : {Token t,t1,t2;}
+void MD1() #void : {Token t;}
 {
-  (Type() t1=<IDENTIFIER> <OPENPAR> [(Param() (<COMMA> Param())*) #MethodArguments]  <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY> {jjtThis.name = t1.image;}) #ClassMethod  |
+  (Type() t=<IDENTIFIER> <OPENPAR> [(Param() (<COMMA> Param())*) #MethodArguments]  <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY> { jjtThis.put("value", t.image); }) #ClassMethod  |
   (<STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* <CLOSECURLY>) #MainMethod
 }
 
@@ -212,7 +212,7 @@ void Statement() #void : {Token t;}
   (<OPENCURLY> (Statement())* <CLOSECURLY>) |
   IfElse() |
   While() |
-  LOOKAHEAD(2) (t=<IDENTIFIER>{jjtThis.name = t.image;} #Variable [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression() <SEMICOLON>) #Assignment |
+  LOOKAHEAD(2) (t=<IDENTIFIER>{ jjtThis.put("value", t.image); } #Variable [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression() <SEMICOLON>) #Assignment |
   (Expression() <SEMICOLON>)
 }
 
@@ -225,25 +225,25 @@ void Expression() #void : {}
 // RelationalExpression -> AdditiveExpression (<LESSTHAN> AdditiveExpression)*
 void RelationalExpression() #void : {Token t;}
 {
-  AdditiveExpression() (t=<LESSTHAN> AdditiveExpression() {jjtThis.name = t.image;} #RelationalExpression(2))*
+  AdditiveExpression() (t=<LESSTHAN> AdditiveExpression() { jjtThis.put("value", t.image); } #RelationalExpression(2))*
 }
 
 // AdditiveExpression -> MultiplicativeExpression ((<PLUS> | <MINUS>) MultiplicativeExpression)*
 void AdditiveExpression() #void : {Token t;}
 {
-  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() {jjtThis.name = t.image;}  #AdditiveExpression(2))*
+  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() { jjtThis.put("value", t.image); }  #AdditiveExpression(2))*
 }
 
 // MultiplicativeExpression -> NotExpression ((<MULT> | <DIV>) NotExpression)*
 void MultiplicativeExpression() #void : {Token t;}
 {
-  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() {jjtThis.name = t.image;} #MultiplicativeExpression(2))*
+  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() { jjtThis.put("value", t.image); } #MultiplicativeExpression(2))*
 }
 
 // NotExpression -> (<NOT> NotExpression) | PrimaryExpression
 void NotExpression() #void : {}
 {
-  <NOT> NotExpression() #NotExpression | PrimaryExpression()
+  (<NOT> NotExpression()) #NotExpression | PrimaryExpression()
 }
 
 // PrimaryExpression -> PrimaryPrefix (PrimarySuffix)*
@@ -255,7 +255,7 @@ void PrimaryExpression() #void : {}
 // PrimaryPrefix -> Literal | <THIS> | <IDENTIFIER> | (<OPENPAR> Expression <CLOSEPAR>) | AllocationExpression
 void PrimaryPrefix() #void : {Token t;}
 {
-  Literal() | <THIS> #This | t=<IDENTIFIER>{jjtThis.name = t.image;} #Variable | (<OPENPAR> Expression() <CLOSEPAR>) | AllocationExpression()
+  Literal() | <THIS> #This | t=<IDENTIFIER>{ jjtThis.put("value", t.image); } #Variable | (<OPENPAR> Expression() <CLOSEPAR>) | AllocationExpression()
 }
 
 // PrimarySuffix -> <DOT> (AllocationExpression | <IDENTIFIER> [MethodCall] | <LENGTH>)
@@ -263,7 +263,7 @@ void PrimaryPrefix() #void : {Token t;}
 void PrimarySuffix() #void : {Token t;}
 {
   (<DOT> (AllocationExpression()
-  | (t=<IDENTIFIER>{jjtThis.name = t.image;} [MethodCall()]) #MethodCall
+  | (t=<IDENTIFIER>{ jjtThis.put("value", t.image); } [MethodCall()]) #MethodCall
   | <LENGTH> #Length)
   )
   | <OPENBRACKET> Expression() <CLOSEBRACKET> #ArrayAccess
@@ -278,19 +278,19 @@ void MethodCall() #void: {}
 // Literal -> <INTEGERLITERAL> | BooleanLiteral
 void Literal() #void : {Token t;}
 {
-  t=<INTEGERLITERAL>{jjtThis.name = t.image;} #IntegerLiteral | BooleanLiteral()
+  t=<INTEGERLITERAL>{ jjtThis.put("value", t.image); } #IntegerLiteral | BooleanLiteral()
 }
 
 // BooleanLiteral -> <TRUE> | <FALSE>
 void BooleanLiteral() : {Token t;}
 {
-  (t=<TRUE> | t=<FALSE>) {jjtThis.name = t.image;}
+  (t=<TRUE> | t=<FALSE>) { jjtThis.put("value", t.image); }
 }
 
 // AllocationExpression -> <NEW> ((<INT> ArrayInit) | (<IDENTIFIER> <OPENPAR> <CLOSEPAR>))
 void AllocationExpression() #void : {Token t1,t2;}
 {
-  <NEW> ((t1=<INT>{jjtThis.name = t1.image;} #NewIntArray ArrayInit()) | (t2=<IDENTIFIER>{jjtThis.name = t2.image;} #NewObject <OPENPAR> <CLOSEPAR>))
+  <NEW> ((t1=<INT>{ jjtThis.put("value", t1.image); } #NewIntArray ArrayInit()) | (t2=<IDENTIFIER>{ jjtThis.put("value", t2.image); } #NewObject <OPENPAR> <CLOSEPAR>))
 }
 
 // ArrayInit -> <OPENBRACKET> Expression <CLOSEBRACKET>
