@@ -60,6 +60,13 @@ public class ParserTest {
     }
 
     @Test
+    public void unitTest() throws IOException {
+        System.out.println("Unit Test");
+        String code = TestUtils.getJmmCode("MonteCarloPi.jmm");
+        assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
+    }
+
+    @Test
     public void testParser() throws IOException {
         System.out.println("\nTesting Valid Files");
         for (String filename : this.validFiles) {
