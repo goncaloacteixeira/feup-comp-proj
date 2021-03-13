@@ -117,90 +117,69 @@ void Statement() #void : {}
   (Expression() <SEMICOLON>)
 }
 
-void Expression() #void : {}
+void Expression() : {}
 {
-  Term() |
-  Variable() |
-  Init() |
-  Not() |
-  EnclosedExpression()
+  RelationalExpression() (<AND> RelationalExpression())*
 }
 
-void Term() : {}
+void RelationalExpression() : {}
 {
-  (
-    <INTEGERLITERAL> |
-    <TRUE> |
-    <FALSE>
-  ) Exp1()
+  AdditiveExpression() (<LESSTHAN> AdditiveExpression())*
 }
 
-void Variable() : {}
+void AdditiveExpression() : {}
 {
-  (
-    <IDENTIFIER> |
-    <THIS>
-  ) Exp1()
+  MultiplicationExpression() ((<PLUS> | <MINUS>) MultiplicationExpression())*
 }
 
-void Init() #void : {}
+void MultiplicationExpression() : {}
 {
-  <NEW>
-  (
-    ArrayInit() |
-    ObjInit()
-  ) Exp1()
+  NotExpression() ((<MULT> | <DIV>) NotExpression())*
 }
+
+void NotExpression() : {}
+{
+  <NOT> NotExpression() | PrimaryExpression()
+}
+
+void PrimaryExpression() : {}
+{
+  PrimaryPrefix() (PrimarySuffix())*
+}
+
+void PrimaryPrefix() : {}
+{
+  Literal() | <THIS> | ([<DOT>] <IDENTIFIER>) | (<OPENPAR> Expression() <CLOSEPAR>) | AllocationExpression()
+}
+
+void PrimarySuffix() : {}
+{
+  (<DOT> (<THIS> | AllocationExpression() | <IDENTIFIER> [FunctionCall()] | <LENGTH>)) | <OPENBRACKET> Expression() <CLOSEBRACKET>
+}
+
+void FunctionCall() : {}
+{
+  <OPENPAR> Expression() (<COMMA> Expression())* <CLOSEPAR>
+}
+
+void Literal() : {}
+{
+  <INTEGERLITERAL> | BooleanLiteral()
+}
+
+void BooleanLiteral() : {}
+{
+  <TRUE> | <FALSE>
+}
+
+
+void AllocationExpression() : {}
+{
+  <NEW> <INT> ArrayInit()
+}
+
 
 void ArrayInit() : {}
 {
-  <INT> <OPENBRACKET> Expression() <CLOSEBRACKET>
-}
-
-void ObjInit() : {}
-{
-  <IDENTIFIER> <OPENPAR> <CLOSEPAR>
-}
-
-void Not() : {}
-{
-  <NOT> Expression() Exp1()
-}
-
-void EnclosedExpression() : {}
-{
-  <OPENPAR> Expression() <CLOSEPAR> Exp1()
-}
-
-void Exp1() #void : {}
-{
-  [
-    LOOKAHEAD(2)
-    (
-      BinaryOperation() |
-      ArrayAccess() |
-      MethodCall()
-    )
-  ]
-}
-
-void BinaryOperation() : {}
-{
-  (<AND> | <LESSTHAN> | <PLUS> | <MINUS> | <MULT> | <DIV>) Expression() Exp1()
-}
-
-void ArrayAccess() : {}
-{
-  <OPENBRACKET> Expression() <CLOSEBRACKET> Exp1()
-}
-
-void MethodCall() : {}
-{
-  <DOT> Method() Exp1()
-}
-
-void Method() #void : {}
-{
-  <LENGTH> |
-  (<IDENTIFIER> <OPENPAR> [Expression() (<COMMA> Expression())*] <CLOSEPAR>)
+  <OPENBRACKET> Expression() <CLOSEBRACKET>
 }
