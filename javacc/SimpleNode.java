@@ -32,7 +32,7 @@ class SimpleNode implements Node, JmmNode {
   }
 
   public String getKind() {
-    return toString();
+    return CalculatorTreeConstants.jjtNodeName[id];
   }
 
   public List<String> getAttributes() {

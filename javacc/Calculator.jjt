@@ -128,22 +128,22 @@ void ImportAux() : {Token t;}
 
 void ClassDeclaration() : {Token t,t1; SimpleNode n; }
 {
-  <CLASS> t=<IDENTIFIER> { jjtThis.put("value", t.image); n = jjtThis; }
+  <CLASS> t=<IDENTIFIER> { jjtThis.put("name", t.image); n = jjtThis; }
   [<EXTENDS> t1=<IDENTIFIER> { n.put("extends", t1.image); }]
   <OPENCURLY> (VarDeclaration())* (MethodDeclaration())* <CLOSECURLY>
 }
 
-void VarDeclaration() : {Token t;}
+void VarDeclaration() : {Token t; String type;}
 {
-  Type() t=<IDENTIFIER> { jjtThis.put("value", t.image); } <SEMICOLON>
+  type=Type() t=<IDENTIFIER> { jjtThis.put("type", type); jjtThis.put("identifier", t.image); } <SEMICOLON>
 }
 
-void Type() : {Token t;}
+String Type() #void : {Token t;}
 {
-  (t=<BOOL>
-  | LOOKAHEAD(2) t=<INT> <OPENBRACKET><CLOSEBRACKET>
-  | t=<INT>
-  | t=<IDENTIFIER>) { jjtThis.put("value", t.image); }
+  t=<BOOL> { return t.image; }
+  | LOOKAHEAD(2) <INT> <OPENBRACKET><CLOSEBRACKET> { return "int[]"; }
+  | t=<INT> { return t.image; }
+  | t=<IDENTIFIER> { return t.image; }
 }
 
 void MethodDeclaration() #void : {}
