@@ -59,12 +59,12 @@ public class ParserTest {
             semanticErrorFiles.add("/fail/semantic/" + semName);
     }
 
-    /*@Test
+    @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
-        String code = TestUtils.getJmmCode("/fail/syntactical/CompleteWhileTest.jmm");
+        String code = TestUtils.getJmmCode("MonteCarloPi.jmm");
         assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
-    }*/
+    }
 
     @Test
     public void testParser() throws IOException {
@@ -108,5 +108,5 @@ public class ParserTest {
             System.setOut(realSystemOut);
             System.out.print("  - PASSED\n");
         }
-    }*/
+    }
 }
