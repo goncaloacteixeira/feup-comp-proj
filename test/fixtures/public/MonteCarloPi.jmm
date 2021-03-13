@@ -29,7 +29,7 @@ class MonteCarloPi {
 		samples_so_far = 0;
 		samples_in_circle = 0;
 
-		while sdasd (samples_so_far < n) {
+		while (samples_so_far < n) {
 			if (this.performSingleEstimate()) {
 				samples_in_circle = samples_in_circle + 1;
 			} else {
