@@ -3,10 +3,8 @@ import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmParserResult;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -63,15 +61,19 @@ public class ParserTest {
     @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
-        String code = TestUtils.getJmmCode("MonteCarloPi.jmm");
 
-        JmmParserResult result = TestUtils.parse(code);
+        for (String filename : validFiles) {
+            String code = TestUtils.getJmmCode(filename);
+            String astJson = TestUtils.parse(code).getRootNode().toJson();
+            File jmm = new File(filename);
+            int i = jmm.getName().lastIndexOf('.');
+            String name = jmm.getName().substring(0,i);
+            File json = new File(name + ".json");
 
-
-
-        System.out.println(result.getRootNode().toJson());
-
-        // assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
+            FileOutputStream fos = new FileOutputStream(json);
+            fos.write(astJson.getBytes(StandardCharsets.UTF_8));
+            fos.close();
+        }
     }
 
     @Test
