@@ -174,9 +174,9 @@ void Return() : {}
 
 // MD1 -> Type() <IDENTIFIER> <OPENPAR> [Param (<COMMA> Param)*] <CLOSEPAR> <OPENCURLY> (VarDeclaration)* (Statement)* Return <CLOSECURLY>
 // MD1 -> <STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (VarDeclaration)* (Statement)* <CLOSECURLY>
-void MD1() #void : {Token t;}
+void MD1() #void : {Token t; String returnType; }
 {
-  (Type() t=<IDENTIFIER> <OPENPAR> [(Param() (<COMMA> Param())*) #MethodArguments]  <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY> { jjtThis.put("value", t.image); }) #ClassMethod  |
+  (returnType=Type() t=<IDENTIFIER> <OPENPAR> [(Param() (<COMMA> Param())*) #MethodArguments]  <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY> { jjtThis.put("name", t.image); jjtThis.put("return", returnType); }) #ClassMethod  |
   (<STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* <CLOSECURLY>) #MainMethod
 }
 
@@ -220,32 +220,32 @@ void Statement() #void : {Token t;}
   (<OPENCURLY> (Statement())* <CLOSECURLY>) |
   IfElse() |
   While() |
-  LOOKAHEAD(2) (t=<IDENTIFIER>{ jjtThis.put("value", t.image); } #Variable [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression() <SEMICOLON>) #Assignment |
+  LOOKAHEAD(2) (t=<IDENTIFIER> [(<OPENBRACKET> Expression() <CLOSEBRACKET>) #ArrayAccess]  <EQUAL> Expression() <SEMICOLON> {jjtThis.put("variable", t.image);}) #Assignment   |
   (Expression() <SEMICOLON>)
 }
 
 // Expression -> RelationalExpression (<AND> RelationalExpression)*
-void Expression() #void : {}
+void Expression() #void : { Token t; }
 {
-  RelationalExpression() (<AND> RelationalExpression() #AndExpression(2))*
+  RelationalExpression() (t=<AND> RelationalExpression() { jjtThis.put("operation", t.image); } #AndExpression(2))*
 }
 
 // RelationalExpression -> AdditiveExpression (<LESSTHAN> AdditiveExpression)*
 void RelationalExpression() #void : {Token t;}
 {
-  AdditiveExpression() (t=<LESSTHAN> AdditiveExpression() { jjtThis.put("value", t.image); } #RelationalExpression(2))*
+  AdditiveExpression() (t=<LESSTHAN> AdditiveExpression() { jjtThis.put("operation", t.image); } #RelationalExpression(2))*
 }
 
 // AdditiveExpression -> MultiplicativeExpression ((<PLUS> | <MINUS>) MultiplicativeExpression)*
 void AdditiveExpression() #void : {Token t;}
 {
-  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() { jjtThis.put("value", t.image); }  #AdditiveExpression(2))*
+  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() { jjtThis.put("operation", t.image); }  #AdditiveExpression(2))*
 }
 
 // MultiplicativeExpression -> NotExpression ((<MULT> | <DIV>) NotExpression)*
 void MultiplicativeExpression() #void : {Token t;}
 {
-  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() { jjtThis.put("value", t.image); } #MultiplicativeExpression(2))*
+  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() { jjtThis.put("operation", t.image); } #MultiplicativeExpression(2))*
 }
 
 // NotExpression -> (<NOT> NotExpression) | PrimaryExpression
@@ -263,7 +263,7 @@ void PrimaryExpression() #void : {}
 // PrimaryPrefix -> Literal | <THIS> | <IDENTIFIER> | (<OPENPAR> Expression <CLOSEPAR>) | AllocationExpression
 void PrimaryPrefix() #void : {Token t;}
 {
-  Literal() | <THIS> #This | t=<IDENTIFIER>{ jjtThis.put("value", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
+  Literal() | <THIS> #This | t=<IDENTIFIER>{ jjtThis.put("name", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
 }
 
 // PrimarySuffix -> <DOT> (AllocationExpression | <IDENTIFIER> [MethodCall] | <LENGTH>)
@@ -294,11 +294,10 @@ void BooleanLiteral() : {Token t;}
 {
   (t=<TRUE> | t=<FALSE>) { jjtThis.put("value", t.image); }
 }
-
 // AllocationExpression -> <NEW> ((<INT> ArrayInit) | (<IDENTIFIER> <OPENPAR> <CLOSEPAR>))
-void AllocationExpression() #void : {Token t1,t2;}
+void AllocationExpression() #void : {Token t;}
 {
-  <NEW> ((t1=<INT>{ jjtThis.put("value", t1.image); } #NewIntArray ArrayInit()) | (t2=<IDENTIFIER>{ jjtThis.put("value", t2.image); } #NewObject <OPENPAR> <CLOSEPAR>))
+  <NEW> ((<INT> #NewIntArray ArrayInit()) | (t=<IDENTIFIER>{ jjtThis.put("value", t.image); } #NewObject <OPENPAR> <CLOSEPAR>))
 }
 
 // ArrayInit -> <OPENBRACKET> Expression <CLOSEBRACKET>

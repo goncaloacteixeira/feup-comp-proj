@@ -36,6 +36,16 @@ public class TestUtils {
 		return new String(data, StandardCharsets.UTF_8);
 	}
 
+	public static void writeJson(final String pathname, final JmmParserResult result) throws IOException {
+		String astJson = result.getRootNode().toJson();
+
+		File json = new File(pathname);
+
+		FileOutputStream fos = new FileOutputStream(json);
+		fos.write(astJson.getBytes(StandardCharsets.UTF_8));
+		fos.close();
+	}
+
 	public static JmmParserResult parse(String code) {
 		try {
 			// Get Parser class
