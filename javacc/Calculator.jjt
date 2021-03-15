@@ -6,6 +6,8 @@ options
 PARSER_BEGIN(Calculator)
 
 public class Calculator {
+    public int par_count=0;
+
     public static void main(String[] args) throws ParseException {
         Calculator myCalc = new Calculator(System.in);
         SimpleNode root = myCalc.Program(); // returns reference to root node
@@ -16,18 +18,19 @@ public class Calculator {
 PARSER_END(Calculator)
 
 JAVACODE
-void error_skipto(int kind) #Error {
-  ParseException e = generateParseException();  // generate the exception object.
-  System.out.println("Error In while Expression");
-  System.out.println(e.getMessage());  // print the error message
+void error_skipto(int kind, boolean expection) #Error {
+  if(expection){
+    ParseException e = generateParseException();  // generate the exception object.
+    System.out.println("Error In while Expression");
+    System.out.println(e.getMessage());  // print the error message
+  }
   Token t;
-  	  do
-  	  {
-  	    if (kind != CLOSECURLY && token.next != null && token.next.kind == CLOSECURLY)
-  	    break;
-  	    t = getNextToken();
-  	  }
-  	  while (t.kind != kind);
+  do
+  {
+    //if(getToken(1).kind == OPENCURLY) break;
+    t = getNextToken();
+  }
+  while (t.kind != kind);
 }
 
 SKIP :
@@ -196,9 +199,14 @@ void ElseStatement() : {} {
 void While() : {}
 {
   try {
-    <WHILE> <OPENPAR> Expression() #WhileCondition <CLOSEPAR>
+    <WHILE> <OPENPAR>{par_count++;} Expression() #WhileCondition <CLOSEPAR>{par_count--;}
   } catch (ParseException e) {
-    error_skipto(OPENCURLY);
+    boolean exception = true;
+    while(par_count>0) {
+      error_skipto(CLOSEPAR, exception);
+      exception = false;
+      par_count--;
+    }
   }
    Statement()
 }
@@ -255,7 +263,7 @@ void PrimaryExpression() #void : {}
 // PrimaryPrefix -> Literal | <THIS> | <IDENTIFIER> | (<OPENPAR> Expression <CLOSEPAR>) | AllocationExpression
 void PrimaryPrefix() #void : {Token t;}
 {
-  Literal() | <THIS> #This | t=<IDENTIFIER>{ jjtThis.put("value", t.image); } #Variable | (<OPENPAR> Expression() <CLOSEPAR>) | AllocationExpression()
+  Literal() | <THIS> #This | t=<IDENTIFIER>{ jjtThis.put("value", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
 }
 
 // PrimarySuffix -> <DOT> (AllocationExpression | <IDENTIFIER> [MethodCall] | <LENGTH>)
