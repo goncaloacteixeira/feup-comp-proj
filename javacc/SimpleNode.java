@@ -5,6 +5,7 @@ import pt.up.fe.comp.jmm.JmmNode;
 import java.lang.RuntimeException;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -17,9 +18,9 @@ class SimpleNode implements Node, JmmNode {
   protected Object value;
   protected Calculator parser;
 
-    // added
-    public int val;
-    public Operator op = null;
+  protected HashMap<String, String> attributes = new HashMap<>();
+
+  public Operator op = null;
 
   public SimpleNode(int i) {
     id = i;
@@ -30,37 +31,43 @@ class SimpleNode implements Node, JmmNode {
     parser = p;
   }
 
-
   public String getKind() {
-	  return toString();
+    return CalculatorTreeConstants.jjtNodeName[id];
   }
-  
+
   public List<String> getAttributes() {
-	throw new RuntimeException("Not implemented yet");
+    return new ArrayList<>(this.attributes.keySet());
   }
 
   public void put(String attribute, String value) {
-	throw new RuntimeException("Not implemented yet");	  
+    this.attributes.put(attribute, value);
   }
 
   public String get(String attribute) {
-	throw new RuntimeException("Not implemented yet");
+    return this.attributes.get(attribute);
   }
-  
+
   public List<JmmNode> getChildren() {
-    return (children == null) ? new ArrayList<>() : Arrays.asList((JmmNode[])children);
+    if (children == null) {
+      return new ArrayList<>();
+    }
+    List<JmmNode> nodes = new ArrayList<>();
+    for (Node node : this.children) {
+      nodes.add((JmmNode) node);
+    }
+    return nodes;
   }
-  
+
   public int getNumChildren() {
     return jjtGetNumChildren();
   }
-  
+
   public void add(JmmNode child, int index) {
     if(!(child instanceof Node)) {
-  	throw new RuntimeException("Node not supported: " + child.getClass());  
+      throw new RuntimeException("Node not supported: " + child.getClass());
     }
-	  
-	jjtAddChild((Node) child, index);
+
+    jjtAddChild((Node) child, index);
   }
 
 
@@ -102,7 +109,7 @@ class SimpleNode implements Node, JmmNode {
      you need to do. */
 
   public String toString() {
-    return CalculatorTreeConstants.jjtNodeName[id];
+    return CalculatorTreeConstants.jjtNodeName[id] + " " + this.attributes.toString();
   }
   public String toString(String prefix) { return prefix + toString(); }
 
