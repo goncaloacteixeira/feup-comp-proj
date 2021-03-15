@@ -61,7 +61,15 @@ public class ParserTest {
     @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
+        String code = TestUtils.getJmmCode("/fail/syntactical/CompleteWhileTest.jmm");
+        assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
+    }
 
+
+    @Test
+    public void generateJSON() throws IOException {
+        System.out.println("Unit Test");
+        System.setOut(new PrintStream(new NullOutputStream()));
         for (String filename : validFiles) {
             String code = TestUtils.getJmmCode(filename);
             String astJson = TestUtils.parse(code).getRootNode().toJson();
@@ -74,6 +82,7 @@ public class ParserTest {
             fos.write(astJson.getBytes(StandardCharsets.UTF_8));
             fos.close();
         }
+        System.setOut(realSystemOut);
     }
 
     @Test
