@@ -5,8 +5,13 @@ options
 
 PARSER_BEGIN(Calculator)
 
+import java.util.ArrayList;
+import java.util.List;
+import pt.up.fe.comp.jmm.report.*;
+
 public class Calculator {
     public int par_count=0;
+    public ArrayList<Report> reports = new ArrayList();
 
     public static void main(String[] args) throws ParseException {
         Calculator myCalc = new Calculator(System.in);
@@ -21,8 +26,7 @@ JAVACODE
 void error_skipto(int kind, boolean expection) #Error {
   if (expection) {
     ParseException e = generateParseException();  // generate the exception object.
-    System.out.println("Error In while Expression");
-    System.out.println(e.getMessage());  // print the error message
+    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, "Error in while statement, token: " + e.currentToken)); }
   }
   Token t;
   do
@@ -114,7 +118,13 @@ TOKEN :
 
 SimpleNode Program(): {}
 {
-  (ImportDeclaration())* ClassDeclaration() <EOF> { return jjtThis; }
+  try {
+    (ImportDeclaration())* ClassDeclaration() <EOF>
+  } catch (ParseException e) {
+    { reports.add(new Report(ReportType.ERROR, Stage.LEXICAL, 1, "Could not parse file")); }
+  }
+
+   { return jjtThis; }
 }
 
 // ImportDeclaration -> <IMPORT> <IDENTIFIER> [ImportAux] <SEMICOLON>

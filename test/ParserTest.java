@@ -2,6 +2,8 @@ import org.junit.Before;
 import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmParserResult;
+import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.specs.util.stringparser.ParserResult;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -61,8 +63,15 @@ public class ParserTest {
     @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
-        String code = TestUtils.getJmmCode("/fail/syntactical/MissingRightPar.jmm");
-        assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
+        String code = TestUtils.getJmmCode("/fail/syntactical/CompleteWhileTest.jmm");
+
+        JmmParserResult parserResult = TestUtils.parse(code);
+
+        assertEquals("Program", parserResult.getRootNode().getKind());
+        System.out.println("\nREPORTS");
+        for (Report report : parserResult.getReports()) {
+            System.out.println(report);
+        }
     }
 
     @Test
