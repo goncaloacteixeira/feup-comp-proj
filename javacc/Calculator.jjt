@@ -19,7 +19,7 @@ PARSER_END(Calculator)
 
 JAVACODE
 void error_skipto(int kind, boolean expection) #Error {
-  if(expection){
+  if (expection) {
     ParseException e = generateParseException();  // generate the exception object.
     System.out.println("Error In while Expression");
     System.out.println(e.getMessage());  // print the error message
@@ -30,7 +30,7 @@ void error_skipto(int kind, boolean expection) #Error {
     //if(getToken(1).kind == OPENCURLY) break;
     t = getNextToken();
   }
-  while (t.kind != kind);
+  while (t.kind != kind && t.kind != EOF);
 }
 
 SKIP :
