@@ -65,7 +65,6 @@ public class ParserTest {
         assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
     }
 
-
     @Test
     public void generateJSON() throws IOException {
         System.out.println("Unit Test");
