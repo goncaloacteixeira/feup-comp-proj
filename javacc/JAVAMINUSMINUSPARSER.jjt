@@ -3,24 +3,24 @@ options
     LOOKAHEAD=1;
 }
 
-PARSER_BEGIN(Calculator)
+PARSER_BEGIN(JAVAMINUSMINUSPARSER)
 
 import java.util.ArrayList;
 import java.util.List;
 import pt.up.fe.comp.jmm.report.*;
 
-public class Calculator {
+public class JAVAMINUSMINUSPARSER {
     public int par_count=0;
     public ArrayList<Report> reports = new ArrayList();
 
     public static void main(String[] args) throws ParseException {
-        Calculator myCalc = new Calculator(System.in);
-        SimpleNode root = myCalc.Program(); // returns reference to root node
+        JAVAMINUSMINUSPARSER parser = new JAVAMINUSMINUSPARSER(System.in);
+        SimpleNode root = parser.Program(); // returns reference to root node
         root.dump("");  // prints the tree on the screen
     }
 }
 
-PARSER_END(Calculator)
+PARSER_END(JAVAMINUSMINUSPARSER)
 
 JAVACODE
 void error_skipto(int kind, boolean expection) #Error {

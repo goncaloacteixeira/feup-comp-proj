@@ -12,12 +12,12 @@ public class Main implements JmmParser {
 	public JmmParserResult parse(String jmmCode) {
 		
 		try {
-			Calculator myCalc = new Calculator(new StringReader(jmmCode));
-			SimpleNode root = myCalc.Program(); // returns reference to root node
+			JAVAMINUSMINUSPARSER parser = new JAVAMINUSMINUSPARSER(new StringReader(jmmCode));
+			SimpleNode root = parser.Program(); // returns reference to root node
             	
     		root.dump(""); // prints the tree on the screen
     	
-    		return new JmmParserResult(root, myCalc.reports);
+    		return new JmmParserResult(root, parser.reports);
 		} catch(ParseException e) {
 			throw new RuntimeException("Error while parsing", e);
 		}
