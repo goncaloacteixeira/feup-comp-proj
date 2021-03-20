@@ -121,7 +121,7 @@ SimpleNode Program(): {}
   try {
     (ImportDeclaration())* ClassDeclaration() <EOF>
   } catch (ParseException e) {
-    { reports.add(new Report(ReportType.ERROR, Stage.LEXICAL, 1, "Could not parse file")); }
+    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, "Could not parse file")); }
   }
 
    { return jjtThis; }

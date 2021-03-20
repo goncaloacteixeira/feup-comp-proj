@@ -63,7 +63,7 @@ public class ParserTest {
     @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
-        String code = TestUtils.getJmmCode("/fail/syntactical/CompleteWhileTest.jmm");
+        String code = TestUtils.getJmmCode("/fail/syntactical/BlowUp.jmm");
 
         JmmParserResult parserResult = TestUtils.parse(code);
 
