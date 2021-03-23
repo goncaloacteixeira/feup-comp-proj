@@ -15,65 +15,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class ParserTest {
-    private final PrintStream realSystemOut = System.out;
-    private static class NullOutputStream extends OutputStream {
-        @Override
-        public void write(int b){
-        }
-        @Override
-        public void write(byte[] b){
-        }
-        @Override
-        public void write(byte[] b, int off, int len){
-        }
-        public NullOutputStream(){
-        }
-    }
-
-    private static String getJmmCode(final String filename) throws IOException {
-        File file = new File("test/fixtures/public/" + filename);
-        FileInputStream fis = new FileInputStream(file);
-        byte[] data = new byte[(int) file.length()];
-        fis.read(data);
-        fis.close();
-
-        return new String(data, StandardCharsets.UTF_8);
-    }
-
     private List<String> validFiles;
     private List<String> syntacticalErrorFiles;
-    private List<String> semanticErrorFiles;
 
     @Before
     public void setup() {
-        validFiles = new ArrayList<>();
-        File dir = new File("test/fixtures/public/");
-        String[] names = dir.list((dir1, name) -> name.endsWith(".jmm"));
-
-        assert names != null;
-        validFiles.addAll(Arrays.asList(names));
-
-        syntacticalErrorFiles = new ArrayList<>();
-        File dirSyn = new File("test/fixtures/public/fail/syntactical/");
-        String[] synNames = dirSyn.list((dir1, name) -> name.endsWith(".jmm"));
-
-        assert synNames != null;
-        for (String synName : synNames)
-            syntacticalErrorFiles.add("/fail/syntactical/" + synName);
-
-        semanticErrorFiles = new ArrayList<>();
-        File dirSem = new File("test/fixtures/public/fail/semantic/");
-        String[] semNames = dirSem.list((dir1, name) -> name.endsWith(".jmm"));
-
-        assert semNames != null;
-        for (String semName : semNames)
-            semanticErrorFiles.add("/fail/semantic/" + semName);
+        validFiles = Utils.getValidFiles();
+        syntacticalErrorFiles = Utils.getSyntacticalErrorFiles();
     }
 
     @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
-        String code = getJmmCode("MonteCarloPi.jmm");
+        String code = Utils.getJmmCode("MonteCarloPi.jmm");
 
         JmmParserResult parserResult = TestUtils.parse(code);
 
@@ -84,12 +38,12 @@ public class ParserTest {
         }
     }
 
-    @Test
+    // call this method to generate the JSON or add @Test
     public void generateJSON() throws IOException {
         System.out.println("Unit Test");
-        System.setOut(new PrintStream(new NullOutputStream()));
+        System.setOut(new PrintStream(new Utils.NullOutputStream()));
         for (String filename : validFiles) {
-            String code = getJmmCode(filename);
+            String code = Utils.getJmmCode(filename);
             String astJson = TestUtils.parse(code).getRootNode().toJson();
             File jmm = new File(filename);
             int i = jmm.getName().lastIndexOf('.');
@@ -100,7 +54,7 @@ public class ParserTest {
             fos.write(astJson.getBytes(StandardCharsets.UTF_8));
             fos.close();
         }
-        System.setOut(realSystemOut);
+        System.setOut(Utils.realSystemOut);
     }
 
     @Test
@@ -108,41 +62,24 @@ public class ParserTest {
         System.out.println("\nTesting Valid Files");
         for (String filename : this.validFiles) {
             System.out.print("Testing: " + filename);
-            String code = getJmmCode(filename);
-            System.setOut(new PrintStream(new NullOutputStream()));
+            String code = Utils.getJmmCode(filename);
+            System.setOut(new PrintStream(new Utils.NullOutputStream()));
             assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
-            System.setOut(realSystemOut);
+            System.setOut(Utils.realSystemOut);
             System.out.print("  - PASSED\n");
         }
 	}
 
-	/*@Test
+	@Test
     public void testSyntacticalErrors() throws IOException {
         System.out.println("\nTesting Syntactical Errors");
         for (String filename : this.syntacticalErrorFiles) {
             System.out.print("Testing: " + filename);
-            String code = TestUtils.getJmmCode(filename);
-            System.setOut(new PrintStream(new NullOutputStream()));
-            try {
-                TestUtils.parse(code).getRootNode().getKind();
-                System.setOut(realSystemOut);
-                fail();
-            } catch (Exception e) {
-                System.setOut(realSystemOut);
-                System.out.print("  - PASSED\n");
-            }
-        }
-    }*/
-
-    @Test
-    public void testSemanticErrors() throws IOException {
-        System.out.println("\nTesting Semantic Errors");
-        for (String filename : this.semanticErrorFiles) {
-            System.out.print("Testing: " + filename);
-            String code = getJmmCode(filename);
-            System.setOut(new PrintStream(new NullOutputStream()));
-            assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
-            System.setOut(realSystemOut);
+            String code = Utils.getJmmCode(filename);
+            System.setOut(new PrintStream(new Utils.NullOutputStream()));
+            JmmParserResult result = TestUtils.parse(code);
+            System.setOut(Utils.realSystemOut);
+            TestUtils.mustFail(result.getReports());
             System.out.print("  - PASSED\n");
         }
     }
