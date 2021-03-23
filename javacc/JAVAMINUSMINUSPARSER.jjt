@@ -136,7 +136,7 @@ void ImportDeclaration() : {Token t;}
 }
 
 // ImportAux -> <DOT> <IDENTIFIER> [ImportAux]
-void ImportAux() : {Token t;}
+void ImportAux() #ImportDeclaration : {Token t;}
 {
     <DOT> t=<IDENTIFIER> {jjtThis.put("value", t.image);} [ImportAux()]
 }
@@ -249,13 +249,13 @@ void RelationalExpression() #void : {Token t;}
 // AdditiveExpression -> MultiplicativeExpression ((<PLUS> | <MINUS>) MultiplicativeExpression)*
 void AdditiveExpression() #void : {Token t;}
 {
-  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() { jjtThis.put("operation", t.image); }  #AdditiveExpression(2))*
+  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() { jjtThis.put("operation", t.image); }  #BinaryOperation(2))*
 }
 
 // MultiplicativeExpression -> NotExpression ((<MULT> | <DIV>) NotExpression)*
 void MultiplicativeExpression() #void : {Token t;}
 {
-  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() { jjtThis.put("operation", t.image); } #MultiplicativeExpression(2))*
+  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() { jjtThis.put("operation", t.image); } #BinaryOperation(2))*
 }
 
 // NotExpression -> (<NOT> NotExpression) | PrimaryExpression

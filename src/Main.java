@@ -1,11 +1,7 @@
-import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmParser;
 import pt.up.fe.comp.jmm.JmmParserResult;
-import pt.up.fe.comp.jmm.report.Report;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.io.StringReader;
 import java.util.Arrays;
 
 public class Main implements JmmParser {
@@ -15,7 +11,7 @@ public class Main implements JmmParser {
 			JAVAMINUSMINUSPARSER parser = new JAVAMINUSMINUSPARSER(new StringReader(jmmCode));
 			SimpleNode root = parser.Program(); // returns reference to root node
             	
-    		root.dump(""); // prints the tree on the screen
+    		// root.dump(""); // prints the tree on the screen
     	
     		return new JmmParserResult(root, parser.reports);
 		} catch(ParseException e) {
