@@ -1,8 +1,12 @@
 package pt.up.fe.comp;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.StringReader;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.List;
 
@@ -30,28 +34,9 @@ public class TestUtils {
 		}
 	}
 
-	public static String getJmmCode(final String filename) throws IOException {
-		File file = new File("test/fixtures/public/" + filename);
-		FileInputStream fis = new FileInputStream(file);
-		byte[] data = new byte[(int) file.length()];
-		fis.read(data);
-		fis.close();
-
-		return new String(data, StandardCharsets.UTF_8);
-	}
-
-	public static void writeJson(final String pathname, final JmmParserResult result) throws IOException {
-		String astJson = result.getRootNode().toJson();
-
-		File json = new File(pathname);
-
-		FileOutputStream fos = new FileOutputStream(json);
-		fos.write(astJson.getBytes(StandardCharsets.UTF_8));
-		fos.close();
-	}
-
 	public static JmmParserResult parse(String code) {
 		try {
+
 			// Get Parser class
 			String parserClassName = PARSER_CONFIG.getProperty("ParserClass");
 
