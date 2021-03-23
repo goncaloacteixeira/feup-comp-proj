@@ -30,6 +30,16 @@ public class ParserTest {
         }
     }
 
+    private static String getJmmCode(final String filename) throws IOException {
+        File file = new File("test/fixtures/public/" + filename);
+        FileInputStream fis = new FileInputStream(file);
+        byte[] data = new byte[(int) file.length()];
+        fis.read(data);
+        fis.close();
+
+        return new String(data, StandardCharsets.UTF_8);
+    }
+
     private List<String> validFiles;
     private List<String> syntacticalErrorFiles;
     private List<String> semanticErrorFiles;
@@ -63,7 +73,7 @@ public class ParserTest {
     @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
-        String code = TestUtils.getJmmCode("/fail/syntactical/BlowUp.jmm");
+        String code = getJmmCode("MonteCarloPi.jmm");
 
         JmmParserResult parserResult = TestUtils.parse(code);
 
@@ -79,7 +89,7 @@ public class ParserTest {
         System.out.println("Unit Test");
         System.setOut(new PrintStream(new NullOutputStream()));
         for (String filename : validFiles) {
-            String code = TestUtils.getJmmCode(filename);
+            String code = getJmmCode(filename);
             String astJson = TestUtils.parse(code).getRootNode().toJson();
             File jmm = new File(filename);
             int i = jmm.getName().lastIndexOf('.');
@@ -98,7 +108,7 @@ public class ParserTest {
         System.out.println("\nTesting Valid Files");
         for (String filename : this.validFiles) {
             System.out.print("Testing: " + filename);
-            String code = TestUtils.getJmmCode(filename);
+            String code = getJmmCode(filename);
             System.setOut(new PrintStream(new NullOutputStream()));
             assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
             System.setOut(realSystemOut);
@@ -129,7 +139,7 @@ public class ParserTest {
         System.out.println("\nTesting Semantic Errors");
         for (String filename : this.semanticErrorFiles) {
             System.out.print("Testing: " + filename);
-            String code = TestUtils.getJmmCode(filename);
+            String code = getJmmCode(filename);
             System.setOut(new PrintStream(new NullOutputStream()));
             assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
             System.setOut(realSystemOut);

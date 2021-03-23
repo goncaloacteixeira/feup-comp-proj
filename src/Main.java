@@ -29,14 +29,4 @@ public class Main implements JmmParser {
             throw new RuntimeException("It's supposed to fail");
         }
     }
-
-	public static String getJmmCode(final File jmmFile) throws IOException {
-		FileInputStream fis = new FileInputStream(jmmFile);
-		byte[] data = new byte[(int) jmmFile.length()];
-		fis.read(data);
-		fis.close();
-
-		return new String(data, StandardCharsets.UTF_8);
-	}
-
 }
