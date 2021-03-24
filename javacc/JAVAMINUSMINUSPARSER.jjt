@@ -273,7 +273,7 @@ void PrimaryExpression() #void : {}
 // PrimaryPrefix -> Literal | <THIS> | <IDENTIFIER> | (<OPENPAR> Expression <CLOSEPAR>) | AllocationExpression
 void PrimaryPrefix() #void : {Token t;}
 {
-  Literal() | <THIS> { jjtThis.put("name", "this"); } #Variable | t=<IDENTIFIER>{ jjtThis.put("name", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
+  Literal() | <THIS> { jjtThis.put("name", "this"); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | t=<IDENTIFIER>{ jjtThis.put("name", t.image); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
 }
 
 // PrimarySuffix -> <DOT> (AllocationExpression | <IDENTIFIER> [MethodCall] | <LENGTH>)
