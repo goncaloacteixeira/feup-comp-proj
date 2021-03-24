@@ -32,7 +32,8 @@ public class AnalysisTest {
 
         assertEquals("Program", parserResult.getRootNode().getKind());
 
-        JmmAnalysis analysis = new MainAnalysis();
-        JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
+        JmmSemanticsResult semanticsResult = new Main().analyse(parserResult);
+
+        System.out.println(semanticsResult.getSymbolTable());
     }
 }

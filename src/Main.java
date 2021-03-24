@@ -1,5 +1,7 @@
+import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParser;
 import pt.up.fe.comp.jmm.JmmParserResult;
+import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 
 import java.io.StringReader;
 import java.util.Arrays;
@@ -17,6 +19,18 @@ public class Main implements JmmParser {
 		} catch(ParseException e) {
 			throw new RuntimeException("Error while parsing", e);
 		}
+	}
+
+	public JmmSemanticsResult analyse(JmmParserResult parserResult) {
+		JmmNode node = parserResult.getRootNode().sanitize();
+
+		JmmSymbolTable table = new JmmSymbolTable();
+
+		System.out.println("VISITOR");
+		JmmPreorderVisitor visitor = new JmmPreorderVisitor(table);
+		System.out.println(visitor.visit(node, ""));
+
+		return new JmmSemanticsResult(node, table, parserResult.getReports());
 	}
 
     public static void main(String[] args) {

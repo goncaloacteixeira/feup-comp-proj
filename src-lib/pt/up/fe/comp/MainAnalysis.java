@@ -46,21 +46,21 @@ public class MainAnalysis implements JmmAnalysis { // }, JmmOptimization, Jasmin
 
         JmmNode node = parserResult.getRootNode().sanitize();
 
-        System.out.println("VISITOR");
+        /*System.out.println("VISITOR");
         ExampleVisitor visitor = new ExampleVisitor();
-        System.out.println(visitor.visit(node, ""));
+        System.out.println(visitor.visit(node, ""));*/
 
-        System.out.println("PREORDER VISITOR");
+        /*System.out.println("PREORDER VISITOR");
         var preOrderVisitor = new ExamplePreorderVisitor();
-        System.out.println(preOrderVisitor.visit(node, ""));
+        System.out.println(preOrderVisitor.visit(node, ""));*/
 
-        System.out.println("POSTORDER VISITOR");
+        /*System.out.println("POSTORDER VISITOR");
         var postOrderVisitor = new ExamplePostorderVisitor();
         var kindCount = new HashMap<String, Integer>();
         postOrderVisitor.visit(node, kindCount);
-        System.out.println("Kinds count: " + kindCount);
+        System.out.println("Kinds count: " + kindCount);*/
 
-        // No Symbol Table being calculated yet
+
         return new JmmSemanticsResult(node, null, parserResult.getReports());
 
     }

@@ -17,12 +17,12 @@ public class ExamplePreorderVisitor extends PreorderJmmVisitor<String, String> {
 
     public ExamplePreorderVisitor() {
         super(ExamplePreorderVisitor::reduce);
-        addVisit("Identifier", this::dealWithIdentifier);
+        addVisit("Variable", this::dealWithIdentifier);
         setDefaultVisit(this::defaultVisit);
     }
 
     public String dealWithIdentifier(JmmNode node, String space) {
-        if (node.get("id").equals("this")) {
+        if (node.get("name").equals("this")) {
             return space + "THIS_ACCESS";
         }
 

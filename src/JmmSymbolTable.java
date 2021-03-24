@@ -34,6 +34,25 @@ public class JmmSymbolTable implements SymbolTable {
         methods.put(name, new JmmMethod(name, returnType));
     }
 
+    public void updateImport(String prefix, String suffix) {
+        for (int i = 0 ; i < imports.size() ; i++) {
+            if (imports.get(i).equals(prefix)) {
+                imports.set(i, imports.get(i) + "." + suffix);
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "JmmSymbolTable{" +
+                "imports=" + imports +
+                ", className='" + className + '\'' +
+                ", superClassName='" + superClassName + '\'' +
+                ", fields=" + fields +
+                ", methods=" + methods +
+                '}';
+    }
+
     @Override
     public List<String> getImports() {
         return imports;

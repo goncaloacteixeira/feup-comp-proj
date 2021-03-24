@@ -136,7 +136,7 @@ void ImportDeclaration() : {Token t;}
 }
 
 // ImportAux -> <DOT> <IDENTIFIER> [ImportAux]
-void ImportAux() #ImportDeclaration : {Token t;}
+void ImportAux() : {Token t;}
 {
     <DOT> t=<IDENTIFIER> {jjtThis.put("value", t.image);} [ImportAux()]
 }
@@ -171,9 +171,9 @@ void MethodDeclaration() #void : {}
 }
 
 // Param -> Type <IDENTIFIER>
-void Param() : {Token t;}
+void Param() : {Token t; String type; }
 {
-  Type() t=<IDENTIFIER> { jjtThis.put("value", t.image); }
+  type=Type() t=<IDENTIFIER> { jjtThis.put("value", t.image); jjtThis.put("type", type); }
 }
 
 // Return -> <RETURN> Expression <SEMICOLON>
@@ -273,7 +273,7 @@ void PrimaryExpression() #void : {}
 // PrimaryPrefix -> Literal | <THIS> | <IDENTIFIER> | (<OPENPAR> Expression <CLOSEPAR>) | AllocationExpression
 void PrimaryPrefix() #void : {Token t;}
 {
-  Literal() | <THIS> #This | t=<IDENTIFIER>{ jjtThis.put("name", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
+  Literal() | <THIS> { jjtThis.put("name", "this"); } #Variable | t=<IDENTIFIER>{ jjtThis.put("name", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
 }
 
 // PrimarySuffix -> <DOT> (AllocationExpression | <IDENTIFIER> [MethodCall] | <LENGTH>)

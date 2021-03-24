@@ -38,4 +38,14 @@ public class JmmMethod {
     public List<Symbol> getLocalVariables() {
         return localVariables;
     }
+
+    @Override
+    public String toString() {
+        return "JmmMethod{" +
+                "name='" + name + '\'' +
+                ", returnType=" + returnType +
+                ", parameters=" + parameters +
+                ", localVariables=" + localVariables +
+                '}';
+    }
 }
