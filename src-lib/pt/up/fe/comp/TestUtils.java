@@ -68,6 +68,12 @@ public class TestUtils {
 
     }
 
+    public static JmmSemanticsResult analyse(String code) {
+        var parseResults = TestUtils.parse(code);
+        noErrors(parseResults.getReports());
+        return analyse(parseResults);
+    }
+
     /**
      * Checks if there are no Error reports. Throws exception if there is at least one Report of type Error.
      */
