@@ -9,8 +9,8 @@ public interface JmmAnalysis {
 
 	/**
 	 * Executes the Semantic Analysis on a JMMParserResult
-	 * @param parserResult a JmmParserResult to be analysed
-	 * @return The Result of the Analysis as a JmmSemanticsResult
+	 * @param parserResult 	a JmmParserResult to be analysed
+	 * @return 				The Result of the Analysis as a JmmSemanticsResult
 	 */
 	JmmSemanticsResult semanticAnalysis(JmmParserResult parserResult);
 		

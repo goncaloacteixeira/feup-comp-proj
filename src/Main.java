@@ -15,6 +15,11 @@ public class Main implements JmmParser {
 		}
 	}
 
+	/**
+	 * Given a String representing Jmm Code, returns the Result of that parsing
+	 * @param jmmCode 	String representing Java minus minus code
+	 * @return 			JmmParserResult
+	 */
 	public JmmParserResult parse(String jmmCode) {
 		
 		try {
@@ -29,6 +34,11 @@ public class Main implements JmmParser {
 		}
 	}
 
+	/**
+	 * Not sure if this stays here
+	 * @param parserResult 	The result of a parsing
+	 * @return 				JmmSemanticsResult
+	 */
 	public JmmSemanticsResult analyse(JmmParserResult parserResult) {
 		JmmNode node = parserResult.getRootNode().sanitize();
 

@@ -23,9 +23,9 @@ public class Utils {
 
     /**
      * Read a file of JMM code and parses it to a String
-     * @param filename Name of the file in the "test/fixtures/public/" folder
-     * @return The String representation of the code read
-     * @throws IOException Error on read()
+     * @param filename          Name of the file in the "test/fixtures/public/" folder
+     * @return                  The String representation of the code read
+     * @throws IOException      Error on read()
      */
     public static String getJmmCode(final String filename) throws IOException {
         File file = new File("test/fixtures/public/" + filename);
@@ -39,7 +39,7 @@ public class Utils {
 
     /**
      * Checks all the available files in the "test/fixtures/public/" directory
-     * @return List of Strings with the names of the available files
+     * @return  List of Strings with the names of the available files
      */
     public static List<String> getValidFiles() {
         File dir = new File("test/fixtures/public/");
@@ -51,7 +51,7 @@ public class Utils {
 
     /**
      * Searches the "test/fixtures/public/fail/syntactical/" directory to find valid Syntactical Error Files
-     * @return List of Strings with file names of Syntactical Error Files
+     * @return  List of Strings with file names of Syntactical Error Files
      */
     public static List<String> getSyntacticalErrorFiles() {
         List<String> syntacticalErrorFiles = new ArrayList<>();
@@ -67,7 +67,7 @@ public class Utils {
 
     /**
      * Searches the "test/fixtures/public/fail/semantic/" directory to find valid Semantic Error Files
-     * @return List of Strings with file names of Semantic Error Files
+     * @return  List of Strings with file names of Semantic Error Files
      */
     public static List<String> getSemanticErrorFiles() {
         List<String> semanticErrorFiles = new ArrayList<>();

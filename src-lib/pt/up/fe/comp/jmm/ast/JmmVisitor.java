@@ -22,25 +22,25 @@ import pt.up.fe.comp.jmm.JmmNode;
  * Each type of Node will have a method associated with it.
  * When a visit occurs, depending on the type of Node, a different method will be executed
  * 
- * @author JBispo
+ * @author      JBispo
  *
- * @param <D> Data type: String
- * @param <R> Return type: String
+ * @param <D>   Data type: String
+ * @param <R>   Return type: String
  */
 public interface JmmVisitor<D, R> {
 
     /**
      * Visits a JmmNode using the visitor methodology
-     * @param jmmNode Node to be visited
-     * @param data Data to use during the visit. e.g. Symbol Table
-     * @return Any kind of data
+     * @param jmmNode   Node to be visited
+     * @param data      Data to use during the visit. e.g. Symbol Table
+     * @return          Any kind of data
      */
     R visit(JmmNode jmmNode, D data);
 
     /**
      * Default visit in case there is no data
-     * @param jmmNode Node to be visited
-     * @return Any kind of data
+     * @param jmmNode   Node to be visited
+     * @return          Any kind of data
      */
     default R visit(JmmNode jmmNode) {
         return visit(jmmNode, null);
@@ -48,8 +48,8 @@ public interface JmmVisitor<D, R> {
 
     /**
      * Depending on the Kind of Node, adds a different method of visiting
-     * @param kind String representing the kind of the Node
-     * @param method method to be used when visiting this kind of node
+     * @param kind      String representing the kind of the Node
+     * @param method    method to be used when visiting this kind of node
      */
     void addVisit(String kind, BiFunction<JmmNode, D, R> method);
 

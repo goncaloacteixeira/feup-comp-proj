@@ -30,7 +30,6 @@ public class ExamplePreorderVisitor extends PreorderJmmVisitor<String, String> {
         if (node.get(identifierAttribute).equals("this")) {
             return space + "THIS_ACCESS";
         }
-
         return defaultVisit(node, space);
     }
 

@@ -40,7 +40,7 @@ public class ParserTest {
 
     /**
      * Call this method to generate the JSON or add @Test
-     * @throws IOException error while writing
+     * @throws IOException  error while writing
      */
     public void generateJSON() throws IOException {
         System.out.println("Unit Test");

@@ -26,9 +26,9 @@ public abstract class AJmmVisitor<D, R> implements JmmVisitor<D, R> {
      * Default visit does nothing, just returns null.
      * Because Visit is BiFunction< JmmNode, D, R >, this method needs to have parameters and a return
      * 
-     * @param node Not usable here
-     * @param data Not usable here
-     * @return always null
+     * @param node      Not usable here
+     * @param data      Not usable here
+     * @return          always null
      */
     private R defaultVisit(JmmNode node, D data) {
         return null;
@@ -54,8 +54,8 @@ public abstract class AJmmVisitor<D, R> implements JmmVisitor<D, R> {
 
     /**
      * 
-     * @param kind the kind of the node (e.g. MethodDeclaration, ClassDeclaration, etc.)
-     * @return the visit method to use, or default if no visit method was found
+     * @param kind  the kind of the node (e.g. MethodDeclaration, ClassDeclaration, etc.)
+     * @return      the visit method to use, or default if no visit method was found
      */
     protected BiFunction<JmmNode, D, R> getVisit(String kind) {
         var visitMethod = visitMap.get(kind);
@@ -71,11 +71,11 @@ public abstract class AJmmVisitor<D, R> implements JmmVisitor<D, R> {
     }
 
     /**
-     * Given a Node, gets the type of visit (BiFunction< JmmNode, D, R >) from its kind and calls it with apply() with the parameters
+     * Given a Node, gets the type of visit ({@code BiFunction<JmmNode, D, R>}) from its kind and calls it with apply() with the parameters
      * The JmmNode must not be null.
-     * @param jmmNode the node to be visited
-     * @param data Information to be passed to the BiFunction
-     * @return Return Data from the BiFunction
+     * @param jmmNode   the node to be visited
+     * @param data      Information to be passed to the BiFunction
+     * @return          Return Data from the BiFunction
      */
     @Override
     public R visit(JmmNode jmmNode, D data) {

@@ -18,6 +18,11 @@ import pt.up.fe.comp.jmm.report.Stage;
 
 public class AnalysisStage implements JmmAnalysis {
 
+    /**
+     * Executes the Semantic Analysis on a JMMParserResult
+     * @param parserResult  a JmmParserResult to be analysed
+     * @return              The Result of the Analysis as a JmmSemanticsResult
+     */
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult parserResult) {
 

@@ -11,8 +11,8 @@ public class ExampleVisitor extends AJmmVisitor<String, String> {
     /**
      * Constructor of a Visitor
      * TODO Dunno what the 2 parameters are for..
-     * @param identifierType Kind of the Node
-     * @param identifierAttribute Name of the attribute
+     * @param identifierType        Kind of the Node
+     * @param identifierAttribute   Name of the attribute
      */
     public ExampleVisitor(String identifierType, String identifierAttribute) {
         this.identifierAttribute = identifierAttribute;
@@ -23,9 +23,9 @@ public class ExampleVisitor extends AJmmVisitor<String, String> {
 
     /**
      * BiFunction< JmmNode, D, R > to be used with this.identifierType
-     * @param node Node that will be analysed
-     * @param space Information passed to the method
-     * @return Information returned from the method
+     * @param node      Node that will be analysed
+     * @param space     Information passed to the method
+     * @return          Information returned from the method
      */
     public String dealWithIdentifier(JmmNode node, String space) {
         if (node.get(identifierAttribute).equals("this")) {
@@ -36,9 +36,9 @@ public class ExampleVisitor extends AJmmVisitor<String, String> {
 
     /**
      * Default BiFunction< JmmNode, D, R > used to visit a Node. Visits every child of that node also
-     * @param node JMMNode to be visited
-     * @param space Inital data to be passed to the method
-     * @return String with the content of the visit
+     * @param node      JMMNode to be visited
+     * @param space     Inital data to be passed to the method
+     * @return          String with the content of the visit
      */
     private String defaultVisit(JmmNode node, String space) {
         String content = space + node.getKind();
