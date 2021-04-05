@@ -59,9 +59,7 @@ public class JmmSymbolTable implements SymbolTable {
     }
 
     @Override
-    public String getClassName() {
-        return className;
-    }
+    public String getClassName() { return className; }
 
     @Override
     public String getSuper() {

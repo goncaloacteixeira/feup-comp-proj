@@ -15,6 +15,13 @@ import pt.up.fe.specs.util.SpecsIo;
 
 public class MainAnalysis implements JmmAnalysis { // }, JmmOptimization, JasminBackend {
 
+    /**
+     * Executes a Analysis on a filename passed on the arguments.
+     * Starts by parsing the file content.
+     * Executes the Semantic Analysis on the parser Result with {@link #semanticAnalysis(JmmParserResult)}
+     *
+     * @param args List of arguments: First argument is the pathname of the input file
+     */
     public static void main(String[] args) {
         System.out.println("Executing with args: " + Arrays.toString(args));
 
@@ -33,6 +40,13 @@ public class MainAnalysis implements JmmAnalysis { // }, JmmOptimization, Jasmin
         analysis.semanticAnalysis(parserResult);
     }
 
+    /**
+     * Checks if the ParserResult is error free and has a Root Node.
+     * TODO Does something with visitors
+     *
+     * @param parserResult a JmmParserResult to be analysed
+     * @return The Result of the Analysis as a JmmSemanticsResult
+     */
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult parserResult) {
 
