@@ -223,8 +223,9 @@ void While() : {}
 
 // Statement -> <OPENCURLY> (Statement)* <CLOSECURLY>
 // Statement -> IfElse
+// Statement -> While
 // Statement -> <IDENTIFIER> [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression <SEMICOLON>
-// Statement -> <OPENCURLY> (Statement)* <CLOSECURLY>
+// Statement -> Expression <SEMICOLON>
 void Statement() #void : {Token t;}
 {
   (<OPENCURLY> (Statement())* <CLOSECURLY>) |
