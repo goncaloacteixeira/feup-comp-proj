@@ -2,7 +2,6 @@
 .gradle/
 /build/
 /generated/
-comp2021-*.jar
 gradle/**
 gradlew
 gradle.bat
@@ -114,7 +113,6 @@ modules.xml
 .mtj.tmp/
 
 # Package Files #
-*.jar
 *.war
 *.nar
 *.ear
