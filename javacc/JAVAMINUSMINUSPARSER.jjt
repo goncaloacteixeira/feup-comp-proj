@@ -26,7 +26,7 @@ JAVACODE
 void error_skipto(int kind, boolean expection) #Error {
   if (expection) {
     ParseException e = generateParseException();  // generate the exception object.
-    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, "Error in while statement, token: " + e.currentToken)); }
+    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, e.currentToken.beginColumn, "Error in while statement, token: " + e.currentToken)); }
   }
   Token t;
   do
@@ -121,7 +121,7 @@ SimpleNode Program(): {}
   try {
     (ImportDeclaration())* ClassDeclaration() <EOF>
   } catch (ParseException e) {
-    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, "Could not parse file")); }
+    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, e.currentToken.beginColumn, "Could not parse file")); }
   }
 
    { return jjtThis; }

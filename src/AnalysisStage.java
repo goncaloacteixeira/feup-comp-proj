@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.ast.examples.ExamplePostorderVisitor;
 import pt.up.fe.comp.jmm.ast.examples.ExamplePreorderVisitor;
 import pt.up.fe.comp.jmm.ast.examples.ExamplePrintVariables;
@@ -42,7 +43,14 @@ public class AnalysisStage implements JmmAnalysis {
 
         // TODO sanitize?
 
-        System.out.println("Dump tree with Visitor where you control tree traversal");
+        JmmSymbolTable table = new JmmSymbolTable();
+
+        System.out.println("Preorder Visitor");
+        JmmPreorderVisitor visitor = new JmmPreorderVisitor(table);
+        System.out.println(visitor.visit(node, ""));
+
+
+        /*System.out.println("Dump tree with Visitor where you control tree traversal");
         ExampleVisitor visitor = new ExampleVisitor("Identifier", "id");
         System.out.println(visitor.visit(node, ""));
 
@@ -60,10 +68,10 @@ public class AnalysisStage implements JmmAnalysis {
         System.out.println(
                 "Print variables name and line, and their corresponding parent with Visitor that automatically performs preorder tree traversal");
         var varPrinter = new ExamplePrintVariables("Variable", "name", "line");
-        varPrinter.visit(node, null);
+        varPrinter.visit(node, null);*/
 
-        // No Symbol Table being calculated yet
-        return new JmmSemanticsResult(parserResult, null, new ArrayList<>());
+
+        return new JmmSemanticsResult(parserResult, table, new ArrayList<>());
 
     }
 

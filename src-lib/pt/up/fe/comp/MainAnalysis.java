@@ -13,7 +13,7 @@ import pt.up.fe.comp.jmm.ast.examples.ExampleVisitor;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.specs.util.SpecsIo;
 
-public class MainAnalysis implements JmmAnalysis { // }, JmmOptimization, JasminBackend {
+public class MainAnalysis implements JmmAnalysis /*, JmmOptimization, JasminBackend */ {
 
     /**
      * Executes a Analysis on a filename passed on the arguments.

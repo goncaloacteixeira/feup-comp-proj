@@ -36,7 +36,6 @@ public class JmmPreorderVisitor extends PreorderJmmVisitor<String, String> {
         return defaultVisit(node, space);
     }
 
-
     private String defaultVisit(JmmNode node, String space) {
         String content = space + node.getKind();
         String attrs = node.getAttributes()
