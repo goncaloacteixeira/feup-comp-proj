@@ -7,6 +7,11 @@ import pt.up.fe.comp.jmm.JmmParserResult;
  */
 public interface JmmAnalysis {
 
+	/**
+	 * Executes the Semantic Analysis on a JMMParserResult
+	 * @param parserResult 	a JmmParserResult to be analysed
+	 * @return 				The Result of the Analysis as a JmmSemanticsResult
+	 */
 	JmmSemanticsResult semanticAnalysis(JmmParserResult parserResult);
 		
 }

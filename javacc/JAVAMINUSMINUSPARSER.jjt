@@ -171,9 +171,9 @@ void MethodDeclaration() #void : {}
 }
 
 // Param -> Type <IDENTIFIER>
-void Param() : {Token t;}
+void Param() : {Token t; String type; }
 {
-  Type() t=<IDENTIFIER> { jjtThis.put("value", t.image); }
+  type=Type() t=<IDENTIFIER> { jjtThis.put("value", t.image); jjtThis.put("type", type); }
 }
 
 // Return -> <RETURN> Expression <SEMICOLON>
@@ -223,8 +223,9 @@ void While() : {}
 
 // Statement -> <OPENCURLY> (Statement)* <CLOSECURLY>
 // Statement -> IfElse
+// Statement -> While
 // Statement -> <IDENTIFIER> [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression <SEMICOLON>
-// Statement -> <OPENCURLY> (Statement)* <CLOSECURLY>
+// Statement -> Expression <SEMICOLON>
 void Statement() #void : {Token t;}
 {
   (<OPENCURLY> (Statement())* <CLOSECURLY>) |
@@ -249,13 +250,13 @@ void RelationalExpression() #void : {Token t;}
 // AdditiveExpression -> MultiplicativeExpression ((<PLUS> | <MINUS>) MultiplicativeExpression)*
 void AdditiveExpression() #void : {Token t;}
 {
-  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() { jjtThis.put("operation", t.image); }  #AdditiveExpression(2))*
+  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() { jjtThis.put("operation", t.image); }  #BinaryOperation(2))*
 }
 
 // MultiplicativeExpression -> NotExpression ((<MULT> | <DIV>) NotExpression)*
 void MultiplicativeExpression() #void : {Token t;}
 {
-  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() { jjtThis.put("operation", t.image); } #MultiplicativeExpression(2))*
+  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() { jjtThis.put("operation", t.image); } #BinaryOperation(2))*
 }
 
 // NotExpression -> (<NOT> NotExpression) | PrimaryExpression
@@ -273,7 +274,7 @@ void PrimaryExpression() #void : {}
 // PrimaryPrefix -> Literal | <THIS> | <IDENTIFIER> | (<OPENPAR> Expression <CLOSEPAR>) | AllocationExpression
 void PrimaryPrefix() #void : {Token t;}
 {
-  Literal() | <THIS> #This | t=<IDENTIFIER>{ jjtThis.put("name", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
+  Literal() | <THIS> { jjtThis.put("name", "this"); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | t=<IDENTIFIER>{ jjtThis.put("name", t.image); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
 }
 
 // PrimarySuffix -> <DOT> (AllocationExpression | <IDENTIFIER> [MethodCall] | <LENGTH>)

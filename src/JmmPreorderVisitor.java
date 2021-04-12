@@ -1,37 +1,41 @@
-package pt.up.fe.comp.jmm.ast.examples;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.specs.util.utilities.StringLines;
 
-/**
- * Counts the occurences of each node kind.
- * 
- * @author JBispo
- *
- */
-public class ExamplePreorderVisitor extends PreorderJmmVisitor<String, String> {
+import java.util.List;
+import java.util.stream.Collectors;
 
-    private final String identifierAttribute;
+public class JmmPreorderVisitor extends PreorderJmmVisitor<String, String> {
+    private final JmmSymbolTable table;
 
-    public ExamplePreorderVisitor(String identifierType, String identifierAttribute) {
-        super(ExamplePreorderVisitor::reduce);
+    public JmmPreorderVisitor(JmmSymbolTable table) {
+        super(JmmPreorderVisitor::reduce);
+        this.table = table;
 
-        this.identifierAttribute = identifierAttribute;
-
-        addVisit(identifierType, this::dealWithIdentifier);
+        addVisit("ImportDeclaration", this::dealWithImport);
+        addVisit("ImportAux", this::dealWithImportAux);
+        addVisit("ClassDeclaration", this::dealClassDeclaration);
         setDefaultVisit(this::defaultVisit);
     }
 
-    public String dealWithIdentifier(JmmNode node, String space) {
-        if (node.get(identifierAttribute).equals("this")) {
-            return space + "THIS_ACCESS";
-        }
+    private String dealWithImport(JmmNode node, String space) {
+        table.addImport(node.get("value"));
         return defaultVisit(node, space);
     }
+
+    private String dealWithImportAux(JmmNode node, String space) {
+        String parent = node.getParent().get("value");
+        table.updateImport(parent, node.get("value"));
+        return defaultVisit(node, space);
+    }
+
+    private String dealClassDeclaration(JmmNode node, String space) {
+        table.setClassName(node.get("name"));
+        table.setSuperClassName(node.get("extends"));
+
+        return defaultVisit(node, space);
+    }
+
 
     private String defaultVisit(JmmNode node, String space) {
         String content = space + node.getKind();
@@ -61,5 +65,4 @@ public class ExamplePreorderVisitor extends PreorderJmmVisitor<String, String> {
 
         return content.toString();
     }
-
 }

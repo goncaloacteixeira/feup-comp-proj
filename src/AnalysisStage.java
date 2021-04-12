@@ -18,6 +18,11 @@ import pt.up.fe.comp.jmm.report.Stage;
 
 public class AnalysisStage implements JmmAnalysis {
 
+    /**
+     * Executes the Semantic Analysis on a JMMParserResult
+     * @param parserResult  a JmmParserResult to be analysed
+     * @return              The Result of the Analysis as a JmmSemanticsResult
+     */
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult parserResult) {
 
@@ -34,6 +39,8 @@ public class AnalysisStage implements JmmAnalysis {
         }
 
         JmmNode node = parserResult.getRootNode();
+
+        // TODO sanitize?
 
         System.out.println("Dump tree with Visitor where you control tree traversal");
         ExampleVisitor visitor = new ExampleVisitor("Identifier", "id");
