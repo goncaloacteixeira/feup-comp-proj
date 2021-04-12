@@ -15,6 +15,10 @@ public class JmmMethod {
         this.returnType = returnType;
     }
 
+    public void addLocalVariable(Symbol variable) {
+        localVariables.add(variable);
+    }
+
     public String getName() {
         return name;
     }
@@ -31,6 +35,10 @@ public class JmmMethod {
         this.returnType = returnType;
     }
 
+    public void addParameter(Symbol param) {
+        this.parameters.add(param);
+    }
+
     public List<Symbol> getParameters() {
         return parameters;
     }
@@ -41,11 +49,20 @@ public class JmmMethod {
 
     @Override
     public String toString() {
-        return "JmmMethod{" +
-                "name='" + name + '\'' +
-                ", returnType=" + returnType +
-                ", parameters=" + parameters +
-                ", localVariables=" + localVariables +
-                '}';
+        StringBuilder builder = new StringBuilder("JmmMethod").append("\n");
+
+        builder.append("Name: ").append(name).append(" | Return: ").append(returnType).append("\n");
+
+        builder.append("Parameters").append("\n");
+        for (Symbol param : this.parameters)
+            builder.append("\t").append(param).append("\n");
+
+        builder.append("Local Variables").append("\n");
+        for (Symbol localVariable : this.localVariables) {
+            builder.append("\t").append(localVariable).append("\n");
+        }
+
+
+        return builder.toString();
     }
 }

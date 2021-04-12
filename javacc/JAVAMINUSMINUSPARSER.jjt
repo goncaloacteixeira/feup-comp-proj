@@ -186,7 +186,7 @@ void Return() : {}
 // MD1 -> <STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (VarDeclaration)* (Statement)* <CLOSECURLY>
 void MD1() #void : {Token t; String returnType; }
 {
-  (returnType=Type() t=<IDENTIFIER> <OPENPAR> [(Param() (<COMMA> Param())*) #MethodArguments]  <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY> { jjtThis.put("name", t.image); jjtThis.put("return", returnType); }) #ClassMethod  |
+  (returnType=Type() t=<IDENTIFIER> <OPENPAR> [(Param() (<COMMA> Param())*)]  <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY> { jjtThis.put("name", t.image); jjtThis.put("return", returnType); }) #ClassMethod  |
   (<STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* <CLOSECURLY>) #MainMethod
 }
 

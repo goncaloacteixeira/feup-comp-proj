@@ -1,18 +1,33 @@
+import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JmmSymbolTable implements SymbolTable {
     private final List<String> imports = new ArrayList<>();
     private String className;
     private String superClassName;
     private final List<Symbol> fields = new ArrayList<>();
-    private final Map<String, JmmMethod> methods = new HashMap<>();
+    private final List<JmmMethod> methods = new ArrayList<>();
+    private JmmMethod currentMethod;
+
+    public static Type getType(JmmNode node, String attribute) {
+        Type type;
+        if (node.get(attribute).equals("int[]"))
+            type = new Type("int", true);
+        else if (node.get(attribute).equals("int"))
+            type = new Type("int", false);
+        else
+            type = new Type(node.get(attribute), false);
+
+        return type;
+    }
+
+    public void addParam(Symbol param) {
+        currentMethod.addParameter(param);
+    }
 
     public void setClassName(String className) {
         this.className = className;
@@ -31,26 +46,30 @@ public class JmmSymbolTable implements SymbolTable {
     }
 
     public void addMethod(String name, Type returnType) {
-        methods.put(name, new JmmMethod(name, returnType));
-    }
-
-    public void updateImport(String prefix, String suffix) {
-        for (int i = 0 ; i < imports.size() ; i++) {
-            if (imports.get(i).equals(prefix)) {
-                imports.set(i, imports.get(i) + "." + suffix);
-            }
-        }
+        currentMethod = new JmmMethod(name, returnType);
+        methods.add(currentMethod);
     }
 
     @Override
     public String toString() {
-        return "JmmSymbolTable{" +
-                "imports=" + imports +
-                ", className='" + className + '\'' +
-                ", superClassName='" + superClassName + '\'' +
-                ", fields=" + fields +
-                ", methods=" + methods +
-                '}';
+        StringBuilder builder = new StringBuilder("SYMBOL TABLE\n");
+        builder.append("Imports").append("\n");
+        for (String importStmt : imports)
+            builder.append("\t").append(importStmt).append("\n");
+
+        builder.append("Class Name: ").append(className).append(" | Extends: ").append(superClassName).append("\n");
+
+        builder.append("--- Local Variables ---").append("\n");
+        for (Symbol field : fields)
+            builder.append("\t").append(field).append("\n");
+
+        builder.append("--- Methods ---").append("\n");
+        for (JmmMethod method : this.methods) {
+            builder.append(method).append("\n");
+            builder.append("---------").append("\n");
+        }
+
+        return builder.toString();
     }
 
     @Override
@@ -73,21 +92,30 @@ public class JmmSymbolTable implements SymbolTable {
 
     @Override
     public List<String> getMethods() {
-        return new ArrayList<>(methods.keySet());
+        List<String> methods = new ArrayList<>();
+        for (JmmMethod method : this.methods) {
+            methods.add(method.getName());
+        }
+
+        return methods;
+    }
+
+    public JmmMethod getCurrentMethod() {
+        return currentMethod;
     }
 
     @Override
     public Type getReturnType(String methodName) {
-        return methods.get(methodName).getReturnType();
+        return null;
     }
 
     @Override
     public List<Symbol> getParameters(String methodName) {
-        return methods.get(methodName).getParameters();
+        return null;
     }
 
     @Override
     public List<Symbol> getLocalVariables(String methodName) {
-        return methods.get(methodName).getLocalVariables();
+        return null;
     }
 }

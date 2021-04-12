@@ -45,7 +45,7 @@ public class AnalysisStage implements JmmAnalysis {
 
         JmmSymbolTable table = new JmmSymbolTable();
 
-        System.out.println("Preorder Visitor");
+        System.out.println("Preorder Visitor - Creating Symbol Table");
         JmmPreorderVisitor visitor = new JmmPreorderVisitor(table);
         System.out.println(visitor.visit(node, ""));
 

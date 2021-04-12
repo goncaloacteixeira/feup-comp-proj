@@ -26,8 +26,8 @@ public class AnalysisTest {
     @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
-        String code = Utils.getJmmCode("MonteCarloPi.jmm");
-
+        String code = Utils.getJmmCode("QuickSort.jmm");
+        // QuickSort.jmm
         JmmParserResult parserResult = TestUtils.parse(code);
 
         assertEquals("Program", parserResult.getRootNode().getKind());

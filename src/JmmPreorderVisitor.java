@@ -1,12 +1,18 @@
 import pt.up.fe.comp.jmm.JmmNode;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.specs.util.utilities.StringLines;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class JmmPreorderVisitor extends PreorderJmmVisitor<String, String> {
     private final JmmSymbolTable table;
+    private String scope;
 
     public JmmPreorderVisitor(JmmSymbolTable table) {
         super(JmmPreorderVisitor::reduce);
@@ -15,12 +21,17 @@ public class JmmPreorderVisitor extends PreorderJmmVisitor<String, String> {
         addVisit("ImportDeclaration", this::dealWithImport);
         addVisit("ImportAux", this::dealWithImportAux);
         addVisit("ClassDeclaration", this::dealClassDeclaration);
+        addVisit("ClassMethod", this::dealMethodDeclaration);
+        addVisit("Param", this::dealParameter);
+
+        addVisit("VarDeclaration", this::dealVarDeclaration);
+
         setDefaultVisit(this::defaultVisit);
     }
 
     private String dealWithImport(JmmNode node, String space) {
         table.addImport(node.get("value"));
-        return defaultVisit(node, space);
+        return space + "IMPORT";
     }
 
     private String dealWithImportAux(JmmNode node, String space) {
@@ -31,11 +42,52 @@ public class JmmPreorderVisitor extends PreorderJmmVisitor<String, String> {
 
     private String dealClassDeclaration(JmmNode node, String space) {
         table.setClassName(node.get("name"));
-        table.setSuperClassName(node.get("extends"));
+        try {
+            table.setSuperClassName(node.get("extends"));
+        } catch (NullPointerException e) {
+            System.out.println("Does not extends");
+        }
+
+        scope = "CLASS";
+
+        return space + "CLASS";
+    }
+
+    private String dealVarDeclaration(JmmNode node, String space) {
+        switch (scope) {
+            case "CLASS":
+                table.addField(new Symbol(JmmSymbolTable.getType(node, "type"), node.get("identifier")));
+                break;
+            case "METHOD":
+                Symbol field = new Symbol(JmmSymbolTable.getType(node, "type"), node.get("identifier"));
+                table.getCurrentMethod().addLocalVariable(field);
+                break;
+            default:
+                break;
+        }
 
         return defaultVisit(node, space);
     }
 
+    private String dealMethodDeclaration(JmmNode node, String space) {
+        scope = "METHOD";
+        table.addMethod(node.get("name"), JmmSymbolTable.getType(node, "return"));
+        return space + "METHOD";
+    }
+
+    private String dealParameter(JmmNode node, String space) {
+        Symbol field = new Symbol(JmmSymbolTable.getType(node, "type"), node.get("value"));
+        table.getCurrentMethod().addParameter(field);
+
+        return defaultVisit(node, space);
+    }
+
+    /**
+     * Prints node information and appends space
+     * @param node Node to be visited
+     * @param space Info passed down from other nodes
+     * @return New info to be returned
+     */
     private String defaultVisit(JmmNode node, String space) {
         String content = space + node.getKind();
         String attrs = node.getAttributes()
