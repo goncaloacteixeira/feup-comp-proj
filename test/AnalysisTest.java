@@ -36,6 +36,7 @@ public class AnalysisTest {
         JmmSemanticsResult semanticsResult = TestUtils.analyse(parserResult);
 
         System.out.println(semanticsResult.getSymbolTable());
+        System.out.println(semanticsResult.getReports());
     }
 
     @Test
