@@ -25,10 +25,6 @@ public class JmmSymbolTable implements SymbolTable {
         return type;
     }
 
-    public void addParam(Symbol param) {
-        currentMethod.addParameter(param);
-    }
-
     public void setClassName(String className) {
         this.className = className;
     }
@@ -44,6 +40,15 @@ public class JmmSymbolTable implements SymbolTable {
     public void addField(Symbol field) {
         fields.add(field);
     }
+
+    public boolean fieldExists(String name) {
+        for (Symbol field : this.fields) {
+            if (field.getName().equals(name))
+                return true;
+        }
+        return false;
+    }
+
 
     public void addMethod(String name, Type returnType) {
         currentMethod = new JmmMethod(name, returnType);
@@ -65,7 +70,7 @@ public class JmmSymbolTable implements SymbolTable {
 
         builder.append("--- Methods ---").append("\n");
         for (JmmMethod method : this.methods) {
-            builder.append(method).append("\n");
+            builder.append(method);
             builder.append("---------").append("\n");
         }
 

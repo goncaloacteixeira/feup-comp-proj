@@ -33,21 +33,4 @@ public class Main implements JmmParser {
 			throw new RuntimeException("Error while parsing", e);
 		}
 	}
-
-	/**
-	 * Not sure if this stays here
-	 * @param parserResult 	The result of a parsing
-	 * @return 				JmmSemanticsResult
-	 */
-	public JmmSemanticsResult analyse(JmmParserResult parserResult) {
-		JmmNode node = parserResult.getRootNode().sanitize();
-
-		JmmSymbolTable table = new JmmSymbolTable();
-
-		System.out.println("VISITOR");
-		JmmPreorderVisitor visitor = new JmmPreorderVisitor(table);
-		System.out.println(visitor.visit(node, ""));
-
-		return new JmmSemanticsResult(node, table, parserResult.getReports());
-	}
 }

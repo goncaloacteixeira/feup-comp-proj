@@ -2,6 +2,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmNode;
@@ -46,8 +47,12 @@ public class AnalysisStage implements JmmAnalysis {
         JmmSymbolTable table = new JmmSymbolTable();
 
         System.out.println("Preorder Visitor - Creating Symbol Table");
-        JmmPreorderVisitor visitor = new JmmPreorderVisitor(table);
-        System.out.println(visitor.visit(node, ""));
+
+        List<Report> reports = new ArrayList<>();
+
+        JmmPreorderVisitor visitor = new JmmPreorderVisitor(table, reports);
+        visitor.visit(node, "");
+        System.out.println(reports);
 
 
         /*
@@ -74,7 +79,7 @@ public class AnalysisStage implements JmmAnalysis {
         varPrinter.visit(node, null);*/
 
 
-        return new JmmSemanticsResult(parserResult, table, new ArrayList<>());
+        return new JmmSemanticsResult(parserResult, table, reports);
 
     }
 

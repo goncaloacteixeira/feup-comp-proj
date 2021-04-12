@@ -39,6 +39,14 @@ public class JmmMethod {
         this.parameters.add(param);
     }
 
+    public boolean fieldExists(String field) {
+        for (Symbol localVariable : this.localVariables) {
+            if (localVariable.getName().equals(field))
+                return true;
+        }
+        return false;
+    }
+
     public List<Symbol> getParameters() {
         return parameters;
     }

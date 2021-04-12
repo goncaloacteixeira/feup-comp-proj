@@ -1,30 +1,33 @@
 import pt.up.fe.comp.jmm.JmmNode;
+import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
+import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.specs.util.utilities.StringLines;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class JmmPreorderVisitor extends PreorderJmmVisitor<String, String> {
     private final JmmSymbolTable table;
     private String scope;
+    private final List<Report> reports;
 
-    public JmmPreorderVisitor(JmmSymbolTable table) {
+    public JmmPreorderVisitor(JmmSymbolTable table, List<Report> reports) {
         super(JmmPreorderVisitor::reduce);
         this.table = table;
+        this.reports = reports;
 
         addVisit("ImportDeclaration", this::dealWithImport);
         addVisit("ImportAux", this::dealWithImportAux);
-        addVisit("ClassDeclaration", this::dealClassDeclaration);
-        addVisit("ClassMethod", this::dealMethodDeclaration);
-        addVisit("Param", this::dealParameter);
-
-        addVisit("VarDeclaration", this::dealVarDeclaration);
+        addVisit("ClassDeclaration", this::dealWithClassDeclaration);
+        addVisit("MainMethod", this::dealWithMainDeclaration);
+        addVisit("ClassMethod", this::dealWithMethodDeclaration);
+        addVisit("Param", this::dealWithParameter);
+        addVisit("VarDeclaration", this::dealWithVarDeclaration);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -43,51 +46,77 @@ public class JmmPreorderVisitor extends PreorderJmmVisitor<String, String> {
         return space + "IMPORT_AUX";
     }
 
-    private String dealClassDeclaration(JmmNode node, String space) {
+    private String dealWithClassDeclaration(JmmNode node, String space) {
         table.setClassName(node.get("name"));
         try {
             table.setSuperClassName(node.get("extends"));
-        } catch (NullPointerException e) {
-            System.out.println("Does not extends");
+        } catch (NullPointerException ignored) {
+
         }
 
         scope = "CLASS";
-
         return space + "CLASS";
     }
 
-    private String dealVarDeclaration(JmmNode node, String space) {
-        switch (scope) {
-            case "CLASS":
-                table.addField(new Symbol(JmmSymbolTable.getType(node, "type"), node.get("identifier")));
-                break;
-            case "METHOD":
-                Symbol field = new Symbol(JmmSymbolTable.getType(node, "type"), node.get("identifier"));
-                table.getCurrentMethod().addLocalVariable(field);
-                break;
-            default:
-                break;
+    private String dealWithVarDeclaration(JmmNode node, String space) {
+        Symbol field = new Symbol(JmmSymbolTable.getType(node, "type"), node.get("identifier"));
+
+        if (scope.equals("CLASS")) {
+            if (table.fieldExists(field.getName())) {
+                this.reports.add(new Report(
+                        ReportType.ERROR, Stage.SEMANTIC,
+                        Integer.parseInt(node.get("line")),
+                        Integer.parseInt(node.get("col")),
+                        "Variable already declared: " + field.getName()));
+                return space + "ERROR";
+            }
+            table.addField(field);
+        } else {
+            if (table.getCurrentMethod().fieldExists(field.getName())) {
+                this.reports.add(new Report(
+                        ReportType.ERROR,
+                        Stage.SEMANTIC,
+                        Integer.parseInt(node.get("line")),
+                        Integer.parseInt(node.get("col")),
+                        "Variable already declared: " + field.getName()));
+                return space + "ERROR";
+            }
+            table.getCurrentMethod().addLocalVariable(field);
         }
 
-        return defaultVisit(node, space);
+        return space + "VARDECLARATION";
     }
 
-    private String dealMethodDeclaration(JmmNode node, String space) {
+    private String dealWithMethodDeclaration(JmmNode node, String space) {
         scope = "METHOD";
         table.addMethod(node.get("name"), JmmSymbolTable.getType(node, "return"));
         return space + "METHOD";
     }
 
-    private String dealParameter(JmmNode node, String space) {
-        Symbol field = new Symbol(JmmSymbolTable.getType(node, "type"), node.get("value"));
-        table.getCurrentMethod().addParameter(field);
+    private String dealWithParameter(JmmNode node, String space) {
+        if (scope.equals("METHOD")) {
+            Symbol field = new Symbol(JmmSymbolTable.getType(node, "type"), node.get("value"));
+            table.getCurrentMethod().addParameter(field);
+        } else if (scope.equals("MAIN")) {
+            Symbol field = new Symbol(new Type("String", true), node.get("value"));
+            table.getCurrentMethod().addParameter(field);
+        }
 
-        return defaultVisit(node, space);
+        return space + "PARAM";
+    }
+
+    private String dealWithMainDeclaration(JmmNode node, String space) {
+        scope = "MAIN";
+
+        table.addMethod("main", new Type("void", false));
+
+        return space + "MAIN";
     }
 
     /**
      * Prints node information and appends space
-     * @param node Node to be visited
+     *
+     * @param node  Node to be visited
      * @param space Info passed down from other nodes
      * @return New info to be returned
      */
