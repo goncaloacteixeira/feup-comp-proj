@@ -41,7 +41,7 @@ public class AnalysisStage implements JmmAnalysis {
 
         JmmNode node = parserResult.getRootNode();
 
-        // TODO sanitize?
+        node = node.sanitize();
 
         JmmSymbolTable table = new JmmSymbolTable();
 
@@ -50,10 +50,13 @@ public class AnalysisStage implements JmmAnalysis {
         System.out.println(visitor.visit(node, ""));
 
 
-        /*System.out.println("Dump tree with Visitor where you control tree traversal");
-        ExampleVisitor visitor = new ExampleVisitor("Identifier", "id");
+        /*
+        System.out.println("Dump tree with Visitor where you control tree traversal");
+        ExampleVisitor visitor2 = new ExampleVisitor("Identifier", "id");
         System.out.println(visitor.visit(node, ""));
+        */
 
+        /*
         System.out.println("Dump tree with Visitor that automatically performs preorder tree traversal");
         var preOrderVisitor = new ExamplePreorderVisitor("Identifier", "id");
         System.out.println(preOrderVisitor.visit(node, ""));

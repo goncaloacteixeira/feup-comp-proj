@@ -35,9 +35,12 @@ public class JmmPreorderVisitor extends PreorderJmmVisitor<String, String> {
     }
 
     private String dealWithImportAux(JmmNode node, String space) {
-        String parent = node.getParent().get("value");
-        table.updateImport(parent, node.get("value"));
-        return defaultVisit(node, space);
+        List<String> imports = table.getImports();
+        String lastImport = imports.get(imports.size() - 1);
+        String newImport = lastImport + '.' + node.get("value");
+        imports.set(imports.size() - 1, newImport);
+
+        return space + "IMPORT_AUX";
     }
 
     private String dealClassDeclaration(JmmNode node, String space) {
