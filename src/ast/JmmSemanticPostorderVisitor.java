@@ -27,11 +27,27 @@ public class JmmSemanticPostorderVisitor extends PostorderJmmVisitor<Void, Void>
 
         addVisit("BinaryOperation", this::dealWithBinaryOperation);
         addVisit("ArrayAccess", this::dealArrayAccess);
+        addVisit("ArrayInit", this::dealArrayInit);
         addVisit("Program", this::dealProgram);
     }
 
     private Void dealArrayAccess(JmmNode node, Void space) {
-        System.out.println(node);
+        JmmNode index = node.getChildren().get(0);
+
+        if ((index.getKind().equals("BinaryOperation") && index.get("operation_result").equals("error")) || !index.getKind().equals("IntegerLiteral")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(index.get("line")), Integer.parseInt(index.get("col")), "Array access index is not an integer: " + index));
+        }
+
+        return null;
+    }
+
+    private Void dealArrayInit(JmmNode node, Void space) {
+        JmmNode size = node.getChildren().get(0);
+
+        if ((size.getKind().equals("BinaryOperation") && size.get("operation_result").equals("error")) || !size.getKind().equals("IntegerLiteral")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(size.get("line")), Integer.parseInt(size.get("col")), "Array init size is not an integer: " + size));
+        }
+
         return null;
     }
 
