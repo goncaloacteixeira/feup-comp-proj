@@ -16,7 +16,7 @@ class SimpleNode implements Node, JmmNode {
   protected Node[] children;
   protected int id;
   protected Object value;
-  protected Calculator parser;
+  protected JAVAMINUSMINUSPARSER parser;
 
   protected HashMap<String, String> attributes = new HashMap<>();
 
@@ -26,13 +26,13 @@ class SimpleNode implements Node, JmmNode {
     id = i;
   }
 
-  public SimpleNode(Calculator p, int i) {
+  public SimpleNode(JAVAMINUSMINUSPARSER p, int i) {
     this(i);
     parser = p;
   }
 
   public String getKind() {
-    return CalculatorTreeConstants.jjtNodeName[id];
+    return JAVAMINUSMINUSPARSERTreeConstants.jjtNodeName[id];
   }
 
   public List<String> getAttributes() {
@@ -109,7 +109,8 @@ class SimpleNode implements Node, JmmNode {
      you need to do. */
 
   public String toString() {
-    return CalculatorTreeConstants.jjtNodeName[id] + " " + this.attributes.toString();
+    if (this.attributes.isEmpty()) return JAVAMINUSMINUSPARSERTreeConstants.jjtNodeName[id];
+    return JAVAMINUSMINUSPARSERTreeConstants.jjtNodeName[id] + " " + this.attributes.toString();
   }
   public String toString(String prefix) { return prefix + toString(); }
 

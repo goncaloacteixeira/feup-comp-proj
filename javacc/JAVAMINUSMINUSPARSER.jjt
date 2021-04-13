@@ -3,26 +3,30 @@ options
     LOOKAHEAD=1;
 }
 
-PARSER_BEGIN(Calculator)
+PARSER_BEGIN(JAVAMINUSMINUSPARSER)
 
-public class Calculator {
+import java.util.ArrayList;
+import java.util.List;
+import pt.up.fe.comp.jmm.report.*;
+
+public class JAVAMINUSMINUSPARSER {
     public int par_count=0;
+    public ArrayList<Report> reports = new ArrayList();
 
     public static void main(String[] args) throws ParseException {
-        Calculator myCalc = new Calculator(System.in);
-        SimpleNode root = myCalc.Program(); // returns reference to root node
+        JAVAMINUSMINUSPARSER parser = new JAVAMINUSMINUSPARSER(System.in);
+        SimpleNode root = parser.Program(); // returns reference to root node
         root.dump("");  // prints the tree on the screen
     }
 }
 
-PARSER_END(Calculator)
+PARSER_END(JAVAMINUSMINUSPARSER)
 
 JAVACODE
 void error_skipto(int kind, boolean expection) #Error {
-  if(expection){
+  if (expection) {
     ParseException e = generateParseException();  // generate the exception object.
-    System.out.println("Error In while Expression");
-    System.out.println(e.getMessage());  // print the error message
+    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, "Error in while statement, token: " + e.currentToken)); }
   }
   Token t;
   do
@@ -30,7 +34,7 @@ void error_skipto(int kind, boolean expection) #Error {
     //if(getToken(1).kind == OPENCURLY) break;
     t = getNextToken();
   }
-  while (t.kind != kind);
+  while (t.kind != kind && t.kind != EOF);
 }
 
 SKIP :
@@ -114,7 +118,13 @@ TOKEN :
 
 SimpleNode Program(): {}
 {
-  (ImportDeclaration())* ClassDeclaration() <EOF> { return jjtThis; }
+  try {
+    (ImportDeclaration())* ClassDeclaration() <EOF>
+  } catch (ParseException e) {
+    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, "Could not parse file")); }
+  }
+
+   { return jjtThis; }
 }
 
 // ImportDeclaration -> <IMPORT> <IDENTIFIER> [ImportAux] <SEMICOLON>
@@ -161,9 +171,9 @@ void MethodDeclaration() #void : {}
 }
 
 // Param -> Type <IDENTIFIER>
-void Param() : {Token t;}
+void Param() : {Token t; String type; }
 {
-  Type() t=<IDENTIFIER> { jjtThis.put("value", t.image); }
+  type=Type() t=<IDENTIFIER> { jjtThis.put("value", t.image); jjtThis.put("type", type); }
 }
 
 // Return -> <RETURN> Expression <SEMICOLON>
@@ -213,8 +223,9 @@ void While() : {}
 
 // Statement -> <OPENCURLY> (Statement)* <CLOSECURLY>
 // Statement -> IfElse
+// Statement -> While
 // Statement -> <IDENTIFIER> [<OPENBRACKET> Expression() <CLOSEBRACKET>] <EQUAL> Expression <SEMICOLON>
-// Statement -> <OPENCURLY> (Statement)* <CLOSECURLY>
+// Statement -> Expression <SEMICOLON>
 void Statement() #void : {Token t;}
 {
   (<OPENCURLY> (Statement())* <CLOSECURLY>) |
@@ -239,13 +250,13 @@ void RelationalExpression() #void : {Token t;}
 // AdditiveExpression -> MultiplicativeExpression ((<PLUS> | <MINUS>) MultiplicativeExpression)*
 void AdditiveExpression() #void : {Token t;}
 {
-  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() { jjtThis.put("operation", t.image); }  #AdditiveExpression(2))*
+  MultiplicativeExpression() ((t=<PLUS> | t=<MINUS>) MultiplicativeExpression() { jjtThis.put("operation", t.image); }  #BinaryOperation(2))*
 }
 
 // MultiplicativeExpression -> NotExpression ((<MULT> | <DIV>) NotExpression)*
 void MultiplicativeExpression() #void : {Token t;}
 {
-  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() { jjtThis.put("operation", t.image); } #MultiplicativeExpression(2))*
+  NotExpression() ((t=<MULT> | t=<DIV>) NotExpression() { jjtThis.put("operation", t.image); } #BinaryOperation(2))*
 }
 
 // NotExpression -> (<NOT> NotExpression) | PrimaryExpression
@@ -263,7 +274,7 @@ void PrimaryExpression() #void : {}
 // PrimaryPrefix -> Literal | <THIS> | <IDENTIFIER> | (<OPENPAR> Expression <CLOSEPAR>) | AllocationExpression
 void PrimaryPrefix() #void : {Token t;}
 {
-  Literal() | <THIS> #This | t=<IDENTIFIER>{ jjtThis.put("name", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
+  Literal() | <THIS> { jjtThis.put("name", "this"); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | t=<IDENTIFIER>{ jjtThis.put("name", t.image); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
 }
 
 // PrimarySuffix -> <DOT> (AllocationExpression | <IDENTIFIER> [MethodCall] | <LENGTH>)

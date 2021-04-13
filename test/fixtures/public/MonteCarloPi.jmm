@@ -1,4 +1,4 @@
-import MathUtils;
+import MathUtils.io.io;
 import ioPlus;
 
 class MonteCarloPi extends idk{
