@@ -47,20 +47,29 @@ public class JmmSemanticPostorderVisitor extends PostorderJmmVisitor<Void, Void>
         if (left.getKind().equals("BinaryOperation") /* access expression, method invocation */) {
             if (left.get("operation_result").equals("error")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member is not Integer: " + left));
+                node.put("operation_result", "error");
             }
         } else {
             if (!left.getKind().equals("IntegerLiteral")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member is not Integer: " + left));
+                node.put("operation_result", "error");
             }
         }
 
         if (right.getKind().equals("BinaryOperation") /* access expression, method invocation */) {
             if (right.get("operation_result").equals("error")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member is not Integer: " + right));
+                node.put("operation_result", "error");
             }
         } else {
             if (!right.getKind().equals("IntegerLiteral")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member is not Integer: " + right));
+                node.put("operation_result", "error");
+            } else {
+                if (node.get("operation").equals("/") && right.get("value").equals("0")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Division by 0: " + right));
+                    node.put("operation_result", "error");
+                }
             }
         }
 
@@ -70,5 +79,4 @@ public class JmmSemanticPostorderVisitor extends PostorderJmmVisitor<Void, Void>
 
         return null;
     }
-
 }
