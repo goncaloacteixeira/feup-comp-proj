@@ -1,3 +1,5 @@
+package ast;
+
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
@@ -9,7 +11,7 @@ public class JmmSymbolTable implements SymbolTable {
     private final List<String> imports = new ArrayList<>();
     private String className;
     private String superClassName;
-    private final List<Symbol> fields = new ArrayList<>();
+    private final Map<Symbol, String> fields = new HashMap<>();
     private final List<JmmMethod> methods = new ArrayList<>();
     private JmmMethod currentMethod;
 
@@ -38,11 +40,11 @@ public class JmmSymbolTable implements SymbolTable {
     }
 
     public void addField(Symbol field) {
-        fields.add(field);
+        fields.put(field, null);
     }
 
     public boolean fieldExists(String name) {
-        for (Symbol field : this.fields) {
+        for (Symbol field : this.fields.keySet()) {
             if (field.getName().equals(name))
                 return true;
         }
@@ -65,7 +67,7 @@ public class JmmSymbolTable implements SymbolTable {
         builder.append("Class Name: ").append(className).append(" | Extends: ").append(superClassName).append("\n");
 
         builder.append("--- Local Variables ---").append("\n");
-        for (Symbol field : fields)
+        for (Symbol field : fields.keySet())
             builder.append("\t").append(field).append("\n");
 
         builder.append("--- Methods ---").append("\n");
@@ -92,7 +94,7 @@ public class JmmSymbolTable implements SymbolTable {
 
     @Override
     public List<Symbol> getFields() {
-        return fields;
+        return new ArrayList<>(this.fields.keySet());
     }
 
     @Override

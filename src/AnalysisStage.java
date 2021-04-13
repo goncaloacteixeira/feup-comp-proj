@@ -4,19 +4,18 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import ast.JmmSemanticPostorderVisitor;
+import ast.JmmSemanticPreorderVisitor;
+import ast.JmmSymbolTable;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
-import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
-import pt.up.fe.comp.jmm.ast.examples.ExamplePostorderVisitor;
-import pt.up.fe.comp.jmm.ast.examples.ExamplePreorderVisitor;
-import pt.up.fe.comp.jmm.ast.examples.ExamplePrintVariables;
-import pt.up.fe.comp.jmm.ast.examples.ExampleVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
+import ast.SymbolTableVisitor;
 
 public class AnalysisStage implements JmmAnalysis {
 
@@ -49,9 +48,16 @@ public class AnalysisStage implements JmmAnalysis {
         List<Report> reports = new ArrayList<>();
 
         System.out.println("Preorder Visitor - Filling Symbol Table");
+        SymbolTableVisitor visitor = new SymbolTableVisitor(table, reports);
+        System.out.println(visitor.visit(node, ""));
 
-        JmmPreorderVisitor visitor = new JmmPreorderVisitor(table, reports);
-        visitor.visit(node, "");
+        /*System.out.println("Preorder Visitor - Semantic Analysis");
+        JmmSemanticPreorderVisitor preorderVisitor = new JmmSemanticPreorderVisitor(table, reports);
+        preorderVisitor.visit(node, "");*/
+
+        System.out.println("Postorder Visitor - Semantic Analysis");
+        JmmSemanticPostorderVisitor postorderVisitor = new JmmSemanticPostorderVisitor(table, reports);
+        postorderVisitor.visit(node, null);
 
         return new JmmSemanticsResult(parserResult, table, reports);
     }

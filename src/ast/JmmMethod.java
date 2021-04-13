@@ -1,14 +1,18 @@
+package ast;
+
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JmmMethod {
     private String name;
     private Type returnType;
     private final List<Symbol> parameters = new ArrayList<>();
-    private final List<Symbol> localVariables = new ArrayList<>();
+    private final Map<Symbol, String> localVariables = new HashMap<>();
 
     public JmmMethod(String name, Type returnType) {
         this.name = name;
@@ -16,7 +20,7 @@ public class JmmMethod {
     }
 
     public void addLocalVariable(Symbol variable) {
-        localVariables.add(variable);
+        localVariables.put(variable, null);
     }
 
     public String getName() {
@@ -40,7 +44,7 @@ public class JmmMethod {
     }
 
     public boolean fieldExists(String field) {
-        for (Symbol localVariable : this.localVariables) {
+        for (Symbol localVariable : this.localVariables.keySet()) {
             if (localVariable.getName().equals(field))
                 return true;
         }
@@ -52,12 +56,12 @@ public class JmmMethod {
     }
 
     public List<Symbol> getLocalVariables() {
-        return localVariables;
+        return new ArrayList<>(this.localVariables.keySet());
     }
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder("JmmMethod").append("\n");
+        StringBuilder builder = new StringBuilder("ast.JmmMethod").append("\n");
 
         builder.append("Name: ").append(name).append(" | Return: ").append(returnType).append("\n");
 
@@ -66,7 +70,7 @@ public class JmmMethod {
             builder.append("\t").append(param).append("\n");
 
         builder.append("Local Variables").append("\n");
-        for (Symbol localVariable : this.localVariables) {
+        for (Symbol localVariable : this.localVariables.keySet()) {
             builder.append("\t").append(localVariable).append("\n");
         }
 

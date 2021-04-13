@@ -1,6 +1,7 @@
 options
 {
     LOOKAHEAD=1;
+    NODE_SCOPE_HOOK=true;
 }
 
 PARSER_BEGIN(JAVAMINUSMINUSPARSER)
@@ -17,6 +18,14 @@ public class JAVAMINUSMINUSPARSER {
         JAVAMINUSMINUSPARSER parser = new JAVAMINUSMINUSPARSER(System.in);
         SimpleNode root = parser.Program(); // returns reference to root node
         root.dump("");  // prints the tree on the screen
+    }
+
+    void jjtreeOpenNodeScope(Node n) {
+            ((SimpleNode)n).put("line", String.valueOf(getToken(1).beginLine));
+            ((SimpleNode)n).put("col", String.valueOf(getToken(1).beginColumn));
+        }
+
+    void jjtreeCloseNodeScope(Node n) {
     }
 }
 
@@ -152,7 +161,7 @@ void ClassDeclaration() : {Token t,t1; SimpleNode n; }
 // VarDeclaration -> Type <IDENTIFIER> <SEMICOLON>
 void VarDeclaration() : {Token t; String type;}
 {
-  type=Type() t=<IDENTIFIER> { jjtThis.put("type", type); jjtThis.put("identifier", t.image); jjtThis.put("line", String.valueOf(token.beginLine)); jjtThis.put("col", String.valueOf(token.beginColumn)); } <SEMICOLON>
+  type=Type() t=<IDENTIFIER> { jjtThis.put("type", type); jjtThis.put("identifier", t.image); } <SEMICOLON>
 }
 
 // Type -> <BOOL> | <INT> <OPENBRACKET><CLOSEBRACKET> | <INT> | <IDENTIFIER>
@@ -274,7 +283,7 @@ void PrimaryExpression() #void : {}
 // PrimaryPrefix -> Literal | <THIS> | <IDENTIFIER> | (<OPENPAR> Expression <CLOSEPAR>) | AllocationExpression
 void PrimaryPrefix() #void : {Token t;}
 {
-  Literal() | <THIS> { jjtThis.put("name", "this"); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | t=<IDENTIFIER>{ jjtThis.put("name", t.image); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
+  Literal() | <THIS> { jjtThis.put("name", "this"); } #Variable | t=<IDENTIFIER>{ jjtThis.put("name", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
 }
 
 // PrimarySuffix -> <DOT> (AllocationExpression | <IDENTIFIER> [MethodCall] | <LENGTH>)
@@ -285,7 +294,7 @@ void PrimarySuffix() #void : {Token t;}
   | (t=<IDENTIFIER>{ jjtThis.put("value", t.image); } [MethodCall()]) #MethodCall
   | <LENGTH> #Length)
   )
-  | <OPENBRACKET> Expression() <CLOSEBRACKET> #ArrayAccess
+  | <OPENBRACKET> Expression() #ArrayAccess <CLOSEBRACKET>
 }
 
 // MethodCall -> <OPENPAR> [Expression (<COMMA> Expression)*] <CLOSEPAR>

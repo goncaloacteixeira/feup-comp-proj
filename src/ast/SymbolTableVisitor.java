@@ -1,5 +1,6 @@
+package ast;
+
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
@@ -11,13 +12,13 @@ import pt.up.fe.specs.util.utilities.StringLines;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class JmmPreorderVisitor extends PreorderJmmVisitor<String, String> {
+public class SymbolTableVisitor extends PreorderJmmVisitor<String, String> {
     private final JmmSymbolTable table;
     private String scope;
     private final List<Report> reports;
 
-    public JmmPreorderVisitor(JmmSymbolTable table, List<Report> reports) {
-        super(JmmPreorderVisitor::reduce);
+    public SymbolTableVisitor(JmmSymbolTable table, List<Report> reports) {
+        super(SymbolTableVisitor::reduce);
         this.table = table;
         this.reports = reports;
 
