@@ -41,12 +41,8 @@ public class JmmSemanticPostorderVisitor extends PostorderJmmVisitor<Void, Void>
     }
 
     private Void dealWithBinaryOperation(JmmNode node, Void space) {
-        System.out.println(node);
-
-        List<JmmNode> children = node.getChildren();
-
-        JmmNode left = children.get(0);
-        JmmNode right = children.get(1);
+        JmmNode left = node.getChildren().get(0);
+        JmmNode right = node.getChildren().get(1);
 
         if (left.getKind().equals("BinaryOperation") /* access expression, method invocation */) {
             if (left.get("operation_result").equals("error")) {
