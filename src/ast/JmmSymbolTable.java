@@ -51,6 +51,13 @@ public class JmmSymbolTable implements SymbolTable {
         return false;
     }
 
+    public Map.Entry<Symbol, String> getField(String name) {
+        for (Map.Entry<Symbol, String> field : this.fields.entrySet()) {
+            if (field.getKey().getName().equals(name))
+                return field;
+        }
+        return null;
+    }
 
     public void addMethod(String name, Type returnType) {
         currentMethod = new JmmMethod(name, returnType);
