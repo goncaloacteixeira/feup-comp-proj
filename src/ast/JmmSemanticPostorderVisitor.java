@@ -1,6 +1,8 @@
 package ast;
 
 import pt.up.fe.comp.jmm.JmmNode;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PostorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -24,11 +26,38 @@ public class JmmSemanticPostorderVisitor extends PostorderJmmVisitor<Void, Void>
         this.table = table;
         this.reports = reports;
 
-
+        addVisit("MethodCall", this::dealMethodCall);
         addVisit("BinaryOperation", this::dealWithBinaryOperation);
         addVisit("ArrayAccess", this::dealArrayAccess);
         addVisit("ArrayInit", this::dealArrayInit);
         addVisit("Program", this::dealProgram);
+    }
+
+    private Void dealMethodCall(JmmNode node, Void space) {
+        JmmMethod method = table.getCurrentMethod();
+
+        System.out.println("method name: " + node.get("value"));
+        List<Symbol> params = method.getParameters();
+        List<JmmNode> childrens = node.getChildren();
+
+        System.out.println("params: " + params);
+
+        System.out.println("CHILDREN: " + childrens);
+
+        if (params == null) {return null;}
+
+        if (params.size() != node.getNumChildren()){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Function call does not match number of params: " + node));
+            return null;
+        }
+
+        for (int i=0; i < params.size(); i++){
+            if (!params.get(i).getType().getName().equals(childrens.get(i).getKind())){
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(childrens.get(i).get("line")), Integer.parseInt(childrens.get(i).get("col")), "Param does not match required type: " + childrens.get(i)));
+            }
+        }
+
+        return null;
     }
 
     private Void dealArrayAccess(JmmNode node, Void space) {

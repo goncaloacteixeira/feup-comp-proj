@@ -91,6 +91,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<String, String> {
     private String dealWithMethodDeclaration(JmmNode node, String space) {
         scope = "METHOD";
         table.addMethod(node.get("name"), JmmSymbolTable.getType(node, "return"));
+
         return space + "METHOD";
     }
 

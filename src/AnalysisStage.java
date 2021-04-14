@@ -51,9 +51,9 @@ public class AnalysisStage implements JmmAnalysis {
         SymbolTableVisitor visitor = new SymbolTableVisitor(table, reports);
         System.out.println(visitor.visit(node, ""));
 
-        /*System.out.println("Preorder Visitor - Semantic Analysis");
+        System.out.println("Preorder Visitor - Semantic Analysis");
         JmmSemanticPreorderVisitor preorderVisitor = new JmmSemanticPreorderVisitor(table, reports);
-        preorderVisitor.visit(node, "");*/
+        preorderVisitor.visit(node, "");
 
         System.out.println("Postorder Visitor - Semantic Analysis");
         JmmSemanticPostorderVisitor postorderVisitor = new JmmSemanticPostorderVisitor(table, reports);

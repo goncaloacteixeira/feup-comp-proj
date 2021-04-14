@@ -1,11 +1,15 @@
 package ast;
 
 import pt.up.fe.comp.jmm.JmmNode;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.specs.util.utilities.StringLines;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
@@ -21,6 +25,8 @@ public class JmmSemanticPreorderVisitor extends PreorderJmmVisitor<String, Boole
 
         addVisit("BinaryOperation", this::dealWithBinaryOperation);
     }
+
+
 
     private boolean dealWithBinaryOperation(JmmNode node, String space) {
         System.out.println("OP: " + node);
@@ -41,7 +47,5 @@ public class JmmSemanticPreorderVisitor extends PreorderJmmVisitor<String, Boole
 
         System.out.println("LEFT: " + children.get(0));
         System.out.println("RIGHT: " + children.get(1));
-
-
     }
 }
