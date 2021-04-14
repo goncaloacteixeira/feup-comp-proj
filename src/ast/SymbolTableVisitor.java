@@ -92,16 +92,24 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<String, String> {
         scope = "METHOD";
         table.addMethod(node.get("name"), JmmSymbolTable.getType(node, "return"));
 
-        return space + "METHOD";
+        node.put("params", "");
+
+        return node.toString();
     }
 
     private String dealWithParameter(JmmNode node, String space) {
         if (scope.equals("METHOD")) {
             Symbol field = new Symbol(JmmSymbolTable.getType(node, "type"), node.get("value"));
             table.getCurrentMethod().addParameter(field);
+
+            String paramType = field.getType().getName() + ((field.getType().isArray()) ? " []" : "");
+            node.getParent().put("params", node.getParent().get("params") + paramType + ",");
         } else if (scope.equals("MAIN")) {
             Symbol field = new Symbol(new Type("String", true), node.get("value"));
             table.getCurrentMethod().addParameter(field);
+
+            String paramType = field.getType().getName() + ((field.getType().isArray()) ? " []" : "");
+            node.getParent().put("params", node.getParent().get("params") + paramType + ",");
         }
 
         return space + "PARAM";
@@ -112,7 +120,9 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<String, String> {
 
         table.addMethod("main", new Type("void", false));
 
-        return space + "MAIN";
+        node.put("params", "");
+
+        return node.toString();
     }
 
     /**

@@ -27,7 +27,9 @@ public class AnalysisTest {
     @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
+
         String code = Utils.getJmmCode("/fail/semantic/badArguments.jmm");
+
         // QuickSort.jmm
         JmmParserResult parserResult = TestUtils.parse(code);
 
