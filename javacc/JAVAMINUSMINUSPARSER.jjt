@@ -321,7 +321,7 @@ void AllocationExpression() #void : {Token t;}
 }
 
 // ArrayInit -> <OPENBRACKET> Expression <CLOSEBRACKET>
-void ArrayInit() : {}
+void ArrayInit() #void : {}
 {
   <OPENBRACKET> Expression() <CLOSEBRACKET>
 }
