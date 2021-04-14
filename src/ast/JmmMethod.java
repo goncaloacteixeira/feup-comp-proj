@@ -9,6 +9,8 @@ public class JmmMethod {
     private String name;
     private Type returnType;
     private final List<Map.Entry<Symbol, String>> parameters = new ArrayList<>();
+
+    // Map from Symbol to Value -> null if the field is not initialized yet
     private final Map<Symbol, String> localVariables = new HashMap<>();
 
     public JmmMethod(String name, Type returnType) {

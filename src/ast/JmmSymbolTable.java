@@ -12,6 +12,7 @@ public class JmmSymbolTable implements SymbolTable {
     private final List<String> imports = new ArrayList<>();
     private String className;
     private String superClassName;
+    // Map from Symbol to Value -> null if the field is not initialized yet
     private final Map<Symbol, String> fields = new HashMap<>();
     private final List<JmmMethod> methods = new ArrayList<>();
     private JmmMethod currentMethod;
