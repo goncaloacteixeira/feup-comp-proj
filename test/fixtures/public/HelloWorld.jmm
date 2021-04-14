@@ -2,9 +2,18 @@ import ioPlus;
 class HelloWorld {
 	public static void main(String[] args) {
 		int a;
+		int[] b;
 
 		a = 1 + 2 * b;
 
 		ioPlus.printHelloWorld();
+	}
+
+	public int[] ok(int a, int[] b, int c) {
+		int d;
+
+		d = 1 + 2;
+
+		return a;
 	}
 }

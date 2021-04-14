@@ -3,20 +3,28 @@ package ast;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JmmMethod {
     private String name;
     private Type returnType;
-    private final List<Symbol> parameters = new ArrayList<>();
+    private final List<Map.Entry<Symbol, String>> parameters = new ArrayList<>();
     private final Map<Symbol, String> localVariables = new HashMap<>();
 
     public JmmMethod(String name, Type returnType) {
         this.name = name;
         this.returnType = returnType;
+    }
+
+
+    public List<Type> getParameterTypes() {
+        List<Type> params = new ArrayList<>();
+
+        for (Map.Entry<Symbol, String> parameter : parameters) {
+            params.add(parameter.getKey().getType());
+        }
+
+        return params;
     }
 
     public void addLocalVariable(Symbol variable) {
@@ -40,7 +48,7 @@ public class JmmMethod {
     }
 
     public void addParameter(Symbol param) {
-        this.parameters.add(param);
+        this.parameters.add(Map.entry(param, "param"));
     }
 
     public boolean fieldExists(String field) {
@@ -51,8 +59,26 @@ public class JmmMethod {
         return false;
     }
 
+    public Map.Entry<Symbol, String> getField(String name) {
+        for (Map.Entry<Symbol, String> field : this.localVariables.entrySet()) {
+            if (field.getKey().getName().equals(name))
+                return field;
+        }
+
+        for (Map.Entry<Symbol, String> param : this.parameters) {
+            if (param.getKey().getName().equals(name))
+                return param;
+        }
+
+        return null;
+    }
+
     public List<Symbol> getParameters() {
-        return parameters;
+        List<Symbol> params = new ArrayList<>();
+        for (Map.Entry<Symbol, String> param : this.parameters) {
+            params.add(param.getKey());
+        }
+        return params;
     }
 
     public List<Symbol> getLocalVariables() {
@@ -66,15 +92,38 @@ public class JmmMethod {
         builder.append("Name: ").append(name).append(" | Return: ").append(returnType).append("\n");
 
         builder.append("Parameters").append("\n");
-        for (Symbol param : this.parameters)
-            builder.append("\t").append(param).append("\n");
+        for (Map.Entry<Symbol, String> param : this.parameters)
+            builder.append("\t").append(param.getKey()).append("\n");
 
         builder.append("Local Variables").append("\n");
         for (Symbol localVariable : this.localVariables.keySet()) {
             builder.append("\t").append(localVariable).append("\n");
         }
 
-
         return builder.toString();
     }
+
+    public static boolean matchParameters(List<Type> types1, List<Type> types2) {
+        for (int i = 0; i < types1.size(); i++) {
+            if (!types1.get(i).equals(types2.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static List<Type> parseParameters(String params) {
+        String[] typesString = params.split(",");
+
+        List<Type> types = new ArrayList<>();
+
+        for (String s : typesString) {
+            String[] aux = s.split(" ");
+            types.add(new Type(aux[0], aux.length == 2));
+        }
+
+        return types;
+    }
+
+
 }

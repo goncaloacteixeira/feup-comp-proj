@@ -1,5 +1,6 @@
 package ast;
 
+import ast.exceptions.NoSuchMethod;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
@@ -49,6 +50,18 @@ public class JmmSymbolTable implements SymbolTable {
                 return true;
         }
         return false;
+    }
+
+    public JmmMethod getMethod(String name, List<Type> params, Type returnType) throws NoSuchMethod {
+        for (JmmMethod method : methods) {
+            if (method.getName().equals(name) && returnType.equals(method.getReturnType()) && params.size() == method.getParameters().size()) {
+                if (JmmMethod.matchParameters(params, method.getParameterTypes())) {
+                    return method;
+                }
+            }
+        }
+
+        throw new NoSuchMethod(name);
     }
 
     public Map.Entry<Symbol, String> getField(String name) {

@@ -1,36 +1,49 @@
 package ast;
 
 import ast.exceptions.DivisionByZero;
+import ast.exceptions.NoSuchMethod;
 import ast.exceptions.UnsupportedOperation;
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.ast.PostorderJmmVisitor;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.Type;
+import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
-import java.util.stream.Collectors;
 
 /**
  * Counts the occurrences of each node kind.
  *
  * @author JBispo
  */
-public class JmmSemanticPostorderVisitor extends PostorderJmmVisitor<Void, Void> {
+public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, String>, Map.Entry<String, String>> {
     private final JmmSymbolTable table;
     private final List<Report> reports;
+    private String scope;
+    private JmmMethod currentMethod;
 
-    public JmmSemanticPostorderVisitor(JmmSymbolTable table, List<Report> reports) {
+    public JmmExpressionAnalyser(JmmSymbolTable table, List<Report> reports) {
         this.table = table;
         this.reports = reports;
+
+        // DATA -> <return type, result (expression eval)>
+
+        // TODO - Fazer os assignments às variáveis neste visitor uma vez que é possivel fazer isso com preorder
 
 
         addVisit("BinaryOperation", this::dealWithBinaryOperation);
         addVisit("IntegerLiteral", this::dealWithPrimitive);
         addVisit("BooleanLiteral", this::dealWithPrimitive);
         addVisit("Variable", this::dealWithVariable);
+
+        // keep track of scopes, TODO - mais scopes, como acessos ou invocação de métodos
+        addVisit("ClassDeclaration", this::dealWithClassDeclaration);
+        addVisit("MainMethod", this::dealWithMainDeclaration);
+        addVisit("ClassMethod", this::dealWithMethodDeclaration);
     }
 
     private Void dealArrayAccess(JmmNode node, Void space) {
@@ -53,41 +66,45 @@ public class JmmSemanticPostorderVisitor extends PostorderJmmVisitor<Void, Void>
         return null;
     }
 
-    private Void dealWithBinaryOperation(JmmNode node, Void space) {
+    private Map.Entry<String, String> dealWithBinaryOperation(JmmNode node, Map.Entry<String, String> data) {
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
 
-        if (!left.get("return_type").equals("int")) {
-            node.put("return_type", "error");
+        Map.Entry<String, String> leftReturn = visit(left);
+        Map.Entry<String, String> rightReturn = visit(right);
+
+        Map.Entry<String, String> dataReturn = Map.entry("int", "null");
+
+        if (!leftReturn.getKey().equals("int")) {
+            dataReturn = Map.entry("error", "null");
             // para não apresentar o mesmo erro mais do que uma vez
-            if (!(left.getAttributes().contains("return_type") && left.get("return_type").equals("error")))
+            if (leftReturn.getKey().equals("error"))
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer"));
         }
-        if (!right.get("return_type").equals("int")) {
-            node.put("return_type", "error");
+        if (!rightReturn.getKey().equals("int")) {
+            dataReturn = Map.entry("error", "null");
             // para não apresentar o mesmo erro mais do que uma vez
-            if (!(right.getAttributes().contains("return_type") && right.get("return_type").equals("error")))
+            if (rightReturn.getKey().equals("error"))
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer"));
         }
 
         // TODO - fazer verificação se for divisão p/ 0
 
-        if (!node.getAttributes().contains("return_type")) {
+        if (dataReturn.getKey().equals("int")) {
             try {
-                String result = expressionEval(left.get("result"), right.get("result"), node.get("operation"));
-                node.put("return_type", "int");
-                node.put("result", result);
+                String result = expressionEval(leftReturn.getValue(), rightReturn.getValue(), node.get("operation"));
+                dataReturn = Map.entry(dataReturn.getKey(), result);
             } catch (DivisionByZero divisionByZero) {
-                node.put("return_type", "error");
+                dataReturn = Map.entry("error", "null");
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Division by Zero"));
             } catch (UnsupportedOperation unsupportedOperation) {
-                node.put("return_type", "error");
+                dataReturn = Map.entry("error", "null");
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Operation not supported"));
             }
         }
 
-        System.out.println(node);
-        return null;
+        System.out.println(node + " result: " + dataReturn.getValue());
+        return dataReturn;
     }
 
 
@@ -110,34 +127,81 @@ public class JmmSemanticPostorderVisitor extends PostorderJmmVisitor<Void, Void>
     }
 
 
-    private Void dealWithPrimitive(JmmNode node, Void space) {
+    private Map.Entry<String, String> dealWithPrimitive(JmmNode node, Map.Entry<String, String> data) {
         String return_type;
+        String result;
 
         switch (node.getKind()) {
             case "IntegerLiteral":
                 return_type = "int";
-                node.put("result", node.get("value"));
+                result = node.get("value");
                 break;
             case "BooleanLiteral":
                 return_type = "boolean";
+                result = node.get("value");
                 break;
             default:
                 return_type = "error";
+                result = "null";
                 break;
         }
 
-        node.put("return_type", return_type);
+        return Map.entry(return_type, result);
+    }
+
+    private Map.Entry<String, String> dealWithVariable(JmmNode node, Map.Entry<String, String> data) {
+        Map.Entry<Symbol, String> field = null;
+
+        if (scope.equals("CLASS")) {
+            field = table.getField(node.get("name"));
+        } else if (scope.equals("METHOD") && currentMethod != null) {
+            field = currentMethod.getField(node.get("name"));
+        }
+
+        // TODO - ver se a variavel foi inicializada
+        // TODO - ver se a variavel se refere a um acesso, ou a um metodo
+
+        if (field == null) {
+            return Map.entry("error", "null");
+        } else {
+            return Map.entry(field.getKey().getType().getName() + (field.getKey().getType().isArray() ? "[]" : ""), "1");
+        }
+    }
+
+
+    private Map.Entry<String, String> dealWithClassDeclaration(JmmNode node, Map.Entry<String, String> data) {
+        scope = "CLASS";
+        return null;
+    }
+
+
+    private Map.Entry<String, String> dealWithMethodDeclaration(JmmNode node, Map.Entry<String, String> data) {
+        scope = "METHOD";
+
+        List<Type> params = JmmMethod.parseParameters(node.get("params"));
+
+        try {
+            currentMethod = table.getMethod(node.get("name"), params, JmmSymbolTable.getType(node, "return"));
+        } catch (NoSuchMethod noSuchMethod) {
+            currentMethod = null;
+            noSuchMethod.printStackTrace();
+        }
 
         return null;
     }
 
-    private Void dealWithVariable(JmmNode node, Void space) {
-        String return_type;
+    private Map.Entry<String, String> dealWithMainDeclaration(JmmNode node, Map.Entry<String, String> data) {
+        scope = "METHOD";
 
-        node.put("return_type", "int");
-        node.put("result", "1");
+        try {
+            currentMethod = table.getMethod("main", Arrays.asList(new Type("String", true)), new Type("void", false));
+        } catch (NoSuchMethod noSuchMethod) {
+            currentMethod = null;
+            noSuchMethod.printStackTrace();
+        }
 
         return null;
-
     }
+
+
 }

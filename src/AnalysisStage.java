@@ -1,12 +1,6 @@
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-
-import ast.JmmSemanticPostorderVisitor;
-import ast.JmmSemanticPreorderVisitor;
+import ast.JmmExpressionAnalyser;
 import ast.JmmSymbolTable;
+import ast.SymbolTableVisitor;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;
@@ -15,7 +9,10 @@ import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
-import ast.SymbolTableVisitor;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class AnalysisStage implements JmmAnalysis {
 
@@ -56,8 +53,8 @@ public class AnalysisStage implements JmmAnalysis {
         preorderVisitor.visit(node, "");*/
 
         System.out.println("Postorder Visitor - Semantic Analysis");
-        JmmSemanticPostorderVisitor postorderVisitor = new JmmSemanticPostorderVisitor(table, reports);
-        postorderVisitor.visit(node, null);
+        JmmExpressionAnalyser expressionsAnalyser = new JmmExpressionAnalyser(table, reports);
+        expressionsAnalyser.visit(node, null);
 
         return new JmmSemanticsResult(parserResult, table, reports);
     }
