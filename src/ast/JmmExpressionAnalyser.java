@@ -1,8 +1,6 @@
 package ast;
 
-import ast.exceptions.DivisionByZero;
-import ast.exceptions.NoSuchMethod;
-import ast.exceptions.UnsupportedOperation;
+import ast.exceptions.*;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
@@ -11,6 +9,7 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -34,16 +33,18 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
 
         // TODO - Fazer os assignments às variáveis neste visitor uma vez que é possivel fazer isso com preorder
 
-
         addVisit("BinaryOperation", this::dealWithBinaryOperation);
         addVisit("IntegerLiteral", this::dealWithPrimitive);
         addVisit("BooleanLiteral", this::dealWithPrimitive);
         addVisit("Variable", this::dealWithVariable);
+        addVisit("Assignment", this::dealWithAssignment);
 
         // keep track of scopes, TODO - mais scopes, como acessos ou invocação de métodos
         addVisit("ClassDeclaration", this::dealWithClassDeclaration);
         addVisit("MainMethod", this::dealWithMainDeclaration);
         addVisit("ClassMethod", this::dealWithMethodDeclaration);
+        addVisit("AccessExpression", this::dealWithAccessExpression);
+        addVisit("MethodCall", this::dealWithMethodCall);
     }
 
     private Void dealArrayAccess(JmmNode node, Void space) {
@@ -88,7 +89,6 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer"));
         }
 
-        // TODO - fazer verificação se for divisão p/ 0
 
         if (dataReturn.getKey().equals("int")) {
             try {
@@ -158,8 +158,15 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
             field = currentMethod.getField(node.get("name"));
         }
 
-        // TODO - ver se a variavel foi inicializada
-        // TODO - ver se a variavel se refere a um acesso, ou a um metodo
+        //TODO - ver se a variavel foi inicializada
+        //LocalVariables dao coco quando temos funções overloaded
+
+        //ver se a variavel se refere a um acesso, ou a um metodo
+        if (field == null && table.getImports().contains(node.get("name"))){
+            return Map.entry("access", "null");
+        }else if (field == null && node.get("name").equals("this")){
+            return Map.entry("method", "null");
+        }
 
         if (field == null) {
             return Map.entry("error", "null");
@@ -182,9 +189,9 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
 
         try {
             currentMethod = table.getMethod(node.get("name"), params, JmmSymbolTable.getType(node, "return"));
-        } catch (NoSuchMethod noSuchMethod) {
+        } catch (Exception e) {
             currentMethod = null;
-            noSuchMethod.printStackTrace();
+            e.printStackTrace();
         }
 
         return null;
@@ -195,13 +202,75 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
 
         try {
             currentMethod = table.getMethod("main", Arrays.asList(new Type("String", true)), new Type("void", false));
-        } catch (NoSuchMethod noSuchMethod) {
+        } catch (Exception e) {
             currentMethod = null;
-            noSuchMethod.printStackTrace();
+            e.printStackTrace();
         }
 
         return null;
     }
 
+    private Map.Entry<String, String> dealWithAccessExpression(JmmNode node, Map.Entry<String, String> space){
+        JmmNode target = node.getChildren().get(0);
+        JmmNode method = node.getChildren().get(1);
+
+        Map.Entry<String, String> targetReturn = visit(target);
+        Map.Entry<String, String> methodReturn = visit(method);
+
+        if (targetReturn.getKey().equals("error")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Unknown target: " + target.get("name")));
+            return null;
+
+        }else if (targetReturn.getKey().equals("method")){
+
+            if (methodReturn != null && methodReturn.getKey().equals("error") && table.getSuper() == null){
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
+            }
+
+        } else if (!targetReturn.getKey().equals("access")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Target cannot be primitive: " + target.get("value")));
+        }
+
+        return null;
+    }
+
+    private Map.Entry<String, String> dealWithMethodCall(JmmNode node, Map.Entry<String, String> space) {
+        List<JmmNode> children = node.getChildren();
+        List<Type> params = getParametersList(children);
+        Type returnType = table.getReturnType(node.get("value"));
+
+        try {
+            table.getMethod(node.get("value"), params, returnType);
+        } catch (NoSuchMethod noSuchMethod) {
+            return Map.entry("error", "noSuchMethod");
+        }
+        return null;
+    }
+
+    public List<Type> getParametersList(List<JmmNode> children){
+        //TODO - visitor para os parametros em vez disto maybe
+        List<Type> params = new ArrayList<>();
+        for(JmmNode child : children){
+            switch (child.getKind()){
+                case "IntegerLiteral":
+                    params.add(new Type("int", false));
+                    break;
+                case "BooleanLiteral":
+                    params.add(new Type("boolean", false));
+                    break;
+                case "Variable":
+                    Map.Entry<String,String> var = visit(child);
+                    params.add(new Type(var.getKey(), Boolean.parseBoolean(var.getValue())));
+                    break;
+                default:
+                    break;
+            }
+        }
+        return params;
+    }
+
+    private Map.Entry<String, String> dealWithAssignment(JmmNode node, Map.Entry<String, String> space) {
+        return null;
+    }
 
 }

@@ -134,11 +134,21 @@ public class JmmSymbolTable implements SymbolTable {
 
     @Override
     public Type getReturnType(String methodName) {
+        for (JmmMethod method : methods){
+            if(method.getName().equals(methodName)){
+                return method.getReturnType();
+            }
+        }
         return null;
     }
 
     @Override
     public List<Symbol> getParameters(String methodName) {
+        for (JmmMethod method : this.methods){
+            if (method.getName().equals(methodName)){
+                return method.getParameters();
+            }
+        }
         return null;
     }
 

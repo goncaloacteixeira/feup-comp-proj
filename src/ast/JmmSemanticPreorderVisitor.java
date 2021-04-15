@@ -24,6 +24,7 @@ public class JmmSemanticPreorderVisitor extends PreorderJmmVisitor<String, Boole
         this.scope = new Stack<>();
 
         addVisit("BinaryOperation", this::dealWithBinaryOperation);
+
     }
 
 

@@ -1,5 +1,6 @@
 package ast;
 
+import ast.exceptions.WrongArgumentType;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
@@ -18,16 +19,15 @@ public class JmmMethod {
         this.returnType = returnType;
     }
 
-
     public List<Type> getParameterTypes() {
         List<Type> params = new ArrayList<>();
 
         for (Map.Entry<Symbol, String> parameter : parameters) {
             params.add(parameter.getKey().getType());
         }
-
         return params;
     }
+
 
     public void addLocalVariable(Symbol variable) {
         localVariables.put(variable, null);
