@@ -36,6 +36,8 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         addVisit("BinaryOperation", this::dealWithBinaryOperation);
         addVisit("IntegerLiteral", this::dealWithPrimitive);
         addVisit("BooleanLiteral", this::dealWithPrimitive);
+        addVisit("ArrayInit", this::dealWithArrayInit);
+        addVisit("ArrayAccess", this::dealWithArrayAccess);
         addVisit("Variable", this::dealWithVariable);
         addVisit("Assignment", this::dealWithAssignment);
 
@@ -48,24 +50,36 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         addVisit("Length", this::dealWithMethodCall);
     }
 
-    private Void dealArrayAccess(JmmNode node, Void space) {
-        JmmNode index = node.getChildren().get(0);
 
-        if ((index.getKind().equals("BinaryOperation") && index.get("operation_result").equals("error")) || !index.getKind().equals("IntegerLiteral")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(index.get("line")), Integer.parseInt(index.get("col")), "Array access index is not an integer: " + index));
+    private Map.Entry<String, String> dealWithArrayAccess(JmmNode node, Map.Entry<String, String> data) {
+        JmmNode index = node.getChildren().get(0);
+        Map.Entry<String, String> indexReturn = visit(index);
+
+        if (!indexReturn.getKey().equals("int")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(index.get("line")), Integer.parseInt(index.get("col")), "Array access index is not an Integer: " + index));
+            return Map.entry("error", "null");
         }
 
-        return null;
+        return Map.entry("index", indexReturn.getValue());
     }
 
-    private Void dealArrayInit(JmmNode node, Void space) {
+    private Map.Entry<String, String> dealWithArrayInit(JmmNode node, Map.Entry<String, String> data) {
         JmmNode size = node.getChildren().get(0);
+        Map.Entry<String, String> sizeReturn = visit(size);
 
-        if ((size.getKind().equals("BinaryOperation") && size.get("operation_result").equals("error")) || !size.getKind().equals("IntegerLiteral")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(size.get("line")), Integer.parseInt(size.get("col")), "Array init size is not an integer: " + size));
+        if (!sizeReturn.getKey().equals("int")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(size.get("line")), Integer.parseInt(size.get("col")), "Array init size is not an Integer: " + size));
+            return Map.entry("error", "null");
         }
 
-        return null;
+        int sizeValue = Integer.parseInt(sizeReturn.getValue());
+        StringBuffer array = new StringBuffer(sizeValue);
+        array.append(sizeReturn.getValue());
+        for (int i = 0; i < sizeValue; i++){
+            array.append(",0");
+        }
+
+        return Map.entry("int []", array.toString());
     }
 
     private Map.Entry<String, String> dealWithBinaryOperation(JmmNode node, Map.Entry<String, String> data) {
@@ -222,28 +236,51 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         Map.Entry<String, String> targetReturn = visit(target);
         Map.Entry<String, String> methodReturn = visit(method);
 
+
         if (targetReturn.getKey().equals("error")){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Unknown target: " + target.get("name")));
-            return null;
-
         }else if (targetReturn.getKey().equals("method")){
-
             if (methodReturn != null && methodReturn.getKey().equals("error") && table.getSuper() == null){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
+            } else {
+                return Map.entry("int", "1");
             }
-
         } else if (targetReturn.getKey().equals("int") || targetReturn.getKey().equals("boolean")){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Target cannot be primitive: " + target));
+        } else if (targetReturn.getKey().equals("int []") && methodReturn.getKey().equals("index")) {
+            String value = getArrayValue(targetReturn.getValue(), Integer.parseInt(methodReturn.getValue()));
+            if (value == null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Array access out of bounds: " + target));
+            } else {
+                return Map.entry("int", value);
+            }
+        } else if (targetReturn.getKey().equals("int []") && methodReturn.getKey().equals("length")) {
+            return Map.entry("int", targetReturn.getValue().split(",",2)[0]);
         }
 
         // TODO - verificar valor do resultado, e tipo de valor (int, boolean, int[])
-        return Map.entry("int", "1");
+        return Map.entry("error", "null");
+    }
+
+    private String getArrayValue(String array, int index) {
+        String[] parts = array.split(",");
+
+        if (Integer.parseInt(parts[0]) <= index) {
+            return null;
+        }
+        return parts[index + 1];
+    }
+
+    private String updateArray(String array, int index, String new_value) {
+        String[] parts = array.split(",");
+        parts[index + 1] = new_value;
+        return String.join(",", parts);
     }
 
     private Map.Entry<String, String> dealWithMethodCall(JmmNode node, Map.Entry<String, String> space) {
         // TODO - verificação do length
         if (node.getKind().equals("Length")) {
-            return Map.entry("int", "1");
+            return Map.entry("length", "null");
         }
 
         List<JmmNode> children = node.getChildren();
@@ -260,7 +297,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         return Map.entry("int", "1");
     }
 
-    public List<Type> getParametersList(List<JmmNode> children){
+    private List<Type> getParametersList(List<JmmNode> children){
         //TODO - visitor para os parametros em vez disto maybe
         List<Type> params = new ArrayList<>();
         for(JmmNode child : children){
@@ -294,5 +331,4 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
 
         return null;
     }
-
 }
