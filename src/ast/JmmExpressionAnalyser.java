@@ -183,7 +183,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
 
         if (field == null && table.getImports().contains(node.get("name"))){
             return Map.entry("access", "null");
-        }else if (field == null && node.get("name").equals("this")){
+        } else if (field == null && node.get("name").equals("this")){
             return Map.entry("method", "null");
         }
 
@@ -239,7 +239,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
 
         if (targetReturn.getKey().equals("error")){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Unknown target: " + target.get("name")));
-        } else if (targetReturn.getValue().equals("null")) {
+        } else if (targetReturn.getValue().equals("null") && !targetReturn.getKey().equals("method")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Uninitialized variable: " + target.get("name")));
         } else if (targetReturn.getKey().equals("method")){
             if (methodReturn.getKey().equals("error") && table.getSuper() == null){
