@@ -1,10 +1,9 @@
 /*  REASON:
-    Variable assignments to literals must have the literal be the variable's type.
+    Call to method of the class being compiled that does not exist.
 */
-import io;
 
 class T {
-    public static void main(String[] a) {
+    public static void main(String[] a) { 
         io.println(10);
     }
 
