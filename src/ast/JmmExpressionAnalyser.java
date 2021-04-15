@@ -45,6 +45,8 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
         addVisit("AccessExpression", this::dealWithAccessExpression);
         addVisit("MethodCall", this::dealWithMethodCall);
         addVisit("Length", this::dealWithMethodCall);
+
+        addVisit("Return", this::dealWithReturn);
     }
 
 
@@ -76,8 +78,8 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
 
-        Map.Entry<String, String> leftReturn = visit(left);
-        Map.Entry<String, String> rightReturn = visit(right);
+        Map.Entry<String, String> leftReturn = visit(left, true);
+        Map.Entry<String, String> rightReturn = visit(right, true);
 
         Map.Entry<String, String> dataReturn = Map.entry("int", "null");
 
@@ -307,6 +309,28 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
             }
         }
 
+        return null;
+    }
+
+    private Map.Entry<String, String> dealWithReturn(JmmNode node, Boolean space) {
+        String returnType = visit(node.getChildren().get(0)).getKey();
+
+        System.out.println(returnType);
+        System.out.println(currentMethod.getReturnType());
+
+        if (returnType.equals("access")) {
+            return null;
+        }
+
+        String[] parts = returnType.split(" ");
+        if (parts.length == 2 && currentMethod.getReturnType().isArray()) {
+            if (!parts[0].equals(currentMethod.getReturnType().getName())) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Return type mismatch"));
+            }
+            return null;
+        }
+
+        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Return type mismatch"));
         return null;
     }
 }
