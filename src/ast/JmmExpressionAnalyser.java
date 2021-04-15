@@ -32,6 +32,11 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
         // DATA -> <return type, result (expression eval)>
 
         addVisit("BinaryOperation", this::dealWithBinaryOperation);
+        addVisit("RelationalExpression", this::dealWithRelationalExpression);
+        addVisit("AndExpression", this::dealWithAndExpression);
+        addVisit("NotExpression", this::dealWithNotExpression);
+        addVisit("IfCondition", this::dealConditionalExpression);
+        addVisit("WhileCondition", this::dealConditionalExpression);
         addVisit("IntegerLiteral", this::dealWithPrimitive);
         addVisit("BooleanLiteral", this::dealWithPrimitive);
         addVisit("ArrayInit", this::dealWithArrayInit);
@@ -70,6 +75,99 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
         }
 
         return Map.entry("int []", "null");
+    }
+
+    private Map.Entry<String, String> dealConditionalExpression(JmmNode node, Boolean data) {
+        JmmNode condition = node.getChildren().get(0);
+        Map.Entry<String, String> conditionReturn = visit(condition, true);
+
+        Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
+
+        if (!conditionReturn.getKey().equals("boolean")) {
+            dataReturn = Map.entry("error", "null");
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(condition.get("line")), Integer.parseInt(condition.get("col")), "Condition not boolean"));
+        }
+
+        return dataReturn;
+    }
+
+    private Map.Entry<String, String> dealWithRelationalExpression(JmmNode node, Boolean data) {
+        JmmNode left = node.getChildren().get(0);
+        JmmNode right = node.getChildren().get(1);
+
+        Map.Entry<String, String> leftReturn = visit(left, true);
+        Map.Entry<String, String> rightReturn = visit(right, true);
+
+        Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
+
+        if (!leftReturn.getKey().equals("int")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer"));
+            }
+        }
+        if (!rightReturn.getKey().equals("int")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer"));
+            }
+        }
+
+        if (dataReturn.getKey().equals("boolean")) {
+            return dataReturn;
+        } else {
+            return Map.entry("error", "null");
+        }
+    }
+
+    private Map.Entry<String, String> dealWithAndExpression(JmmNode node, Boolean data) {
+        JmmNode left = node.getChildren().get(0);
+        JmmNode right = node.getChildren().get(1);
+
+        Map.Entry<String, String> leftReturn = visit(left, true);
+        Map.Entry<String, String> rightReturn = visit(right, true);
+
+        Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
+
+        if (!leftReturn.getKey().equals("boolean")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not boolean"));
+            }
+        }
+        if (!rightReturn.getKey().equals("boolean")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not boolean"));
+            }
+        }
+
+        if (dataReturn.getKey().equals("boolean")) {
+            return dataReturn;
+        } else {
+            return Map.entry("error", "null");
+        }
+    }
+
+    private Map.Entry<String, String> dealWithNotExpression(JmmNode node, Boolean data) {
+        JmmNode bool = node.getChildren().get(0);
+
+        Map.Entry<String, String> boolReturn = visit(bool, true);
+
+        Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
+
+        if (!boolReturn.getKey().equals("boolean")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(bool.get("line")), Integer.parseInt(bool.get("col")), "Not boolean"));
+            }
+        }
+
+        if (dataReturn.getKey().equals("boolean")) {
+            return dataReturn;
+        } else {
+            return Map.entry("error", "null");
+        }
     }
 
     private Map.Entry<String, String> dealWithBinaryOperation(JmmNode node, Boolean data) {
