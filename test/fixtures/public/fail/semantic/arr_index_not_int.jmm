@@ -1,5 +1,13 @@
 /*  REASON:
     Array indices must be integer.
+
+    Assignment[variable=c]
+      Variable[name=a]
+      AccessExpression                  <-
+        BooleanLiteral[value=true]      <-
+        ArrayAccess
+
+    Report in case it finds BooleanLiteral inside a AccessExpression
 */
 
 class T {

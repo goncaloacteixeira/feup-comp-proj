@@ -21,33 +21,16 @@ public class Main implements JmmParser {
 	 * @return 			JmmParserResult
 	 */
 	public JmmParserResult parse(String jmmCode) {
-		
+
 		try {
 			JAVAMINUSMINUSPARSER parser = new JAVAMINUSMINUSPARSER(new StringReader(jmmCode));
 			SimpleNode root = parser.Program(); // returns reference to root node
-            	
-    		// root.dump(""); // prints the tree on the screen
-    	
+
+    		root.dump(""); // prints the tree on the screen
+
     		return new JmmParserResult(root, parser.reports);
 		} catch(ParseException e) {
 			throw new RuntimeException("Error while parsing", e);
 		}
-	}
-
-	/**
-	 * Not sure if this stays here
-	 * @param parserResult 	The result of a parsing
-	 * @return 				JmmSemanticsResult
-	 */
-	public JmmSemanticsResult analyse(JmmParserResult parserResult) {
-		JmmNode node = parserResult.getRootNode().sanitize();
-
-		JmmSymbolTable table = new JmmSymbolTable();
-
-		System.out.println("VISITOR");
-		JmmPreorderVisitor visitor = new JmmPreorderVisitor(table);
-		System.out.println(visitor.visit(node, ""));
-
-		return new JmmSemanticsResult(node, table, parserResult.getReports());
 	}
 }

@@ -1,6 +1,7 @@
 options
 {
     LOOKAHEAD=1;
+    NODE_SCOPE_HOOK=true;
 }
 
 PARSER_BEGIN(JAVAMINUSMINUSPARSER)
@@ -18,6 +19,14 @@ public class JAVAMINUSMINUSPARSER {
         SimpleNode root = parser.Program(); // returns reference to root node
         root.dump("");  // prints the tree on the screen
     }
+
+    void jjtreeOpenNodeScope(Node n) {
+            ((SimpleNode)n).put("line", String.valueOf(getToken(1).beginLine));
+            ((SimpleNode)n).put("col", String.valueOf(getToken(1).beginColumn));
+        }
+
+    void jjtreeCloseNodeScope(Node n) {
+    }
 }
 
 PARSER_END(JAVAMINUSMINUSPARSER)
@@ -26,7 +35,7 @@ JAVACODE
 void error_skipto(int kind, boolean expection) #Error {
   if (expection) {
     ParseException e = generateParseException();  // generate the exception object.
-    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, "Error in while statement, token: " + e.currentToken)); }
+    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, e.currentToken.beginColumn, "Error in while statement, token: " + e.currentToken)); }
   }
   Token t;
   do
@@ -121,7 +130,7 @@ SimpleNode Program(): {}
   try {
     (ImportDeclaration())* ClassDeclaration() <EOF>
   } catch (ParseException e) {
-    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, "Could not parse file")); }
+    { reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, e.currentToken.beginColumn, "Could not parse file")); }
   }
 
    { return jjtThis; }
@@ -184,10 +193,10 @@ void Return() : {}
 
 // MD1 -> Type() <IDENTIFIER> <OPENPAR> [Param (<COMMA> Param)*] <CLOSEPAR> <OPENCURLY> (VarDeclaration)* (Statement)* Return <CLOSECURLY>
 // MD1 -> <STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (VarDeclaration)* (Statement)* <CLOSECURLY>
-void MD1() #void : {Token t; String returnType; }
+void MD1() #void : {Token t; String returnType; Token t1; }
 {
-  (returnType=Type() t=<IDENTIFIER> <OPENPAR> [(Param() (<COMMA> Param())*) #MethodArguments]  <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY> { jjtThis.put("name", t.image); jjtThis.put("return", returnType); }) #ClassMethod  |
-  (<STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> <IDENTIFIER> <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* <CLOSECURLY>) #MainMethod
+  (returnType=Type() t=<IDENTIFIER> <OPENPAR> [(Param() (<COMMA> Param())*)]  <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* Return()<CLOSECURLY> { jjtThis.put("name", t.image); jjtThis.put("return", returnType); }) #ClassMethod  |
+  (<STATIC> <VOID> <MAIN> <OPENPAR> <STRING> <OPENBRACKET> <CLOSEBRACKET> t1=<IDENTIFIER> { jjtThis.put("value", t1.image); } #Param <CLOSEPAR> <OPENCURLY> (LOOKAHEAD(2) VarDeclaration())* (Statement())* <CLOSECURLY>) #MainMethod
 }
 
 // IfElse -> IfStatement ElseStatement
@@ -274,7 +283,7 @@ void PrimaryExpression() #void : {}
 // PrimaryPrefix -> Literal | <THIS> | <IDENTIFIER> | (<OPENPAR> Expression <CLOSEPAR>) | AllocationExpression
 void PrimaryPrefix() #void : {Token t;}
 {
-  Literal() | <THIS> { jjtThis.put("name", "this"); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | t=<IDENTIFIER>{ jjtThis.put("name", t.image); jjtThis.put("line", String.valueOf(token.beginLine)); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
+  Literal() | <THIS> { jjtThis.put("name", "this"); } #Variable | t=<IDENTIFIER>{ jjtThis.put("name", t.image); } #Variable | (<OPENPAR>{par_count++;} Expression() <CLOSEPAR>{par_count--;}) | AllocationExpression()
 }
 
 // PrimarySuffix -> <DOT> (AllocationExpression | <IDENTIFIER> [MethodCall] | <LENGTH>)
@@ -285,7 +294,7 @@ void PrimarySuffix() #void : {Token t;}
   | (t=<IDENTIFIER>{ jjtThis.put("value", t.image); } [MethodCall()]) #MethodCall
   | <LENGTH> #Length)
   )
-  | <OPENBRACKET> Expression() <CLOSEBRACKET> #ArrayAccess
+  | <OPENBRACKET> Expression() #ArrayAccess <CLOSEBRACKET>
 }
 
 // MethodCall -> <OPENPAR> [Expression (<COMMA> Expression)*] <CLOSEPAR>
@@ -308,7 +317,7 @@ void BooleanLiteral() : {Token t;}
 // AllocationExpression -> <NEW> ((<INT> ArrayInit) | (<IDENTIFIER> <OPENPAR> <CLOSEPAR>))
 void AllocationExpression() #void : {Token t;}
 {
-  <NEW> ((<INT> #NewIntArray ArrayInit()) | (t=<IDENTIFIER>{ jjtThis.put("value", t.image); } #NewObject <OPENPAR> <CLOSEPAR>))
+  <NEW> ((<INT> ArrayInit()) | (t=<IDENTIFIER>{ jjtThis.put("value", t.image); } #NewObject <OPENPAR> <CLOSEPAR>))
 }
 
 // ArrayInit -> <OPENBRACKET> Expression <CLOSEBRACKET>
