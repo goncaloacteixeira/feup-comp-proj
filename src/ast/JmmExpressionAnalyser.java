@@ -45,6 +45,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         addVisit("ClassMethod", this::dealWithMethodDeclaration);
         addVisit("AccessExpression", this::dealWithAccessExpression);
         addVisit("MethodCall", this::dealWithMethodCall);
+        addVisit("Length", this::dealWithMethodCall);
     }
 
     private Void dealArrayAccess(JmmNode node, Void space) {
@@ -103,7 +104,6 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
             }
         }
 
-        System.out.println(node + " result: " + dataReturn.getValue());
         return dataReturn;
     }
 
@@ -156,12 +156,17 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
             field = table.getField(node.get("name"));
         } else if (scope.equals("METHOD") && currentMethod != null) {
             field = currentMethod.getField(node.get("name"));
+            if (field == null) {
+                field = table.getField(node.get("name"));
+            }
         }
 
         //TODO - ver se a variavel foi inicializada
         //LocalVariables dao coco quando temos funções overloaded
 
         //ver se a variavel se refere a um acesso, ou a um metodo
+
+
         if (field == null && table.getImports().contains(node.get("name"))){
             return Map.entry("access", "null");
         }else if (field == null && node.get("name").equals("this")){
@@ -171,7 +176,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         if (field == null) {
             return Map.entry("error", "null");
         } else {
-            return Map.entry(field.getKey().getType().getName() + (field.getKey().getType().isArray() ? "[]" : ""), "1");
+            return Map.entry(field.getKey().getType().getName() + (field.getKey().getType().isArray() ? " []" : ""), field.getValue() != null ? field.getValue() : "null");
         }
     }
 
@@ -227,14 +232,20 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
             }
 
-        } else if (!targetReturn.getKey().equals("access")){
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Target cannot be primitive: " + target.get("value")));
+        } else if (targetReturn.getKey().equals("int") || targetReturn.getKey().equals("boolean")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Target cannot be primitive: " + target));
         }
 
-        return null;
+        // TODO - verificar valor do resultado, e tipo de valor (int, boolean, int[])
+        return Map.entry("int", "1");
     }
 
     private Map.Entry<String, String> dealWithMethodCall(JmmNode node, Map.Entry<String, String> space) {
+        // TODO - verificação do length
+        if (node.getKind().equals("Length")) {
+            return Map.entry("int", "1");
+        }
+
         List<JmmNode> children = node.getChildren();
         List<Type> params = getParametersList(children);
         Type returnType = table.getReturnType(node.get("value"));
@@ -244,7 +255,9 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         } catch (NoSuchMethod noSuchMethod) {
             return Map.entry("error", "noSuchMethod");
         }
-        return null;
+
+        // TODO - Fazer este visitor retornar para cima o resultado da chamada
+        return Map.entry("int", "1");
     }
 
     public List<Type> getParametersList(List<JmmNode> children){
@@ -259,8 +272,11 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
                     params.add(new Type("boolean", false));
                     break;
                 case "Variable":
+                case "AccessExpression":
+                case "BinaryOperation":
                     Map.Entry<String,String> var = visit(child);
-                    params.add(new Type(var.getKey(), Boolean.parseBoolean(var.getValue())));
+                    String[] type = var.getKey().split(" ");
+                    params.add(new Type(type[0], type.length == 2));
                     break;
                 default:
                     break;
@@ -270,6 +286,12 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
     }
 
     private Map.Entry<String, String> dealWithAssignment(JmmNode node, Map.Entry<String, String> space) {
+        Map.Entry<String, String> assignment = visit(node.getChildren().get(0));
+
+        if (!currentMethod.updateField(node.get("variable"), assignment.getValue())) {
+            table.updateField(node.get("variable"), assignment.getValue());
+        }
+
         return null;
     }
 

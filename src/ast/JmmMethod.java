@@ -28,6 +28,28 @@ public class JmmMethod {
         return params;
     }
 
+    private void updateField(Symbol symbol, String newValue) {
+        this.localVariables.put(symbol, newValue);
+    }
+
+    public boolean updateField(String name, String newValue) {
+        Symbol field = null;
+
+        for (Symbol localVariable : this.localVariables.keySet()) {
+            if (localVariable.getName().equals(name)) {
+                field = localVariable;
+                break;
+            }
+        }
+
+        if (field != null) {
+            this.updateField(field, newValue);
+            return true;
+        }
+
+        return false;
+    }
+
 
     public void addLocalVariable(Symbol variable) {
         localVariables.put(variable, null);
@@ -98,8 +120,8 @@ public class JmmMethod {
             builder.append("\t").append(param.getKey()).append("\n");
 
         builder.append("Local Variables").append("\n");
-        for (Symbol localVariable : this.localVariables.keySet()) {
-            builder.append("\t").append(localVariable).append("\n");
+        for (Map.Entry<Symbol, String> localVariable : this.localVariables.entrySet()) {
+            builder.append("\t").append(localVariable.getKey()).append(" = ").append(localVariable.getValue()).append("\n");
         }
 
         return builder.toString();

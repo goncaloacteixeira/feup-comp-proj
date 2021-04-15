@@ -65,6 +65,28 @@ public class JmmSymbolTable implements SymbolTable {
         throw new NoSuchMethod(name);
     }
 
+    private void updateField(Symbol symbol, String newValue) {
+        this.fields.put(symbol, newValue);
+    }
+
+    public boolean updateField(String name, String newValue) {
+        Symbol field = null;
+
+        for (Symbol localVariable : this.fields.keySet()) {
+            if (localVariable.getName().equals(name)) {
+                field = localVariable;
+                break;
+            }
+        }
+
+        if (field != null) {
+            this.updateField(field, newValue);
+            return true;
+        }
+
+        return false;
+    }
+
     public Map.Entry<Symbol, String> getField(String name) {
         for (Map.Entry<Symbol, String> field : this.fields.entrySet()) {
             if (field.getKey().getName().equals(name))
@@ -88,8 +110,8 @@ public class JmmSymbolTable implements SymbolTable {
         builder.append("Class Name: ").append(className).append(" | Extends: ").append(superClassName).append("\n");
 
         builder.append("--- Local Variables ---").append("\n");
-        for (Symbol field : fields.keySet())
-            builder.append("\t").append(field).append("\n");
+        for (Map.Entry<Symbol, String> field : fields.entrySet())
+            builder.append("\t").append(field.getKey()).append(" = ").append(field.getValue()).append("\n");
 
         builder.append("--- Methods ---").append("\n");
         for (JmmMethod method : this.methods) {
