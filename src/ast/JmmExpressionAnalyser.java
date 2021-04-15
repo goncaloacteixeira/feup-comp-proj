@@ -85,7 +85,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
 
         if (!conditionReturn.getKey().equals("boolean")) {
             dataReturn = Map.entry("error", "null");
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(condition.get("line")), Integer.parseInt(condition.get("col")), "Condition not boolean"));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(condition.get("line")), Integer.parseInt(condition.get("col")), "Conditional expression not boolean"));
         }
 
         return dataReturn;
@@ -159,7 +159,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
         if (!boolReturn.getKey().equals("boolean")) {
             dataReturn = Map.entry("error", "null");
             if (data != null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(bool.get("line")), Integer.parseInt(bool.get("col")), "Not boolean"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(bool.get("line")), Integer.parseInt(bool.get("col")), "Operator '!' cannot be applied to " + boolReturn.getKey().replace(" ","")));
             }
         }
 
