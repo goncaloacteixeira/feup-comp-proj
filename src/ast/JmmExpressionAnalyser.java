@@ -50,6 +50,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
         addVisit("AccessExpression", this::dealWithAccessExpression);
         addVisit("MethodCall", this::dealWithMethodCall);
         addVisit("Length", this::dealWithMethodCall);
+        addVisit("NewObject", this::dealWithNewObject);
 
         addVisit("Return", this::dealWithReturn);
     }
@@ -102,16 +103,29 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
 
         Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
 
+        if (!leftReturn.getValue().equals("true") && left.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not initialized: " + left));
+            }
+        }
+        if (!rightReturn.getValue().equals("true") && right.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not initialized: " + right));
+            }
+        }
+
         if (!leftReturn.getKey().equals("int")) {
             dataReturn = Map.entry("error", "null");
             if (data != null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer: " + left));
             }
         }
         if (!rightReturn.getKey().equals("int")) {
             dataReturn = Map.entry("error", "null");
             if (data != null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer: " + right));
             }
         }
 
@@ -131,16 +145,29 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
 
         Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
 
+        if (!leftReturn.getValue().equals("true") && left.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not initialized: " + left));
+            }
+        }
+        if (!rightReturn.getValue().equals("true") && right.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not initialized: " + right));
+            }
+        }
+
         if (!leftReturn.getKey().equals("boolean")) {
             dataReturn = Map.entry("error", "null");
             if (data != null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not boolean"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not boolean: " + left));
             }
         }
         if (!rightReturn.getKey().equals("boolean")) {
             dataReturn = Map.entry("error", "null");
             if (data != null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not boolean"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not boolean: " + right));
             }
         }
 
@@ -157,6 +184,13 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
         Map.Entry<String, String> boolReturn = visit(bool, true);
 
         Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
+
+        if (!boolReturn.getValue().equals("true") && bool.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(bool.get("line")), Integer.parseInt(bool.get("col")), "Member not initialized: " + bool));
+            }
+        }
 
         if (!boolReturn.getKey().equals("boolean")) {
             dataReturn = Map.entry("error", "null");
@@ -181,16 +215,29 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
 
         Map.Entry<String, String> dataReturn = Map.entry("int", "null");
 
+        if (!leftReturn.getValue().equals("true") && left.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not initialized: " + left));
+            }
+        }
+        if (!rightReturn.getValue().equals("true") && right.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not initialized: " + right));
+            }
+        }
+
         if (!leftReturn.getKey().equals("int")) {
             dataReturn = Map.entry("error", "null");
             if (data != null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer: " + left));
             }
         }
         if (!rightReturn.getKey().equals("int")) {
             dataReturn = Map.entry("error", "null");
             if (data != null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer: " + right));
             }
         }
 
@@ -217,7 +264,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
                 break;
         }
 
-        return Map.entry(return_type, "null");
+        return Map.entry(return_type, "true");
     }
 
     private Map.Entry<String, String> dealWithVariable(JmmNode node, Boolean data) {
@@ -287,13 +334,48 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
         Map.Entry<String, String> targetReturn = visit(target, true);
         Map.Entry<String, String> methodReturn = visit(method, true);
 
-
         if (targetReturn.getKey().equals("error")) {
+            if (requested != null || !node.getParent().getKind().equals("Assignment"))
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Invalid Access"));
+            return Map.entry("error", "null");
+        }
+
+        if (methodReturn.getKey().equals("error")) {
+            if (targetReturn.getKey().equals("access")) {
+                return Map.entry("access", "null");
+            } else {
+                if (requested != null || !node.getParent().getKind().equals("Assignment"))
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method"));
+                return Map.entry("error", "null");
+            }
+        }
+
+        else if (targetReturn.getKey().equals("method") || targetReturn.getKey().equals(table.getClassName())) {
+            return Map.entry(methodReturn.getValue(), "null");
+        } else if (targetReturn.getKey().equals("access")) {
+            return Map.entry("access", "null");
+        } else if (targetReturn.getKey().equals("int") || targetReturn.getKey().equals("boolean")) {
+            if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Target cannot be primitive"));
+            return Map.entry("error", "null");
+        } else if (targetReturn.getKey().equals("int []")) {
+            if (methodReturn.getKey().equals("length")) {
+                return Map.entry("int", "length");
+            }
+            if (methodReturn.getKey().equals("index")) {
+                return Map.entry("int", "index");
+            }
+        } else if (target.get("name").equals(table.getClassName())) {
+            return Map.entry(methodReturn.getValue(), "index");
+        } else if (table.getImports().contains(target.get("name"))) {
+            return Map.entry("access", "null");
+        }
+
+        /*if (targetReturn.getKey().equals("error")) {
             if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Unknown target: " + target.get("name")));
         } else if (targetReturn.getValue().equals("null") && !targetReturn.getKey().equals("method")) {
             if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Uninitialized variable: " + target.get("name")));
         } else if (targetReturn.getKey().equals("method")) {
-            if (methodReturn.getKey().equals("error") && table.getSuper() == null) {
+            if (methodReturn.getKey().equals("error") && table.getSuper() == null ) {
                 if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
             } else {
                 return Map.entry(methodReturn.getValue(), "null");
@@ -304,10 +386,15 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
             return Map.entry("int", "null");
         } else if (targetReturn.getKey().equals("int []") && methodReturn.getKey().equals("length")) {
             return Map.entry("int", "length");
-        }
+        } else if (targetReturn.getKey().equals(table.getClassName()) && methodReturn.getKey().equals("error")) {
+            if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
+        } else if (table.getImports().contains(targetReturn.getKey()) && methodReturn.getKey().equals("error")) {
+            if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
+        } else if (!targetReturn.getKey().equals("error") && methodReturn.getKey().equals("method")) {
+            return Map.entry(methodReturn.getValue(), "null");
+        }*/
 
-
-        return Map.entry("access", "null");
+        return Map.entry("error", "null");
     }
 
     private Map.Entry<String, String> dealWithMethodCall(JmmNode node, Boolean space) {
@@ -322,7 +409,11 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
         try {
             table.getMethod(node.get("value"), params, returnType);
         } catch (NoSuchMethod noSuchMethod) {
-            return Map.entry("error", "noSuchMethod");
+            if (this.table.getSuper() == null) {
+                return Map.entry("error", "noSuchMethod");
+            } else {
+                return Map.entry("method", "access");
+            }
         }
 
         return Map.entry("method", returnType.getName() + (returnType.isArray() ? " []" : ""));
@@ -360,6 +451,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
             Map.Entry<String, String> assignment = visit(node.getChildren().get(0), true);
 
             if (assignment.getKey().equals("error")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Undeclared Variable: " + node.getChildren().get(0)));
                 return null;
             }
 
@@ -387,7 +479,9 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
                 return null;
             }
 
-            variable.setValue(true);
+            if (!currentMethod.initializeField(variable.getKey())) {
+                table.initializeField(variable.getKey());
+            }
 
         } else {
             Map.Entry<Symbol, Boolean> array;
@@ -403,7 +497,9 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
             if (!array.getKey().getType().equals(variable.getKey().getType())) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Mismatched types: " + variable.getKey().getType() + " and " + array.getKey().getType()));
             } else {
-                variable.setValue(true);
+                if (!currentMethod.initializeField(variable.getKey())) {
+                    table.initializeField(variable.getKey());
+                }
             }
         }
 
@@ -412,9 +508,6 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
 
     private Map.Entry<String, String> dealWithReturn(JmmNode node, Boolean space) {
         String returnType = visit(node.getChildren().get(0), true).getKey();
-
-        System.out.println(returnType);
-        System.out.println(currentMethod.getReturnType());
 
         if (returnType.equals("access")) {
             return null;
@@ -426,9 +519,19 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Return type mismatch"));
             }
             return null;
+        } else if (parts.length == 1 && !currentMethod.getReturnType().isArray()) {
+            if (!parts[0].equals(currentMethod.getReturnType().getName())) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Return type mismatch"));
+            }
+            return null;
+        } else {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Return type mismatch"));
         }
 
-        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Return type mismatch"));
         return null;
+    }
+
+    private Map.Entry<String, String> dealWithNewObject(JmmNode node, Boolean data) {
+        return Map.entry(node.get("value"), "object");
     }
 }

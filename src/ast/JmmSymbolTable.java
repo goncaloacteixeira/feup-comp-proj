@@ -73,6 +73,14 @@ public class JmmSymbolTable implements SymbolTable {
         return null;
     }
 
+    public boolean initializeField(Symbol symbol) {
+        if (this.fields.containsKey(symbol)) {
+            this.fields.put(symbol, true);
+            return true;
+        }
+        return false;
+    }
+
     public void addMethod(String name, Type returnType) {
         currentMethod = new JmmMethod(name, returnType);
         methods.add(currentMethod);

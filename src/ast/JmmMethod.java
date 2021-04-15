@@ -74,6 +74,14 @@ public class JmmMethod {
         return null;
     }
 
+    public boolean initializeField(Symbol symbol) {
+        if (this.localVariables.containsKey(symbol)) {
+            this.localVariables.put(symbol, true);
+            return true;
+        }
+        return false;
+    }
+
     public List<Symbol> getParameters() {
         List<Symbol> params = new ArrayList<>();
         for (Map.Entry<Symbol, String> param : this.parameters) {

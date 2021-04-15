@@ -28,7 +28,7 @@ public class AnalysisTest {
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
 
-        String code = Utils.getJmmCode("HelloWorld.jmm");
+        String code = Utils.getJmmCode("LazySort.jmm");
 
         // QuickSort.jmm
         JmmParserResult parserResult = TestUtils.parse(code);
@@ -48,7 +48,10 @@ public class AnalysisTest {
             System.out.print("Testing: " + filename);
             String code = Utils.getJmmCode(filename);
             System.setOut(new PrintStream(new Utils.NullOutputStream()));
-            assertEquals("Program", TestUtils.analyse(code).getRootNode().getKind());
+
+            JmmSemanticsResult result = TestUtils.analyse(code);
+            TestUtils.noErrors(result.getReports());
+
             System.setOut(Utils.realSystemOut);
             System.out.print("  - PASSED\n");
         }

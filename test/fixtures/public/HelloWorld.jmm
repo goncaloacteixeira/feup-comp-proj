@@ -1,33 +1,6 @@
 import ioPlus;
 class HelloWorld {
-	int nice;
-
 	public static void main(String[] args) {
-		int a;
-		int c;
-		int[] b;
-		int[] d;
-		int j;
-
-		d = new int[10];
-		b = new int[10];
-
-		j = 1 + 2;
-
-		c = 5;
-		nice = 10;
-		a = 1 + 2 + nice;
-
-		c = ioPlus.printHelloWorld();
-
-		this.ok(a, b, 1);
-	}
-
-	public int[] ok(int a, int[] b, int c) {
-		int d;
-
-		d = 1 + 2;
-
-		return this.ok(a, b, c);
+		ioPlus.printHelloWorld();
 	}
 }
