@@ -115,6 +115,8 @@ public class JmmMethod {
     }
 
     public static List<Type> parseParameters(String params) {
+        if (params.equals("")) return new ArrayList<>();
+
         String[] typesString = params.split(",");
 
         List<Type> types = new ArrayList<>();
@@ -126,6 +128,4 @@ public class JmmMethod {
 
         return types;
     }
-
-
 }
