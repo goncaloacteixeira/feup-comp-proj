@@ -250,7 +250,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         } else if (targetReturn.getKey().equals("int []") && methodReturn.getKey().equals("index")) {
             String value = getArrayValue(targetReturn.getValue(), Integer.parseInt(methodReturn.getValue()));
             if (value == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Array access out of bounds: " + target));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Array index out of bounds: " + target));
             } else {
                 return Map.entry("int", value);
             }
@@ -273,6 +273,11 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
 
     private String updateArray(String array, int index, String new_value) {
         String[] parts = array.split(",");
+
+        if (Integer.parseInt(parts[0]) <= index) {
+            return null;
+        }
+
         parts[index + 1] = new_value;
         return String.join(",", parts);
     }
@@ -323,10 +328,32 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
     }
 
     private Map.Entry<String, String> dealWithAssignment(JmmNode node, Map.Entry<String, String> space) {
-        Map.Entry<String, String> assignment = visit(node.getChildren().get(0));
+        List<JmmNode> children = node.getChildren();
 
-        if (!currentMethod.updateField(node.get("variable"), assignment.getValue())) {
-            table.updateField(node.get("variable"), assignment.getValue());
+        if (children.size() == 1) {
+            Map.Entry<String, String> assignment = visit(node.getChildren().get(0));
+
+            if (!currentMethod.updateField(node.get("variable"), assignment.getValue())) {
+                table.updateField(node.get("variable"), assignment.getValue());
+            }
+        } else {
+            Map.Entry<String, String> index = visit(node.getChildren().get(0));
+            Map.Entry<String, String> value = visit(node.getChildren().get(1));
+
+            Map.Entry<Symbol, String> array;
+            if ((array = currentMethod.getField(node.get("variable"))) == null) {
+                array = table.getField(node.get("variable"));
+            }
+
+            String updated_array = this.updateArray(array.getValue(), Integer.parseInt(index.getValue()), value.getValue());
+            if (updated_array == null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Array index out of bounds: " + node.get("variable") + "[" + index.getValue() + "]"));
+                return null;
+            }
+
+            if (!currentMethod.updateField(node.get("variable"), updated_array)) {
+                table.updateField(node.get("variable"), updated_array);
+            }
         }
 
         return null;
