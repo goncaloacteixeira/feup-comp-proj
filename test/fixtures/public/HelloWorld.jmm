@@ -28,6 +28,6 @@ class HelloWorld {
 
 		d = 1 + 2;
 
-		return a;
+		return this.ok(a, b, c);
 	}
 }
