@@ -6,12 +6,19 @@ class HelloWorld {
 		int a;
 		int c;
 		int[] b;
+		int[] d;
+		int j;
+
+		d = new int[10];
+		b = new int[10];
+
+		j = 1 + 2;
 
 		c = 5;
 		nice = 10;
 		a = 1 + 2 + nice;
 
-		ioPlus.printHelloWorld();
+		c = ioPlus.printHelloWorld();
 
 		this.ok(a, b, 1);
 	}
