@@ -1,6 +1,9 @@
 import java.util.ArrayList;
 import java.util.List;
 
+import ast.JmmSymbolTable;
+import ast.OllirVisitor;
+import ast.SymbolTableVisitor;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
@@ -28,13 +31,15 @@ public class OptimizationStage implements JmmOptimization {
 
         JmmNode node = semanticsResult.getRootNode();
 
-        // Convert the AST to a String containing the equivalent OLLIR code
-        String ollirCode = ""; // Convert node ...
-
         // More reports from this stage
-        List<Report> reports = new ArrayList<>();
+        OllirVisitor visitor = new OllirVisitor((JmmSymbolTable) semanticsResult.getSymbolTable(), semanticsResult.getReports());
+        // Convert the AST to a String containing the equivalent OLLIR code
+        System.out.println("Preorder Visitor - OLLIR Generator");
+        String ollirCode = visitor.visit(node, null); // Convert node ...
 
-        return new OllirResult(semanticsResult, ollirCode, reports);
+        System.out.println(ollirCode);
+
+        return new OllirResult(semanticsResult, ollirCode, semanticsResult.getReports());
     }
 
     @Override
