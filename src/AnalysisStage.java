@@ -40,8 +40,6 @@ public class AnalysisStage implements JmmAnalysis {
 
         JmmNode node = parserResult.getRootNode();
 
-        node = node.sanitize();
-
         JmmSymbolTable table = new JmmSymbolTable();
         List<Report> reports = new ArrayList<>();
 

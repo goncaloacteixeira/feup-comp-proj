@@ -370,30 +370,6 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
             return Map.entry("access", "null");
         }
 
-        /*if (targetReturn.getKey().equals("error")) {
-            if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Unknown target: " + target.get("name")));
-        } else if (targetReturn.getValue().equals("null") && !targetReturn.getKey().equals("method")) {
-            if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Uninitialized variable: " + target.get("name")));
-        } else if (targetReturn.getKey().equals("method")) {
-            if (methodReturn.getKey().equals("error") && table.getSuper() == null ) {
-                if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
-            } else {
-                return Map.entry(methodReturn.getValue(), "null");
-            }
-        } else if (targetReturn.getKey().equals("int") || targetReturn.getKey().equals("boolean")) {
-            if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Target cannot be primitive: " + target));
-        } else if (targetReturn.getKey().equals("int []") && methodReturn.getKey().equals("index")) {
-            return Map.entry("int", "null");
-        } else if (targetReturn.getKey().equals("int []") && methodReturn.getKey().equals("length")) {
-            return Map.entry("int", "length");
-        } else if (targetReturn.getKey().equals(table.getClassName()) && methodReturn.getKey().equals("error")) {
-            if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
-        } else if (table.getImports().contains(targetReturn.getKey()) && methodReturn.getKey().equals("error")) {
-            if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
-        } else if (!targetReturn.getKey().equals("error") && methodReturn.getKey().equals("method")) {
-            return Map.entry(methodReturn.getValue(), "null");
-        }*/
-
         return Map.entry("error", "null");
     }
 

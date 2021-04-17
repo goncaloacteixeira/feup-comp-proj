@@ -1,11 +1,21 @@
 import ioPlus;
+
 class HelloWorld {
-	public static void main(String[] args) {
-		int a;
-		int b;
+    public static void main(String[] args) {
+        int a;
+        int b;
 
-		a = 1 + 2;
 
-		ioPlus.printHelloWorld();
-	}
+        ioPlus.printHelloWorld();
+    }
+
+    public int sum(int[] A) {
+        int sum;
+
+        sum = 1 + 2 + 3;
+
+        return sum;
+    }
+
+
 }
