@@ -37,6 +37,10 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
         addVisit("Variable", this::dealWithVariable);
         addVisit("Return", this::dealWithReturn);
 
+        addVisit("RelationalExpression", this::dealWithBinaryOperation);
+        addVisit("AndExpression", this::dealWithAndExpression);
+        addVisit("NotExpression", this::dealWithNotExpression);
+
         setDefaultVisit(this::defaultVisit);
     }
 
@@ -155,7 +159,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
                 type = new Type("int", false);
                 break;
             case "BooleanLiteral":
-                value = node.get("value") + ".bool";
+                value = (node.get("value").equals("true") ? "1" : "0") + ".bool";
                 type = new Type("boolean", false);
                 break;
             default:
@@ -169,7 +173,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
 
             String name = currentMethod.isParameter(variable);
 
-            return String.format("%s := %s %s;", OllirTemplates.variable(variable, name), OllirTemplates.type(type), value);
+            return String.format("%s :=%s %s;", OllirTemplates.variable(variable, name), OllirTemplates.type(type), value);
         } else {
             return value;
         }
@@ -188,67 +192,78 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
         String leftReturn;
         String rightReturn;
 
-        if (variable != null) {
-            // BO and BO
-            if (left.getKind().equals("BinaryOperation") && right.getKind().equals("BinaryOperation")) {
-                leftReturn = visit(left, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
-                rightReturn = visit(right, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
+        // BO and BO
+        if (left.getKind().equals("BinaryOperation") && right.getKind().equals("BinaryOperation")) {
+            leftReturn = visit(left, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
+            rightReturn = visit(right, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
 
-                String aux1 = leftReturn.split(" := ")[0];
-                String aux2 = rightReturn.split(" := ")[0];
+            String[] parts = leftReturn.split("\n");
+            String aux1 = parts[parts.length - 1].split(" :=")[0];
 
-                StringBuilder ollir = new StringBuilder();
-                ollir.append(leftReturn).append("\n");
-                ollir.append(rightReturn).append("\n");
+            String[] parts2 = rightReturn.split("\n");
+            String aux2 = parts2[parts.length - 1].split(" :=")[0];
 
-                ollir.append(String.format("%s := %s;", OllirTemplates.variable(variable, name),
-                        OllirTemplates.binary(new Type("int", false), aux1, new Type("int", false), aux2, node.get("operation"))));
+            StringBuilder ollir = new StringBuilder();
+            ollir.append(leftReturn).append("\n");
+            ollir.append(rightReturn).append("\n");
 
-                return ollir.toString();
+            if (variable == null) {
+                ollir.append(String.format("%s %s.i32 %s", aux1, node.get("operation"), aux2));
+            } else {
+                ollir.append(String.format("%s :=.i32 %s;", OllirTemplates.variable(variable, name),
+                        OllirTemplates.binary(aux1, aux2, node.get("operation"), new Type("int", false))));
             }
-            // BO and Simple
-            else if (left.getKind().equals("BinaryOperation") && !right.getKind().equals("BinaryOperation")) {
-                leftReturn = visit(left, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
-                rightReturn = visit(right, Arrays.asList("BINARY_OP"));
+            return ollir.toString();
+        }
+        // BO and Simple
+        else if (left.getKind().equals("BinaryOperation") && !right.getKind().equals("BinaryOperation")) {
+            leftReturn = visit(left, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
+            rightReturn = visit(right, Arrays.asList("BINARY_OP"));
 
-                String aux1 = leftReturn.split(" := ")[0];
+            String[] parts = leftReturn.split("\n");
+            String aux1 = parts[parts.length - 1].split(" :=")[0];
 
-                StringBuilder ollir = new StringBuilder();
-                ollir.append(leftReturn).append("\n");
+            StringBuilder ollir = new StringBuilder();
+            ollir.append(leftReturn).append("\n");
 
-                ollir.append(String.format("%s := %s;", OllirTemplates.variable(variable, name),
-                        OllirTemplates.binary(new Type("int", false), aux1, new Type("int", false), rightReturn, node.get("operation"))));
-
-                return ollir.toString();
+            if (variable == null) {
+                ollir.append(String.format("%s %s.i32 %s", aux1, node.get("operation"), rightReturn));
+            } else {
+                ollir.append(String.format("%s :=.i32 %s;", OllirTemplates.variable(variable, name),
+                        OllirTemplates.binary(aux1, rightReturn, node.get("operation"), new Type("int", false))));
             }
-            // Simple and BO
-            else if (!left.getKind().equals("BinaryOperation") && right.getKind().equals("BinaryOperation")) {
-                leftReturn = visit(left, Arrays.asList("BINARY_OP"));
-                rightReturn = visit(right, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
+            return ollir.toString();
+        }
+        // Simple and BO
+        else if (!left.getKind().equals("BinaryOperation") && right.getKind().equals("BinaryOperation")) {
+            leftReturn = visit(left, Arrays.asList("BINARY_OP"));
+            rightReturn = visit(right, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
 
-                String aux1 = rightReturn.split(" := ")[0];
+            String[] parts = rightReturn.split("\n");
+            String aux1 = parts[parts.length - 1].split(" :=")[0];
 
-                StringBuilder ollir = new StringBuilder();
-                ollir.append(rightReturn).append("\n");
+            StringBuilder ollir = new StringBuilder();
+            ollir.append(rightReturn).append("\n");
 
-                ollir.append(String.format("%s := %s;", OllirTemplates.variable(variable, name),
-                        OllirTemplates.binary(new Type("int", false), leftReturn, new Type("int", false), aux1, node.get("operation"))));
-
-                return ollir.toString();
+            if (variable == null) {
+                ollir.append(String.format("%s %s.i32 %s", leftReturn, node.get("operation"), aux1));
+            } else {
+                ollir.append(String.format("%s :=.i32 %s;", OllirTemplates.variable(variable, name),
+                        OllirTemplates.binary(leftReturn, aux1, node.get("operation"), new Type("int", false))));
             }
-            // Simple and Simple
-            else {
-                leftReturn = visit(left, Arrays.asList("BINARY_OP"));
-                rightReturn = visit(right, Arrays.asList("BINARY_OP"));
-
-                return String.format("%s := %s;", OllirTemplates.variable(variable, name),
-                        OllirTemplates.binary(new Type("int", false), leftReturn, new Type("int", false), rightReturn, node.get("operation")));
-            }
-        } else {
+            return ollir.toString();
+        }
+        // Simple and Simple
+        else {
             leftReturn = visit(left, Arrays.asList("BINARY_OP"));
             rightReturn = visit(right, Arrays.asList("BINARY_OP"));
 
-            return String.format("%s %s %s", leftReturn, node.get("operation"), rightReturn);
+            if (variable == null) {
+                return String.format("%s %s.i32 %s", leftReturn, node.get("operation"), rightReturn);
+            } else {
+                return String.format("%s :=.i32 %s;", OllirTemplates.variable(variable, name),
+                        OllirTemplates.binary(leftReturn, rightReturn, node.get("operation"), new Type("int", false)));
+            }
         }
     }
 
@@ -283,6 +298,103 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
 
         return OllirTemplates.ret(currentMethod.getReturnType(), exp);
     }
+
+    private String dealWithAndExpression(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return "DEFAULT_VISIT";
+        visited.add(node);
+
+        Symbol variable = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
+        String name = (variable != null) ? currentMethod.isParameter(variable) : null;
+
+        JmmNode left = node.getChildren().get(0);
+        JmmNode right = node.getChildren().get(1);
+
+        String leftReturn;
+        String rightReturn;
+
+        // BO and BO
+        if (left.getKind().equals("RelationalExpression") && right.getKind().equals("RelationalExpression")) {
+            leftReturn = visit(left, Arrays.asList("ASSIGNMENT", new Symbol(new Type("boolean", false), String.format("temporary%d", temp_sequence++))));
+            rightReturn = visit(right, Arrays.asList("ASSIGNMENT", new Symbol(new Type("boolean", false), String.format("temporary%d", temp_sequence++))));
+
+            String[] parts = leftReturn.split("\n");
+            String aux1 = parts[parts.length - 1].split(" :=")[0];
+
+            String[] parts2 = leftReturn.split("\n");
+            String aux2 = parts2[parts.length - 1].split(" :=")[0];
+
+            StringBuilder ollir = new StringBuilder();
+            ollir.append(leftReturn).append("\n");
+            ollir.append(rightReturn).append("\n");
+
+            if (variable == null) {
+                ollir.append(String.format("%s %s.bool %s", aux1, node.get("operation"), aux2));
+            } else {
+                ollir.append(String.format("%s :=.bool %s;", OllirTemplates.variable(variable, name),
+                        OllirTemplates.binary(aux1, aux2, node.get("operation"), new Type("boolean", false))));
+            }
+
+            return ollir.toString();
+        }
+        // BO and Simple
+        else if (left.getKind().equals("RelationalExpression") && !right.getKind().equals("RelationalExpression")) {
+            leftReturn = visit(left, Arrays.asList("ASSIGNMENT", new Symbol(new Type("boolean", false), String.format("temporary%d", temp_sequence++))));
+            rightReturn = visit(right, Arrays.asList("BINARY_OP"));
+
+            String[] parts = leftReturn.split("\n");
+            String aux1 = parts[parts.length - 1].split(" :=")[0];
+
+            StringBuilder ollir = new StringBuilder();
+            ollir.append(leftReturn).append("\n");
+
+            if (variable == null) {
+                ollir.append(String.format("%s %s.bool %s", aux1, node.get("operation"), rightReturn));
+            } else {
+                ollir.append(String.format("%s :=.bool %s;", OllirTemplates.variable(variable, name),
+                        OllirTemplates.binary(aux1, rightReturn, node.get("operation"), new Type("boolean", false))));
+            }
+            return ollir.toString();
+        }
+        // Simple and BO
+        else if (!left.getKind().equals("RelationalExpression") && right.getKind().equals("RelationalExpression")) {
+            leftReturn = visit(left, Arrays.asList("BINARY_OP"));
+            rightReturn = visit(right, Arrays.asList("ASSIGNMENT", new Symbol(new Type("boolean", false), String.format("temporary%d", temp_sequence++))));
+
+            String[] parts = rightReturn.split("\n");
+            String aux1 = parts[parts.length - 1].split(" :=")[0];
+
+            StringBuilder ollir = new StringBuilder();
+            ollir.append(rightReturn).append("\n");
+
+            if (variable == null) {
+                ollir.append(String.format("%s %s.bool %s", leftReturn, node.get("operation"), aux1));
+            } else {
+                ollir.append(String.format("%s :=.bool %s;", OllirTemplates.variable(variable, name),
+                        OllirTemplates.binary(leftReturn, aux1, node.get("operation"), new Type("boolean", false))));
+            }
+            return ollir.toString();
+        }
+        // Simple and Simple
+        else {
+            leftReturn = visit(left, Arrays.asList("BINARY_OP"));
+            rightReturn = visit(right, Arrays.asList("BINARY_OP"));
+
+            if (variable == null) {
+                return String.format("%s %s.bool %s", leftReturn, node.get("operation"), rightReturn);
+            } else {
+                return String.format("%s :=.bool %s;", OllirTemplates.variable(variable, name),
+                        OllirTemplates.binary(leftReturn, rightReturn, node.get("operation"), new Type("boolean", false)));
+            }
+        }
+    }
+
+    private String dealWithNotExpression(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return "DEFAULT_VISIT";
+        visited.add(node);
+
+        return "DEFAULT_VISIT";
+    }
+
 
     private String defaultVisit(JmmNode node, List<Object> data) {
         return "DEFAULT_VISIT";

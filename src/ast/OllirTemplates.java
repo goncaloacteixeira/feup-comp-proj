@@ -68,8 +68,8 @@ public class OllirTemplates {
         return ollir.toString();
     }
 
-    public static String binary(Type leftType, String leftSide, Type rightType, String rightSide, String operation) {
-        return String.format("%s %s %s %s %s", OllirTemplates.type(leftType), leftSide, operation, OllirTemplates.type(rightType), rightSide);
+    public static String binary(String leftSide, String rightSide, String operation, Type operationType) {
+        return String.format("%s %s%s %s", leftSide, operation, OllirTemplates.type(operationType), rightSide);
     }
 
     public static String variable(Symbol variable) {
