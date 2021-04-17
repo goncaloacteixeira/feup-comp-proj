@@ -3,6 +3,7 @@ package ast;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class OllirTemplates {
@@ -47,7 +48,7 @@ public class OllirTemplates {
         return "\n}";
     }
 
-    public static String getType(Type type) {
+    public static String type(Type type) {
         StringBuilder ollir = new StringBuilder();
 
         if (type.isArray()) ollir.append(".array");
@@ -65,15 +66,27 @@ public class OllirTemplates {
         }
 
         return ollir.toString();
+    }
 
+    public static String binary(Type leftType, String leftSide, Type rightType, String rightSide, String operation) {
+        return String.format("%s %s %s %s %s", OllirTemplates.type(leftType), leftSide, operation, OllirTemplates.type(rightType), rightSide);
     }
 
     public static String variable(Symbol variable) {
         StringBuilder param = new StringBuilder(variable.getName());
 
-        param.append(getType(variable.getType()));
+        param.append(type(variable.getType()));
 
         return param.toString();
+    }
+
+    public static String variable(Symbol variable, String parameter) {
+        if (parameter == null) return variable(variable);
+        return parameter + "." + variable(variable);
+    }
+
+    public static String ret(Type ret, String exp) {
+        return String.format("ret%s %s;", OllirTemplates.type(ret), exp);
     }
 
 

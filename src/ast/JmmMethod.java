@@ -138,6 +138,15 @@ public class JmmMethod {
         return types;
     }
 
+    public String isParameter(Symbol symbol) {
+        for (int i = 1; i < this.parameters.size() + 1; i++) {
+            if (parameters.get(i - 1).getKey() == symbol) {
+                return "$" + i;
+            }
+        }
+        return null;
+    }
+
     public List<String> parametersToOllir() {
         List<String> ollir = new ArrayList<>();
 

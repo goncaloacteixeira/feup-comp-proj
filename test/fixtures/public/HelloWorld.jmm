@@ -12,9 +12,23 @@ class HelloWorld {
     public int sum(int[] A) {
         int sum;
 
-        sum = 1 + 2 + 3;
+        sum = 1 / (1 + 2) * 3 * 4;
 
         return sum;
+    }
+
+    public int test(int b, int c) {
+        int a;
+        boolean d;
+        int[] arr;
+
+        arr = new int[10];
+
+        d = true;
+
+        a = 1 + c;
+        b = b + a;
+        return b;
     }
 
 

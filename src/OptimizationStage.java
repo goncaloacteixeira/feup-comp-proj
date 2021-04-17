@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import ast.JmmSymbolTable;
@@ -35,7 +36,7 @@ public class OptimizationStage implements JmmOptimization {
         OllirVisitor visitor = new OllirVisitor((JmmSymbolTable) semanticsResult.getSymbolTable(), semanticsResult.getReports());
         // Convert the AST to a String containing the equivalent OLLIR code
         System.out.println("Preorder Visitor - OLLIR Generator");
-        String ollirCode = visitor.visit(node, "DEFAULT_VISIT"); // Convert node ...
+        String ollirCode = visitor.visit(node, Arrays.asList("DEFAULT_VISIT")); // Convert node ...
 
         System.out.println(ollirCode);
 
