@@ -85,6 +85,15 @@ public class OllirTemplates {
         return parameter + "." + variable(variable);
     }
 
+    public static String ifHeader(String condition) {
+        String[] parts;
+        if ((parts = condition.split("<")).length == 2) {
+            return String.format("if (%s >=%s) goto else;\n", parts[0], parts[1]);
+        }
+
+        return String.format("if (%s) goto else;\n", condition);
+    }
+
     public static String ret(Type ret, String exp) {
         return String.format("ret%s %s;", OllirTemplates.type(ret), exp);
     }

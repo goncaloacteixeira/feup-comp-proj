@@ -41,6 +41,10 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
         addVisit("AndExpression", this::dealWithAndExpression);
         addVisit("NotExpression", this::dealWithNotExpression);
 
+        addVisit("IfStatement", this::dealWithIfStatement);
+        addVisit("ElseStatement", this::dealWithElseStatement);
+        addVisit("IfCondition", this::dealWithCondition);
+
         setDefaultVisit(this::defaultVisit);
     }
 
@@ -54,7 +58,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
         for (JmmNode child : node.getChildren()) {
             String ollirChild = visit(child, Arrays.asList("CLASS"));
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
-                ollir.append("\n").append(ollirChild);
+                ollir.append("\n\n").append(ollirChild);
         }
 
         ollir.append(OllirTemplates.closeBrackets());
@@ -389,10 +393,71 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
     }
 
     private String dealWithNotExpression(JmmNode node, List<Object> data) {
+        // TODO
         if (visited.contains(node)) return "DEFAULT_VISIT";
         visited.add(node);
 
         return "DEFAULT_VISIT";
+    }
+
+    private String dealWithIfStatement(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return "DEFAULT_VISIT";
+        visited.add(node);
+
+        StringBuilder ollir = new StringBuilder();
+
+        String ifCondition = visit(node.getChildren().get(0), Arrays.asList("CONDITION"));
+
+        String[] ifConditionParts = ifCondition.split("\n");
+        if (ifConditionParts.length > 1) {
+            for (int i = 0; i < ifConditionParts.length - 1; i++) {
+                ollir.append(ifConditionParts[i]).append("\n");
+            }
+        }
+
+        ollir.append(OllirTemplates.ifHeader(ifConditionParts[ifConditionParts.length - 1]));
+
+        List<String> ifBody = new ArrayList<>();
+
+        for (int i = 1; i < node.getChildren().size(); i++) {
+            ifBody.add(visit(node.getChildren().get(i), Arrays.asList("IF")));
+        }
+
+        ollir.append(String.join("\n", ifBody));
+
+        ollir.append("\ngoto endif;");
+
+        return ollir.toString();
+    }
+
+    private String dealWithElseStatement(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return "DEFAULT_VISIT";
+        visited.add(node);
+
+        StringBuilder ollir = new StringBuilder();
+
+        ollir.append("else:").append("\n");
+
+        List<String> elseBody = new ArrayList<>();
+
+        for (int i = 0; i < node.getChildren().size(); i++) {
+            elseBody.add(visit(node.getChildren().get(i), Arrays.asList("ELSE")));
+        }
+
+        ollir.append(String.join("\n", elseBody));
+
+        ollir.append("\ngoto endif;\n");
+        ollir.append("endif:");
+
+        return ollir.toString();
+    }
+
+    private String dealWithCondition(JmmNode node, List<Object> data) {
+        // TODO
+        if (visited.contains(node)) return "DEFAULT_VISIT";
+        visited.add(node);
+
+        return visit(node.getChildren().get(0), Arrays.asList("CONDITION"));
     }
 
 

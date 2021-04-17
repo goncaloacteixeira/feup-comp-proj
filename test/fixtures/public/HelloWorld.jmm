@@ -22,10 +22,10 @@ class HelloWorld {
 
         d = true && (1 < (1 + 3));
 
-        if (true && false) {
-
+        if (1 < 2) {
+            d = true;
         } else {
-
+            d = false;
         }
 
         return b;
