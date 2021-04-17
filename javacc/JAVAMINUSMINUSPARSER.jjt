@@ -200,7 +200,7 @@ void MD1() #void : {Token t; String returnType; Token t1; }
 }
 
 // IfElse -> IfStatement ElseStatement
-void IfElse() #void : {} {
+void IfElse() : {} {
   IfStatement() ElseStatement()
 }
 

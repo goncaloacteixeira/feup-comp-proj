@@ -393,11 +393,36 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
     }
 
     private String dealWithNotExpression(JmmNode node, List<Object> data) {
-        // TODO
         if (visited.contains(node)) return "DEFAULT_VISIT";
         visited.add(node);
 
-        return "DEFAULT_VISIT";
+        StringBuilder ollir = new StringBuilder();
+        String expression = visit(node.getChildren().get(0), Arrays.asList("NOT"));
+        String[] parts = expression.split("\n");
+
+        String last = parts[parts.length - 1];
+
+        if (parts.length > 1) {
+            for (int i = 0; i < parts.length - 1; i++) {
+                ollir.append(parts[i]).append("\n");
+            }
+        }
+
+        // TODO - NOT expressions not done yet
+        String[] expressionParts;
+        if ((expressionParts = last.split("<")).length == 2) {
+            ollir.append(String.format("%s>=%s", expressionParts[0], expressionParts[1]));
+        } else if ((expressionParts = last.split(">=")).length == 2) {
+            ollir.append(String.format("%s<%s", expressionParts[0], expressionParts[1]));
+        } else {
+            if (expression.equals("0.bool"))
+                ollir.append("1.bool");
+            else
+                ollir.append("0.bool");
+        }
+
+
+        return ollir.toString();
     }
 
     private String dealWithIfStatement(JmmNode node, List<Object> data) {
@@ -415,7 +440,18 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
             }
         }
 
-        ollir.append(OllirTemplates.ifHeader(ifConditionParts[ifConditionParts.length - 1]));
+        // TODO - NOT expressions not done yet
+        String condition;
+        String[] parts;
+        if ((parts = ifConditionParts[ifConditionParts.length - 1].split("<")).length == 2) {
+            condition = String.format("if (%s>=%s) goto else;\n", parts[0], parts[1]);
+        } else if ((parts = ifConditionParts[ifConditionParts.length - 1].split(">=")).length == 2) {
+            condition = String.format("if (%s<%s) goto else;\n", parts[0], parts[1]);
+        } else {
+            condition = String.format("if (%s) goto else;\n", ifConditionParts[ifConditionParts.length - 1]);
+        }
+
+        ollir.append(condition);
 
         List<String> ifBody = new ArrayList<>();
 
@@ -425,7 +461,12 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
 
         ollir.append(String.join("\n", ifBody));
 
-        ollir.append("\ngoto endif;");
+        ollir.append("\ngoto endif;\n");
+
+        ollir.append(visit(node.getParent().getChildren().get(1), Arrays.asList("ELSE")));
+        ollir.append("\n");
+
+        ollir.append("endif:");
 
         return ollir.toString();
     }
@@ -446,14 +487,12 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
 
         ollir.append(String.join("\n", elseBody));
 
-        ollir.append("\ngoto endif;\n");
-        ollir.append("endif:");
+        ollir.append("\ngoto endif;");
 
         return ollir.toString();
     }
 
     private String dealWithCondition(JmmNode node, List<Object> data) {
-        // TODO
         if (visited.contains(node)) return "DEFAULT_VISIT";
         visited.add(node);
 
