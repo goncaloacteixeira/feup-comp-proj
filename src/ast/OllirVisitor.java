@@ -189,6 +189,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
         String rightReturn;
 
         if (variable != null) {
+            // BO and BO
             if (left.getKind().equals("BinaryOperation") && right.getKind().equals("BinaryOperation")) {
                 leftReturn = visit(left, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
                 rightReturn = visit(right, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
@@ -204,7 +205,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
                         OllirTemplates.binary(new Type("int", false), aux1, new Type("int", false), aux2, node.get("operation"))));
 
                 return ollir.toString();
-            } else if (left.getKind().equals("BinaryOperation") && !right.getKind().equals("BinaryOperation")) {
+            }
+            // BO and Simple
+            else if (left.getKind().equals("BinaryOperation") && !right.getKind().equals("BinaryOperation")) {
                 leftReturn = visit(left, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
                 rightReturn = visit(right, Arrays.asList("BINARY_OP"));
 
@@ -217,7 +220,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
                         OllirTemplates.binary(new Type("int", false), aux1, new Type("int", false), rightReturn, node.get("operation"))));
 
                 return ollir.toString();
-            } else if (!left.getKind().equals("BinaryOperation") && right.getKind().equals("BinaryOperation")) {
+            }
+            // Simple and BO
+            else if (!left.getKind().equals("BinaryOperation") && right.getKind().equals("BinaryOperation")) {
                 leftReturn = visit(left, Arrays.asList("BINARY_OP"));
                 rightReturn = visit(right, Arrays.asList("ASSIGNMENT", new Symbol(new Type("int", false), String.format("temporary%d", temp_sequence++))));
 
@@ -230,7 +235,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
                         OllirTemplates.binary(new Type("int", false), leftReturn, new Type("int", false), aux1, node.get("operation"))));
 
                 return ollir.toString();
-            } else {
+            }
+            // Simple and Simple
+            else {
                 leftReturn = visit(left, Arrays.asList("BINARY_OP"));
                 rightReturn = visit(right, Arrays.asList("BINARY_OP"));
 
