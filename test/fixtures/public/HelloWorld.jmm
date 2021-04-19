@@ -20,7 +20,7 @@ class HelloWorld {
     public int test(int b, int c) {
         boolean d;
 
-        if (!(1 < 2)) {
+        if (!(true && false)) {
             d = true;
         } else {
             d = false;

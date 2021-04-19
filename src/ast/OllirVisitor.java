@@ -408,19 +408,19 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
             }
         }
 
-        // TODO - NOT expressions not done yet
         String[] expressionParts;
         if ((expressionParts = last.split("<")).length == 2) {
             ollir.append(String.format("%s>=%s", expressionParts[0], expressionParts[1]));
         } else if ((expressionParts = last.split(">=")).length == 2) {
             ollir.append(String.format("%s<%s", expressionParts[0], expressionParts[1]));
+        } else if (expression.equals("0.bool")) {
+            ollir.append("1.bool");
+        } else if (expression.equals("1.bool")) {
+            ollir.append("0.bool");
         } else {
-            if (expression.equals("0.bool"))
-                ollir.append("1.bool");
-            else
-                ollir.append("0.bool");
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++)), last));
+            ollir.append(String.format("%s !.bool %s", OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)), OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++))));
         }
-
 
         return ollir.toString();
     }
