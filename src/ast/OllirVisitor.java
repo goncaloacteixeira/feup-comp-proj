@@ -1,5 +1,6 @@
 package ast;
 
+import ast.exceptions.NoSuchMethod;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
@@ -51,6 +52,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         addVisit("While", this::dealWithWhile);
         addVisit("WhileCondition", this::dealWithCondition);
+
+        addVisit("AccessExpression", this::dealWithAccessExpression);
+        addVisit("MethodCall", this::dealWithMethodCall);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -207,7 +211,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         String[] rightStmts = rightReturn.split("\n");
 
         StringBuilder ollir = new StringBuilder();
-        
+
         String leftSide;
         String rightSide;
 
@@ -217,7 +221,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         if (variable == null) {
             ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("operation"), rightSide));
         } else {
-            ollir.append(String.format("%s :=.i32 %s;", OllirTemplates.variable(variable, name),
+            ollir.append(String.format("%s :=%s %s;", OllirTemplates.variable(variable, name), OllirTemplates.assignmentType(node.get("operation")),
                     OllirTemplates.binary(leftSide, rightSide, node.get("operation"), new Type("int", false))));
         }
 
@@ -241,10 +245,10 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         if (field != null) {
             String name = currentMethod.isParameter(field.getKey());
-            return Collections.singletonList(OllirTemplates.variable(field.getKey(), name));
+            return Arrays.asList(OllirTemplates.variable(field.getKey(), name), field.getKey());
         }
 
-        return Collections.singletonList("");
+        return Collections.singletonList("ACCESS");
     }
 
     private List<Object> dealWithReturn(JmmNode node, List<Object> data) {
@@ -435,7 +439,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         return Collections.singletonList(ollir.toString());
     }
 
-    private  List<Object> dealWithCondition(JmmNode node, List<Object> data) {
+    private List<Object> dealWithCondition(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
@@ -445,15 +449,170 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
     private List<Object> dealWithAccessExpression(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
-        // TODO
-        return visit(node.getChildren().get(0), Collections.singletonList("CONDITION"));
+
+        JmmNode target = node.getChildren().get(0);
+        JmmNode method = node.getChildren().get(1);
+
+        StringBuilder ollir = new StringBuilder();
+
+        List<Object> targetReturn = visit(target, Arrays.asList("ACCESS"));
+        List<Object> methodReturn = visit(method, Arrays.asList("ACCESS", ollir));
+
+        Symbol variable = null;
+        if (data.get(0).equals("ASSIGNMENT")) {
+            variable = (Symbol) data.get(1);
+        } else if (data.get(0).equals("BINARY")) {
+            variable = new Symbol(new Type("int", false), "temporary" + temp_sequence++);
+        }
+        String name = (variable != null) ? currentMethod.isParameter(variable) : null;
+
+        Type returnType;
+
+        if (targetReturn.get(0).equals("ACCESS")) {
+            // Static Method or This Access
+            if (target.get("name").equals("this")) {
+                if (variable == null) {
+                    ollir.append(String.format("%s;",
+                            OllirTemplates.invokevirtual(
+                                    ((JmmMethod) methodReturn.get(1)).getName(),
+                                    ((JmmMethod) methodReturn.get(1)).getReturnType(),
+                                    (String) methodReturn.get(2))));
+                } else {
+                    ollir.append(String.format("%s :=%s %s;\n",
+                            OllirTemplates.variable(variable, name),
+                            OllirTemplates.type(variable.getType()),
+                            OllirTemplates.invokevirtual(
+                                    ((JmmMethod) methodReturn.get(1)).getName(),
+                                    ((JmmMethod) methodReturn.get(1)).getReturnType(),
+                                    (String) methodReturn.get(2))));
+                    if (data.get(0).equals("BINARY")) {
+                        ollir.append(OllirTemplates.variable(variable));
+                    }
+                }
+                returnType = ((JmmMethod) methodReturn.get(1)).getReturnType();
+            } else {
+                if (variable == null) {
+                    ollir.append(String.format("%s;",
+                            OllirTemplates.invokestatic(target.get("name"),
+                                    (String) methodReturn.get(1),
+                                    new Type("void", false),
+                                    (String) methodReturn.get(2))));
+                    returnType = new Type("void", false);
+                } else {
+                    ollir.append(String.format("%s :=%s %s;\n",
+                            OllirTemplates.variable(variable, name),
+                            OllirTemplates.type(variable.getType()),
+                            OllirTemplates.invokestatic(
+                                    target.get("name"),
+                                    (String) methodReturn.get(1),
+                                    variable.getType(),
+                                    (String) methodReturn.get(2))));
+                    returnType = variable.getType();
+                    if (data.get(0).equals("BINARY")) {
+                        ollir.append(OllirTemplates.variable(variable));
+                    }
+                }
+            }
+        } else {
+            // Instance or Class Method on a variable
+            System.out.println(targetReturn.get(0));
+
+            returnType = null;
+        }
+
+
+        return Arrays.asList(ollir.toString(), returnType);
     }
 
     private List<Object> dealWithMethodCall(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
-        // TODO
-        return visit(node.getChildren().get(0), Collections.singletonList("CONDITION"));
+
+        StringBuilder ollir = (StringBuilder) data.get(1);
+
+        List<JmmNode> children = node.getChildren();
+        Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
+        Type returnType = table.getReturnType(node.get("value"));
+
+        if (node.getKind().equals("Length")) {
+            return Arrays.asList("length");
+        }
+
+        try {
+            JmmMethod method = table.getMethod(node.get("value"), params.getKey(), returnType);
+            return Arrays.asList("class_method", method, params.getValue());
+        } catch (NoSuchMethod noSuchMethod) {
+            return Arrays.asList("method", node.get("value"), params.getValue());
+        }
+    }
+
+    private Map.Entry<List<Type>, String> getParametersList(List<JmmNode> children, StringBuilder ollir) {
+        List<Type> params = new ArrayList<>();
+
+        List<String> paramsOllir = new ArrayList<>();
+
+        for (JmmNode child : children) {
+            Type type;
+            String var;
+            String[] statements;
+            String result;
+            switch (child.getKind()) {
+                case "IntegerLiteral":
+                    type = new Type("int", false);
+                    paramsOllir.add(String.format("%s%s", child.get("value"), OllirTemplates.type(type)));
+                    params.add(type);
+                    break;
+                case "BooleanLiteral":
+                    type = new Type("boolean", false);
+                    paramsOllir.add(String.format("%s%s", child.get("value"), OllirTemplates.type(type)));
+                    params.add(type);
+                    break;
+                case "Variable":
+                    List<Object> variable = visit(child, Arrays.asList("PARAM"));
+
+                    params.add(((Symbol) variable.get(1)).getType());
+                    paramsOllir.add((String) variable.get(0));
+                    break;
+                case "AccessExpression":
+                    List<Object> accessExpression = visit(child, Arrays.asList("PARAM"));
+                    statements = ((String) accessExpression.get(0)).split("\n");
+                    if (statements.length > 1) {
+                        for (int i = 0; i < statements.length - 1; i++) {
+                            ollir.append(statements[i]).append("\n");
+                        }
+                    }
+                    ollir.append(String.format("%s%s :=%s %s\n",
+                            "temporary" + temp_sequence,
+                            OllirTemplates.type((Type) accessExpression.get(1)),
+                            OllirTemplates.type((Type) accessExpression.get(1)),
+                            statements[statements.length - 1]));
+
+                    paramsOllir.add("temporary" + temp_sequence++ + OllirTemplates.type((Type) accessExpression.get(1)));
+
+                    params.add((Type) accessExpression.get(1));
+                    break;
+                case "RelationalExpression":
+                case "AndExpression":
+                    var = (String) visit(child, Arrays.asList("PARAM")).get(0);
+                    statements = var.split("\n");
+                    result = binaryOperations(statements, ollir, new Type("boolean", false));
+                    params.add(new Type("boolean", false));
+
+                    paramsOllir.add(result);
+                    break;
+                case "BinaryOperation":
+                    var = (String) visit(child, Arrays.asList("PARAM")).get(0);
+                    statements = var.split("\n");
+                    result = binaryOperations(statements, ollir, new Type("int", false));
+                    params.add(new Type("int", false));
+
+                    paramsOllir.add(result);
+                    break;
+                default:
+                    break;
+            }
+        }
+        return Map.entry(params, String.join(", ", paramsOllir));
     }
 
 
@@ -472,7 +631,17 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                 content.append(String.join("\n", StringLines.getLines((String) childResult.get(0))));
         }
 
-        return Collections.singletonList(content.toString());
+        if (nodeResult.size() > 1) {
+            List<Object> result = new ArrayList<>();
+            result.add(content.toString());
+            result.addAll(nodeResult.subList(1, nodeResult.size()));
+
+            return result;
+        } else {
+            return Arrays.asList(content.toString());
+        }
+
+
     }
 
     private String binaryOperations(String[] statements, StringBuilder ollir, Type type) {
@@ -488,7 +657,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
                 m.find();
 
-                ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence))), m.group(2), last));
+                ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence))), OllirTemplates.assignmentType(m.group(1)), last));
                 finalStmt = OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence++)));
             } else {
                 finalStmt = last;
@@ -499,7 +668,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                 Matcher m = p.matcher(statements[0]);
                 m.find();
 
-                ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence))), m.group(2), statements[0]));
+                ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence))), OllirTemplates.assignmentType(m.group(1)), statements[0]));
                 finalStmt = OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence++)));
             } else {
                 finalStmt = statements[0];

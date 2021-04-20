@@ -5,6 +5,8 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OllirTemplates {
     public static String constructor(String name) {
@@ -85,18 +87,36 @@ public class OllirTemplates {
         return parameter + "." + variable(variable);
     }
 
-    public static String ifHeader(String condition) {
-        String[] parts;
-        if ((parts = condition.split("<")).length == 2) {
-            return String.format("if (%s >=%s) goto else;\n", parts[0], parts[1]);
+    public static String assignmentType(String operator) {
+        switch (operator) {
+            case "+":
+            case "-":
+            case "/":
+            case "*":
+                return ".i32";
+            case "&&":
+            case "<":
+            case "!":
+            case ">=":
+                return ".bool";
+            default:
+                return ".error";
         }
-
-        return String.format("if (%s) goto else;\n", condition);
     }
 
     public static String ret(Type ret, String exp) {
         return String.format("ret%s %s;", OllirTemplates.type(ret), exp);
     }
 
+    public static String invokestatic(String target, String method, Type returnType, String parameters) {
+        if (parameters.equals(""))
+            return String.format("invokestatic(%s, \"%s\")%s", target, method, type(returnType));
+        return String.format("invokestatic(%s, \"%s\", %s)%s", target, method, parameters, type(returnType));
+    }
 
+    public static String invokevirtual(String method, Type returnType, String parameters) {
+        if (parameters.equals(""))
+            return String.format("invokevirtual(this, \"%s\")%s", method, type(returnType));
+        return String.format("invokevirtual(this, \"%s\", %s)%s", method, parameters, type(returnType));
+    }
 }

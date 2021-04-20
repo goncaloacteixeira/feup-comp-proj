@@ -228,13 +228,13 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
             }
         }
 
-        if (!leftReturn.getKey().equals("int")) {
+        if (!leftReturn.getKey().equals("int") && !leftReturn.getKey().equals("access")) {
             dataReturn = Map.entry("error", "null");
             if (data != null) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer: " + left));
             }
         }
-        if (!rightReturn.getKey().equals("int")) {
+        if (!rightReturn.getKey().equals("int") && !rightReturn.getKey().equals("access")) {
             dataReturn = Map.entry("error", "null");
             if (data != null) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer: " + right));

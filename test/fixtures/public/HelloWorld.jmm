@@ -4,36 +4,23 @@ class HelloWorld {
     public static void main(String[] args) {
         int a;
         int b;
+        boolean c;
 
+        a = 2;
 
-        ioPlus.printHelloWorld();
+        ioPlus.hello();
+
+        a = this.foo(this.foo(this.foo(1 + 2 + this.foo(1 - ioPlus.hi(1 - 2)))));
+
+        a = this.foo(1, 2);
     }
 
-    public int sum(int[] A) {
-        int sum;
-
-        sum = 1 / (1 + 2) * 3 * 4;
-
-        return sum;
+    public int foo(int a) {
+        return 1;
     }
 
-    public int test(int b, int c) {
-        boolean d;
-        int a;
-
-        a = 1;
-
-        while (a < 1) {
-            a = a - 1;
-            if (1 < 2) {
-                d = false;
-            } else {
-                d = true;
-            }
-        }
-
-        return b;
+    public int foo(int b, int c) {
+        return 2;
     }
-
 
 }
