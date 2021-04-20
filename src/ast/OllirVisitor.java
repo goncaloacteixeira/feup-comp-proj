@@ -219,7 +219,13 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         leftSide = binaryOperations(leftStmts, ollir, new Type("int", false));
         rightSide = binaryOperations(rightStmts, ollir, new Type("int", false));
 
-        ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("operation"), rightSide));
+        if (data.get(0).equals("RETURN")) {
+            Symbol variable = new Symbol(new Type("int", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.i32 %s %s.i32 %s;\n", OllirTemplates.variable(variable), leftSide, node.get("operation"), rightSide));
+            ollir.append(OllirTemplates.variable(variable));
+        } else {
+            ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("operation"), rightSide));
+        }
 
         return Collections.singletonList(ollir.toString());
     }
@@ -274,8 +280,8 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
 
-        String leftReturn = (String) visit(left, Collections.singletonList("AND")).get(0);
-        String rightReturn = (String) visit(right, Collections.singletonList("AND")).get(0);
+        String leftReturn = (String) visit(left, Collections.singletonList("BINARY")).get(0);
+        String rightReturn = (String) visit(right, Collections.singletonList("BINARY")).get(0);
 
         String[] leftStmts = leftReturn.split("\n");
         String[] rightStmts = rightReturn.split("\n");
@@ -288,7 +294,14 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         leftSide = binaryOperations(leftStmts, ollir, new Type("boolean", false));
         rightSide = binaryOperations(rightStmts, ollir, new Type("boolean", false));
 
-        ollir.append(String.format("%s %s.bool %s", leftSide, node.get("operation"), rightSide));
+
+        if (data.get(0).equals("RETURN")) {
+            Symbol variable = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.bool %s %s.i32 %s;\n", OllirTemplates.variable(variable), leftSide, node.get("operation"), rightSide));
+            ollir.append(OllirTemplates.variable(variable));
+        } else {
+            ollir.append(String.format("%s %s.bool %s", leftSide, node.get("operation"), rightSide));
+        }
 
         return Collections.singletonList(ollir.toString());
     }
@@ -431,40 +444,41 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         List<Object> targetReturn = visit(target, Arrays.asList("ACCESS"));
         List<Object> methodReturn = visit(method, Arrays.asList("ACCESS", ollir));
 
-        // TODO - IF binary or ret exp -> use temporary
         Symbol variable = null;
-        if (data.get(0).equals("BINARY")) {
-            variable = new Symbol(new Type("int", false), "temporary" + temp_sequence++);
+        boolean auxiliary = false;
+        if (data.get(0).equals("BINARY") || data.get(0).equals("RETURN")) {
+            auxiliary = true;
         }
-        String name = (variable != null) ? currentMethod.isParameter(variable) : null;
 
         Type returnType;
 
         if (targetReturn.get(0).equals("ACCESS")) {
             // Static Method or This Access
             if (target.get("name").equals("this")) {
-                if (variable == null) {
-                    ollir.append(String.format("%s;",
+                if (!auxiliary) {
+                    ollir.append(String.format("%s",
                             OllirTemplates.invokevirtual(
                                     ((JmmMethod) methodReturn.get(1)).getName(),
                                     ((JmmMethod) methodReturn.get(1)).getReturnType(),
                                     (String) methodReturn.get(2))));
                 } else {
+                    variable = new Symbol(((JmmMethod) methodReturn.get(1)).getReturnType(), "temporary" + temp_sequence++);
+
                     ollir.append(String.format("%s :=%s %s;\n",
-                            OllirTemplates.variable(variable, name),
+                            OllirTemplates.variable(variable),
                             OllirTemplates.type(variable.getType()),
                             OllirTemplates.invokevirtual(
                                     ((JmmMethod) methodReturn.get(1)).getName(),
                                     ((JmmMethod) methodReturn.get(1)).getReturnType(),
                                     (String) methodReturn.get(2))));
-                    if (data.get(0).equals("BINARY")) {
+                    if (data.get(0).equals("BINARY") || data.get(0).equals("RETURN")) {
                         ollir.append(OllirTemplates.variable(variable));
                     }
                 }
                 returnType = ((JmmMethod) methodReturn.get(1)).getReturnType();
             } else {
-                if (variable == null) {
-                    ollir.append(String.format("%s;",
+                if (!auxiliary) {
+                    ollir.append(String.format("%s",
                             OllirTemplates.invokestatic(target.get("name"),
                                     (String) methodReturn.get(1),
                                     new Type("void", false),
@@ -472,7 +486,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                     returnType = new Type("void", false);
                 } else {
                     ollir.append(String.format("%s :=%s %s;\n",
-                            OllirTemplates.variable(variable, name),
+                            OllirTemplates.variable(variable),
                             OllirTemplates.type(variable.getType()),
                             OllirTemplates.invokestatic(
                                     target.get("name"),
@@ -480,8 +494,10 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                                     variable.getType(),
                                     (String) methodReturn.get(2))));
                     returnType = variable.getType();
-                    if (data.get(0).equals("BINARY")) {
-                        ollir.append(OllirTemplates.variable(variable));
+                    if (data.get(0).equals("BINARY") || data.get(0).equals("RETURN")) {
+                        ollir.append(OllirTemplates.variable(
+                                new Symbol(((JmmMethod) methodReturn.get(1)).getReturnType(),
+                                        "temporary" + temp_sequence++)));
                     }
                 }
             }
@@ -553,7 +569,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                             ollir.append(statements[i]).append("\n");
                         }
                     }
-                    ollir.append(String.format("%s%s :=%s %s\n",
+                    ollir.append(String.format("%s%s :=%s %s;\n",
                             "temporary" + temp_sequence,
                             OllirTemplates.type((Type) accessExpression.get(1)),
                             OllirTemplates.type((Type) accessExpression.get(1)),
