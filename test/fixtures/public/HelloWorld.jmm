@@ -25,7 +25,11 @@ class HelloWorld {
 
         while (a < 1) {
             a = a - 1;
-            d = true;
+            if (1 < 2) {
+                d = false;
+            } else {
+                d = true;
+            }
         }
 
         return b;
