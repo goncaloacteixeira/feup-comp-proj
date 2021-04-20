@@ -11,31 +11,13 @@ class HelloWorld {
 
     public int sum(int[] A) {
         int sum;
+        boolean a;
 
         sum = 1 / (1 + 2) * 3 * 4;
 
+
+        a = true && !(1 < 2);
+
         return sum;
     }
-
-    public int test(int b, int c) {
-        boolean d;
-
-        if (!(true && false)) {
-            d = !((1<2) && !(2 < 3));
-        } else {
-            d = false;
-        }
-
-
-
-        /*if (1 < 2) {
-            d = true;
-        } else {
-            d = false;
-        }*/
-
-        return b;
-    }
-
-
 }
