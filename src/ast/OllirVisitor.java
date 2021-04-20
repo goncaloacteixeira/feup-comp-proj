@@ -63,23 +63,23 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         ollir.append(OllirTemplates.constructor(table.getClassName()));
 
         for (JmmNode child : node.getChildren()) {
-            String ollirChild = (String) visit(child, Arrays.asList("CLASS")).get(0);
+            String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
                 ollir.append("\n\n").append(ollirChild);
         }
 
         ollir.append(OllirTemplates.closeBrackets());
-        return Arrays.asList(ollir.toString());
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithMainDeclaration(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         scope = "METHOD";
 
         try {
-            currentMethod = table.getMethod("main", Arrays.asList(new Type("String", true)), new Type("void", false));
+            currentMethod = table.getMethod("main", Collections.singletonList(new Type("String", true)), new Type("void", false));
         } catch (Exception e) {
             currentMethod = null;
             e.printStackTrace();
@@ -94,7 +94,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         List<String> body = new ArrayList<>();
 
         for (JmmNode child : node.getChildren()) {
-            String ollirChild = (String) visit(child, Arrays.asList("METHOD")).get(0);
+            String ollirChild = (String) visit(child, Collections.singletonList("METHOD")).get(0);
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
                 if (ollirChild.equals("")) continue;
             body.add(ollirChild);
@@ -104,11 +104,11 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         builder.append(OllirTemplates.closeBrackets());
 
-        return Arrays.asList(builder.toString());
+        return Collections.singletonList(builder.toString());
     }
 
     private List<Object> dealWithMethodDeclaration(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         List<Type> params = JmmMethod.parseParameters(node.get("params"));
@@ -128,7 +128,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         List<String> body = new ArrayList<>();
 
         for (JmmNode child : node.getChildren()) {
-            String ollirChild = (String) visit(child, Arrays.asList("METHOD")).get(0);
+            String ollirChild = (String) visit(child, Collections.singletonList("METHOD")).get(0);
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
                 if (ollirChild.equals("")) continue;
             body.add(ollirChild);
@@ -138,11 +138,11 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         builder.append(OllirTemplates.closeBrackets());
 
-        return Arrays.asList(builder.toString());
+        return Collections.singletonList(builder.toString());
     }
 
     private List<Object> dealWithAssignment(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         Map.Entry<Symbol, Boolean> variable;
@@ -154,11 +154,11 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         ollir.append(visit(node.getChildren().get(0), Arrays.asList("ASSIGNMENT", variable.getKey())).get(0));
 
-        return Arrays.asList(ollir.toString());
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithPrimitive(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         String value;
@@ -184,14 +184,14 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
             String name = currentMethod.isParameter(variable);
 
-            return Arrays.asList(String.format("%s :=%s %s;", OllirTemplates.variable(variable, name), OllirTemplates.type(type), value));
+            return Collections.singletonList(String.format("%s :=%s %s;", OllirTemplates.variable(variable, name), OllirTemplates.type(type), value));
         } else {
             return Collections.singletonList(value);
         }
     }
 
     private List<Object> dealWithBinaryOperation(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         Symbol variable = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
@@ -200,8 +200,8 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
 
-        String leftReturn = (String) visit(left, Arrays.asList("BINARY")).get(0);
-        String rightReturn = (String) visit(right, Arrays.asList("BINARY")).get(0);
+        String leftReturn = (String) visit(left, Collections.singletonList("BINARY")).get(0);
+        String rightReturn = (String) visit(right, Collections.singletonList("BINARY")).get(0);
 
         String[] leftStmts = leftReturn.split("\n");
         String[] rightStmts = rightReturn.split("\n");
@@ -221,11 +221,11 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                     OllirTemplates.binary(leftSide, rightSide, node.get("operation"), new Type("int", false))));
         }
 
-        return Arrays.asList(ollir.toString());
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithVariable(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         Map.Entry<Symbol, Boolean> field = null;
@@ -241,23 +241,23 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         if (field != null) {
             String name = currentMethod.isParameter(field.getKey());
-            return Arrays.asList(OllirTemplates.variable(field.getKey(), name));
+            return Collections.singletonList(OllirTemplates.variable(field.getKey(), name));
         }
 
-        return Arrays.asList("");
+        return Collections.singletonList("");
     }
 
     private List<Object> dealWithReturn(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
-        String exp = (String) visit(node.getChildren().get(0), Arrays.asList("RETURN")).get(0);
+        String exp = (String) visit(node.getChildren().get(0), Collections.singletonList("RETURN")).get(0);
 
-        return Arrays.asList(OllirTemplates.ret(currentMethod.getReturnType(), exp));
+        return Collections.singletonList(OllirTemplates.ret(currentMethod.getReturnType(), exp));
     }
 
     private List<Object> dealWithAndExpression(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         Symbol variable = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
@@ -266,8 +266,8 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
 
-        String leftReturn = (String) visit(left, Arrays.asList("AND")).get(0);
-        String rightReturn = (String) visit(right, Arrays.asList("AND")).get(0);
+        String leftReturn = (String) visit(left, Collections.singletonList("AND")).get(0);
+        String rightReturn = (String) visit(right, Collections.singletonList("AND")).get(0);
 
         String[] leftStmts = leftReturn.split("\n");
         String[] rightStmts = rightReturn.split("\n");
@@ -287,15 +287,15 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                     OllirTemplates.binary(leftSide, rightSide, node.get("operation"), new Type("boolean", false))));
         }
 
-        return Arrays.asList(ollir.toString());
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithNotExpression(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
-        String expression = (String) visit(node.getChildren().get(0), Arrays.asList("NOT")).get(0);
+        String expression = (String) visit(node.getChildren().get(0), Collections.singletonList("NOT")).get(0);
         String[] parts = expression.split("\n");
 
         String last = parts[parts.length - 1];
@@ -348,16 +348,16 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        return Arrays.asList(ollir.toString());
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithIfStatement(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
 
-        String ifCondition = (String) visit(node.getChildren().get(0), Arrays.asList("CONDITION")).get(0);
+        String ifCondition = (String) visit(node.getChildren().get(0), Collections.singletonList("CONDITION")).get(0);
 
         String[] ifConditionParts = ifCondition.split("\n");
         if (ifConditionParts.length > 1) {
@@ -368,24 +368,24 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         ollir.append(String.format("if (%s) goto ifbody;\n", ifConditionParts[ifConditionParts.length - 1]));
 
-        ollir.append(visit(node.getParent().getChildren().get(1), Arrays.asList("ELSE")).get(0));
+        ollir.append(visit(node.getParent().getChildren().get(1), Collections.singletonList("ELSE")).get(0));
         ollir.append("\n");
         ollir.append("goto endif;\n");
 
         ollir.append("ifbody:\n");
         List<String> ifBody = new ArrayList<>();
         for (int i = 1; i < node.getChildren().size(); i++) {
-            ifBody.add((String) visit(node.getChildren().get(i), Arrays.asList("IF")).get(0));
+            ifBody.add((String) visit(node.getChildren().get(i), Collections.singletonList("IF")).get(0));
         }
         ollir.append(String.join("\n", ifBody)).append("\n");
         ollir.append("goto endif;\n");
         ollir.append("endif:\n");
 
-        return Arrays.asList(ollir.toString());
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithElseStatement(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
@@ -395,23 +395,23 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         List<String> elseBody = new ArrayList<>();
 
         for (int i = 0; i < node.getChildren().size(); i++) {
-            elseBody.add((String) visit(node.getChildren().get(i), Arrays.asList("ELSE")).get(0));
+            elseBody.add((String) visit(node.getChildren().get(i), Collections.singletonList("ELSE")).get(0));
         }
 
         ollir.append(String.join("\n", elseBody));
 
-        return Arrays.asList(ollir.toString());
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithWhile(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
 
         ollir.append("loop:\n");
 
-        String condition = (String) visit(node.getChildren().get(0), Arrays.asList("WHILE")).get(0);
+        String condition = (String) visit(node.getChildren().get(0), Collections.singletonList("WHILE")).get(0);
         String[] conditionParts = condition.split("\n");
         if (conditionParts.length > 1) {
             for (int i = 0; i < conditionParts.length - 1; i++) {
@@ -432,33 +432,33 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         ollir.append("goto loop;\n");
         ollir.append("endloop:");
 
-        return Arrays.asList(ollir.toString());
+        return Collections.singletonList(ollir.toString());
     }
 
     private  List<Object> dealWithCondition(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
-        return visit(node.getChildren().get(0), Arrays.asList("CONDITION"));
+        return visit(node.getChildren().get(0), Collections.singletonList("CONDITION"));
     }
 
     private List<Object> dealWithAccessExpression(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
         // TODO
-        return visit(node.getChildren().get(0), Arrays.asList("CONDITION"));
+        return visit(node.getChildren().get(0), Collections.singletonList("CONDITION"));
     }
 
     private List<Object> dealWithMethodCall(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Arrays.asList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
         // TODO
-        return visit(node.getChildren().get(0), Arrays.asList("CONDITION"));
+        return visit(node.getChildren().get(0), Collections.singletonList("CONDITION"));
     }
 
 
     private List<Object> defaultVisit(JmmNode node, List<Object> data) {
-        return Arrays.asList("DEFAULT_VISIT");
+        return Collections.singletonList("DEFAULT_VISIT");
     }
 
     private static List<Object> reduce(List<Object> nodeResult, List<List<Object>> childrenResults) {
@@ -472,7 +472,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                 content.append(String.join("\n", StringLines.getLines((String) childResult.get(0))));
         }
 
-        return Arrays.asList(content.toString());
+        return Collections.singletonList(content.toString());
     }
 
     private String binaryOperations(String[] statements, StringBuilder ollir, Type type) {
