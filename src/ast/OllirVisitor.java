@@ -132,6 +132,8 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
+        scope = "METHOD";
+
         List<Type> params = JmmMethod.parseParameters(node.get("params"));
 
         try {
@@ -249,6 +251,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         leftSide = binaryOperations(leftStmts, ollir, new Type("int", false));
         rightSide = binaryOperations(rightStmts, ollir, new Type("int", false));
 
+        if (data == null) {
+            return Arrays.asList("DEFAULT_VISIT");
+        }
         if (data.get(0).equals("RETURN") || data.get(0).equals("FIELD")) {
             Symbol variable = new Symbol(new Type("int", false), "temporary" + temp_sequence++);
             ollir.append(String.format("%s :=.i32 %s %s.i32 %s;\n", OllirTemplates.variable(variable), leftSide, node.get("operation"), rightSide));
@@ -275,6 +280,10 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
+        System.out.println("Scope: " + scope);
+        System.out.println(node.get("name"));
+        System.out.println(field);
+
         if (field != null) {
             String name = currentMethod.isParameter(field.getKey());
             return Arrays.asList(OllirTemplates.variable(field.getKey(), name), field.getKey());
@@ -289,7 +298,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         StringBuilder ollir = new StringBuilder();
 
-        String result = (String) visit(node.getChildren().get(0), Arrays.asList("RETURN")).get(0);
+        List<Object> visit = visit(node.getChildren().get(0), Arrays.asList("RETURN"));
+
+        String result = (String) visit.get(0);
         String[] parts = result.split("\n");
         if (parts.length > 1) {
             for (int i = 0; i < parts.length - 1; i++) {
@@ -475,7 +486,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         List<Object> methodReturn = visit(method, Arrays.asList("ACCESS", ollir));
 
         Symbol variable;
-        boolean auxiliary = data.get(0).equals("BINARY") || data.get(0).equals("RETURN");
+        boolean auxiliary = data.get(0).equals("BINARY") || data.get(0).equals("RETURN") || data.get(0).equals("CONDITION");
 
         Type returnType;
 
