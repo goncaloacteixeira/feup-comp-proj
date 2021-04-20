@@ -402,6 +402,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
 
         String last = parts[parts.length - 1];
 
+        Symbol variable = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
+        String name = (variable != null) ? currentMethod.isParameter(variable) : null;
+
         if (parts.length > 1) {
             for (int i = 0; i < parts.length - 1; i++) {
                 ollir.append(parts[i]).append("\n");
@@ -410,16 +413,41 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
 
         String[] expressionParts;
         if ((expressionParts = last.split("<")).length == 2) {
-            ollir.append(String.format("%s>=%s", expressionParts[0], expressionParts[1]));
+            if (variable == null) {
+                ollir.append(String.format("%s>=%s", expressionParts[0], expressionParts[1]));
+            } else {
+                ollir.append(String.format("%s :=.bool %s>=%s;", OllirTemplates.variable(variable, name), expressionParts[0], expressionParts[1]));
+            }
         } else if ((expressionParts = last.split(">=")).length == 2) {
-            ollir.append(String.format("%s<%s", expressionParts[0], expressionParts[1]));
+            if (variable == null) {
+                ollir.append(String.format("%s<%s", expressionParts[0], expressionParts[1]));
+            } else {
+                ollir.append(String.format("%s :=.bool %s<%s;", OllirTemplates.variable(variable, name), expressionParts[0], expressionParts[1]));
+            }
         } else if (expression.equals("0.bool")) {
-            ollir.append("1.bool");
+            if (variable == null) {
+                ollir.append("1.bool");
+            } else {
+                ollir.append(String.format("%s :=.bool 1.bool;", OllirTemplates.variable(variable, name)));
+            }
         } else if (expression.equals("1.bool")) {
-            ollir.append("0.bool");
+            if (variable == null) {
+                ollir.append("0.bool");
+            } else {
+                ollir.append(String.format("%s :=.bool 0.bool;", OllirTemplates.variable(variable, name)));
+            }
         } else {
-            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++)), last));
-            ollir.append(String.format("%s !.bool %s", OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)), OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++))));
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)), last));
+            if (variable == null) {
+                ollir.append(String.format("%s !.bool %s",
+                        OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)),
+                        OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++))));
+            } else {
+                ollir.append(String.format("%s :=.bool %s !.bool %s;",
+                        OllirTemplates.variable(variable, name),
+                        OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)),
+                        OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++))));
+            }
         }
 
         return ollir.toString();
