@@ -361,33 +361,20 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
             }
         }
 
-        // TODO - NOT expressions not done yet
-        String condition;
-        String[] parts;
-        if ((parts = ifConditionParts[ifConditionParts.length - 1].split("<")).length == 2) {
-            condition = String.format("if (%s>=%s) goto else;\n", parts[0], parts[1]);
-        } else if ((parts = ifConditionParts[ifConditionParts.length - 1].split(">=")).length == 2) {
-            condition = String.format("if (%s<%s) goto else;\n", parts[0], parts[1]);
-        } else {
-            condition = String.format("if (%s) goto else;\n", ifConditionParts[ifConditionParts.length - 1]);
-        }
-
-        ollir.append(condition);
-
-        List<String> ifBody = new ArrayList<>();
-
-        for (int i = 1; i < node.getChildren().size(); i++) {
-            ifBody.add(visit(node.getChildren().get(i), Arrays.asList("IF")));
-        }
-
-        ollir.append(String.join("\n", ifBody));
-
-        ollir.append("\ngoto endif;\n");
+        ollir.append(String.format("if (%s) goto ifbody;\n", ifConditionParts[ifConditionParts.length - 1]));
 
         ollir.append(visit(node.getParent().getChildren().get(1), Arrays.asList("ELSE")));
         ollir.append("\n");
+        ollir.append("goto endif;\n");
 
-        ollir.append("endif:");
+        ollir.append("ifbody:\n");
+        List<String> ifBody = new ArrayList<>();
+        for (int i = 1; i < node.getChildren().size(); i++) {
+            ifBody.add(visit(node.getChildren().get(i), Arrays.asList("IF")));
+        }
+        ollir.append(String.join("\n", ifBody)).append("\n");
+        ollir.append("goto endif;\n");
+        ollir.append("endif:\n");
 
         return ollir.toString();
     }
@@ -407,8 +394,6 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
         }
 
         ollir.append(String.join("\n", elseBody));
-
-        ollir.append("\ngoto endif;");
 
         return ollir.toString();
     }
