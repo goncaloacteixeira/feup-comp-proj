@@ -6,21 +6,16 @@ class HelloWorld {
         int b;
         boolean c;
 
-        a = 2;
+        if (true && ((1 + 3) < (1 - 3)) && false) {
+            b = 1 + 2;
+        } else {
+            b = 2 + 3;
+        }
 
-        ioPlus.hello();
-
-        a = this.foo(this.foo(this.foo(1 + 2 + this.foo(1 - ioPlus.hi(1 - 2)))));
-
-        a = this.foo(1, 2);
+        b = this.foo(this.foo(1 - this.foo(1)));
     }
 
     public int foo(int a) {
         return 1;
     }
-
-    public int foo(int b, int c) {
-        return 2;
-    }
-
 }

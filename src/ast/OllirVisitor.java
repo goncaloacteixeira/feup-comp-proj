@@ -153,10 +153,26 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         if ((variable = currentMethod.getField(node.get("variable"))) == null) {
             variable = table.getField(node.get("variable"));
         }
+        String name = currentMethod.isParameter(variable.getKey());
 
         StringBuilder ollir = new StringBuilder();
 
-        ollir.append(visit(node.getChildren().get(0), Arrays.asList("ASSIGNMENT", variable.getKey())).get(0));
+        String result = (String) visit(node.getChildren().get(0), Arrays.asList("ASSIGNMENT")).get(0);
+        String[] parts = result.split("\n");
+        if (parts.length > 1) {
+            for (int i = 0; i < parts.length - 1; i++) {
+                ollir.append(parts[i]).append("\n");
+            }
+            ollir.append(String.format("%s :=%s %s;",
+                    OllirTemplates.variable(variable.getKey(), name),
+                    OllirTemplates.type(variable.getKey().getType()),
+                    parts[parts.length - 1]));
+        } else {
+            ollir.append(String.format("%s :=%s %s;",
+                    OllirTemplates.variable(variable.getKey(), name),
+                    OllirTemplates.type(variable.getKey().getType()),
+                    result));
+        }
 
         return Collections.singletonList(ollir.toString());
     }
@@ -166,40 +182,25 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         visited.add(node);
 
         String value;
-        Type type;
 
         switch (node.getKind()) {
             case "IntegerLiteral":
                 value = node.get("value") + ".i32";
-                type = new Type("int", false);
                 break;
             case "BooleanLiteral":
                 value = (node.get("value").equals("true") ? "1" : "0") + ".bool";
-                type = new Type("boolean", false);
                 break;
             default:
                 value = "";
-                type = new Type("void", false);
                 break;
         }
 
-        if (data.get(0).equals("ASSIGNMENT")) {
-            Symbol variable = (Symbol) data.get(1);
-
-            String name = currentMethod.isParameter(variable);
-
-            return Collections.singletonList(String.format("%s :=%s %s;", OllirTemplates.variable(variable, name), OllirTemplates.type(type), value));
-        } else {
-            return Collections.singletonList(value);
-        }
+        return Collections.singletonList(value);
     }
 
     private List<Object> dealWithBinaryOperation(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
-
-        Symbol variable = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
-        String name = (variable != null) ? currentMethod.isParameter(variable) : null;
 
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
@@ -218,12 +219,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         leftSide = binaryOperations(leftStmts, ollir, new Type("int", false));
         rightSide = binaryOperations(rightStmts, ollir, new Type("int", false));
 
-        if (variable == null) {
-            ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("operation"), rightSide));
-        } else {
-            ollir.append(String.format("%s :=%s %s;", OllirTemplates.variable(variable, name), OllirTemplates.assignmentType(node.get("operation")),
-                    OllirTemplates.binary(leftSide, rightSide, node.get("operation"), new Type("int", false))));
-        }
+        ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("operation"), rightSide));
 
         return Collections.singletonList(ollir.toString());
     }
@@ -255,17 +251,25 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
-        String exp = (String) visit(node.getChildren().get(0), Collections.singletonList("RETURN")).get(0);
+        StringBuilder ollir = new StringBuilder();
 
-        return Collections.singletonList(OllirTemplates.ret(currentMethod.getReturnType(), exp));
+        String result = (String) visit(node.getChildren().get(0), Arrays.asList("RETURN")).get(0);
+        String[] parts = result.split("\n");
+        if (parts.length > 1) {
+            for (int i = 0; i < parts.length - 1; i++) {
+                ollir.append(parts[i]).append("\n");
+            }
+            ollir.append(OllirTemplates.ret(currentMethod.getReturnType(), parts[parts.length - 1]));
+        } else {
+            ollir.append(OllirTemplates.ret(currentMethod.getReturnType(), result));
+        }
+
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithAndExpression(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
-
-        Symbol variable = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
-        String name = (variable != null) ? currentMethod.isParameter(variable) : null;
 
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
@@ -284,12 +288,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         leftSide = binaryOperations(leftStmts, ollir, new Type("boolean", false));
         rightSide = binaryOperations(rightStmts, ollir, new Type("boolean", false));
 
-        if (variable == null) {
-            ollir.append(String.format("%s %s.bool %s", leftSide, node.get("operation"), rightSide));
-        } else {
-            ollir.append(String.format("%s :=.bool %s;", OllirTemplates.variable(variable, name),
-                    OllirTemplates.binary(leftSide, rightSide, node.get("operation"), new Type("boolean", false))));
-        }
+        ollir.append(String.format("%s %s.bool %s", leftSide, node.get("operation"), rightSide));
 
         return Collections.singletonList(ollir.toString());
     }
@@ -304,9 +303,6 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         String last = parts[parts.length - 1];
 
-        Symbol variable = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
-        String name = (variable != null) ? currentMethod.isParameter(variable) : null;
-
         if (parts.length > 1) {
             for (int i = 0; i < parts.length - 1; i++) {
                 ollir.append(parts[i]).append("\n");
@@ -315,41 +311,18 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         String[] expressionParts;
         if ((expressionParts = last.split("<")).length == 2) {
-            if (variable == null) {
-                ollir.append(String.format("%s>=%s", expressionParts[0], expressionParts[1]));
-            } else {
-                ollir.append(String.format("%s :=.bool %s>=%s;", OllirTemplates.variable(variable, name), expressionParts[0], expressionParts[1]));
-            }
+            ollir.append(String.format("%s>=%s", expressionParts[0], expressionParts[1]));
         } else if ((expressionParts = last.split(">=")).length == 2) {
-            if (variable == null) {
-                ollir.append(String.format("%s<%s", expressionParts[0], expressionParts[1]));
-            } else {
-                ollir.append(String.format("%s :=.bool %s<%s;", OllirTemplates.variable(variable, name), expressionParts[0], expressionParts[1]));
-            }
+            ollir.append(String.format("%s<%s", expressionParts[0], expressionParts[1]));
         } else if (expression.equals("0.bool")) {
-            if (variable == null) {
-                ollir.append("1.bool");
-            } else {
-                ollir.append(String.format("%s :=.bool 1.bool;", OllirTemplates.variable(variable, name)));
-            }
+            ollir.append("1.bool");
         } else if (expression.equals("1.bool")) {
-            if (variable == null) {
-                ollir.append("0.bool");
-            } else {
-                ollir.append(String.format("%s :=.bool 0.bool;", OllirTemplates.variable(variable, name)));
-            }
+            ollir.append("0.bool");
         } else {
             ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)), last));
-            if (variable == null) {
-                ollir.append(String.format("%s !.bool %s",
-                        OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)),
-                        OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++))));
-            } else {
-                ollir.append(String.format("%s :=.bool %s !.bool %s;",
-                        OllirTemplates.variable(variable, name),
-                        OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)),
-                        OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++))));
-            }
+            ollir.append(String.format("%s !.bool %s",
+                    OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)),
+                    OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++))));
         }
 
         return Collections.singletonList(ollir.toString());
@@ -458,10 +431,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         List<Object> targetReturn = visit(target, Arrays.asList("ACCESS"));
         List<Object> methodReturn = visit(method, Arrays.asList("ACCESS", ollir));
 
+        // TODO - IF binary or ret exp -> use temporary
         Symbol variable = null;
-        if (data.get(0).equals("ASSIGNMENT")) {
-            variable = (Symbol) data.get(1);
-        } else if (data.get(0).equals("BINARY")) {
+        if (data.get(0).equals("BINARY")) {
             variable = new Symbol(new Type("int", false), "temporary" + temp_sequence++);
         }
         String name = (variable != null) ? currentMethod.isParameter(variable) : null;
