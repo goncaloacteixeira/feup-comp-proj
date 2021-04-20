@@ -9,14 +9,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OllirTemplates {
+    public static String classTemplate(String name) {
+        StringBuilder ollir = new StringBuilder();
+        ollir.append(name).append(openBrackets());
+        return ollir.toString();
+    }
+
     public static String constructor(String name) {
         StringBuilder ollir = new StringBuilder();
-
-        ollir.append(name).append(openBrackets());
         ollir.append(".construct ").append(name).append("().V").append(openBrackets());
         ollir.append("invokespecial(this, \"<init>\").V;");
         ollir.append(closeBrackets());
-
         return ollir.toString();
     }
 
@@ -118,5 +121,17 @@ public class OllirTemplates {
         if (parameters.equals(""))
             return String.format("invokevirtual(this, \"%s\")%s", method, type(returnType));
         return String.format("invokevirtual(this, \"%s\", %s)%s", method, parameters, type(returnType));
+    }
+
+    public static String arraylength(String variable) {
+        return String.format("arraylength(%s).i32", variable);
+    }
+
+    public static String putfield(String variable, String value) {
+        return String.format("putfield(this, %s, %s).V", variable, value);
+    }
+
+    public static String field(Symbol variable) {
+        return String.format(".field public %s;", variable(variable));
     }
 }
