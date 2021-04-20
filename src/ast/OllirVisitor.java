@@ -47,6 +47,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
         addVisit("ElseStatement", this::dealWithElseStatement);
         addVisit("IfCondition", this::dealWithCondition);
 
+        addVisit("While", this::dealWithWhile);
+        addVisit("WhileCondition", this::dealWithCondition);
+
         setDefaultVisit(this::defaultVisit);
     }
 
@@ -397,6 +400,39 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, String> {
 
         return ollir.toString();
     }
+
+    private String dealWithWhile(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return "DEFAULT_VISIT";
+        visited.add(node);
+
+        StringBuilder ollir = new StringBuilder();
+
+        ollir.append("loop:\n");
+
+        String condition = visit(node.getChildren().get(0), Arrays.asList("WHILE"));
+        String[] conditionParts = condition.split("\n");
+        if (conditionParts.length > 1) {
+            for (int i = 0; i < conditionParts.length - 1; i++) {
+                ollir.append(conditionParts[i]).append("\n");
+            }
+        }
+
+        ollir.append(String.format("if (%s) goto loopbody;\n", conditionParts[conditionParts.length - 1]));
+        ollir.append("end:\ngoto endloop;\n");
+
+        ollir.append("loopbody:\n");
+        List<String> body = new ArrayList<>();
+        for (int i = 1; i < node.getChildren().size(); i++) {
+            body.add(visit(node.getChildren().get(i)));
+        }
+        ollir.append(String.join("\n", body)).append("\n");
+
+        ollir.append("goto loop;\n");
+        ollir.append("endloop:");
+
+        return ollir.toString();
+    }
+
 
     private String dealWithCondition(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return "DEFAULT_VISIT";
