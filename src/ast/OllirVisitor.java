@@ -280,10 +280,6 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        System.out.println("Scope: " + scope);
-        System.out.println(node.get("name"));
-        System.out.println(field);
-
         if (field != null) {
             String name = currentMethod.isParameter(field.getKey());
             return Arrays.asList(OllirTemplates.variable(field.getKey(), name), field.getKey());
@@ -509,7 +505,12 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                                     ((JmmMethod) methodReturn.get(1)).getName(),
                                     ((JmmMethod) methodReturn.get(1)).getReturnType(),
                                     (String) methodReturn.get(2))));
-                    ollir.append(OllirTemplates.variable(variable));
+
+                    if (data.get(0).equals("CONDITION")) {
+                        ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(variable)));
+                    } else {
+                        ollir.append(OllirTemplates.variable(variable));
+                    }
                 }
                 returnType = ((JmmMethod) methodReturn.get(1)).getReturnType();
             } else {
@@ -533,7 +534,11 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                                     (String) methodReturn.get(2))));
                     returnType = variable.getType();
 
-                    ollir.append(OllirTemplates.variable(variable));
+                    if (data.get(0).equals("CONDITION")) {
+                        ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(variable)));
+                    } else {
+                        ollir.append(OllirTemplates.variable(variable));
+                    }
                 }
             }
         } else {
