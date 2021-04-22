@@ -90,6 +90,11 @@ public class OllirTemplates {
         return parameter + "." + variable(variable);
     }
 
+    public static String arrayaccess(Symbol variable, String parameter, String index) {
+        if (parameter == null) return String.format("%s[%s]%s", variable.getName(), index, type(new Type(variable.getType().getName(), false)));
+        return String.format("%s.%s[%s]%s", parameter, variable.getName(), index, type(new Type(variable.getType().getName(), false)));
+    }
+
     public static String assignmentType(String operator) {
         switch (operator) {
             case "+":

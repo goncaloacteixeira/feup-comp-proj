@@ -9,16 +9,18 @@ class HelloWorld {
         int[] A;
         boolean b;
 
-        HelloWorld hello;
+        a = 1;
+        A = new int[1 + 2];
+        A[this.foo() + this.foo() / 2] = 10;
 
-        hello = new HelloWorld();
+        a = A[a];
     }
 
-    /*public int foo() {
+    public int foo() {
         return 1 + 2;
     }
 
     public boolean ata(int a) {
         return true;
-    }*/
+    }
 }
