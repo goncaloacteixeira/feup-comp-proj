@@ -86,6 +86,10 @@ public class OllirTemplates {
     }
 
     public static String variable(Symbol variable, String parameter) {
+        if (variable.getName().charAt(0) == '$') {
+            variable = new Symbol(variable.getType(), "_" + variable.getName());
+        }
+
         if (parameter == null) return variable(variable);
         return parameter + "." + variable(variable);
     }

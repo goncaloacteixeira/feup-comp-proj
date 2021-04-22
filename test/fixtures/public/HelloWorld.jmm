@@ -3,17 +3,14 @@ import ioPlus;
 class HelloWorld {
     int nice;
     int[] ok;
+    HelloWorld hello;
 
     public static void main(String[] args) {
         int a;
         int[] A;
         boolean b;
 
-        a = 1;
-        A = new int[1 + 2];
-        A[this.foo() + this.foo() / 2] = 10;
-
-        a = A[a];
+        hello = new HelloWorld();
     }
 
     public int foo() {
