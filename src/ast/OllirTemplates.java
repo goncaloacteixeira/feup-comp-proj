@@ -134,4 +134,8 @@ public class OllirTemplates {
     public static String field(Symbol variable) {
         return String.format(".field public %s;", variable(variable));
     }
+
+    public static String arrayinit(String size) {
+        return String.format("new(array, %s).array.i32", size);
+    }
 }

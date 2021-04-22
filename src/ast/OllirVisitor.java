@@ -58,6 +58,8 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         addVisit("MethodCall", this::dealWithMethodCall);
         addVisit("Length", this::dealWithMethodCall);
 
+        addVisit("ArrayInit", this::dealWithArrayInit);
+
         setDefaultVisit(this::defaultVisit);
     }
 
@@ -655,6 +657,26 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
         return Map.entry(params, String.join(", ", paramsOllir));
+    }
+
+    private List<Object> dealWithArrayInit(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        visited.add(node);
+
+        StringBuilder ollir = new StringBuilder();
+
+        String size = (String) visit(node.getChildren().get(0), Collections.singletonList("RETURN")).get(0);
+
+        String[] sizeParts = size.split("\n");
+        if (sizeParts.length > 1) {
+            for (int i = 0; i < sizeParts.length - 1; i++) {
+                ollir.append(sizeParts[i]).append("\n");
+            }
+        }
+
+        ollir.append(OllirTemplates.arrayinit(sizeParts[sizeParts.length - 1]));
+
+        return Collections.singletonList(ollir.toString());
     }
 
 
