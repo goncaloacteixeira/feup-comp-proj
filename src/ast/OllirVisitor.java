@@ -59,6 +59,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         addVisit("Length", this::dealWithMethodCall);
 
         addVisit("ArrayInit", this::dealWithArrayInit);
+        addVisit("NewObject", this::dealWithNewObject);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -181,7 +182,8 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         StringBuilder ollir = new StringBuilder();
 
-        String result = (String) visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT")).get(0);
+        List<Object> visitResult = visit(node.getChildren().get(0), Collections.singletonList(classField ? "FIELD" : "ASSIGNMENT"));
+        String result = (String) visitResult.get(0);
         String[] parts = result.split("\n");
         if (parts.length > 1) {
             for (int i = 0; i < parts.length - 1; i++) {
@@ -206,6 +208,10 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                 ollir.append(OllirTemplates.putfield(OllirTemplates.variable(variable.getKey()), result));
                 ollir.append(";");
             }
+        }
+
+        if (visitResult.size() > 1 && visitResult.get(1).equals("OBJECT_INIT")) {
+            ollir.append("\n").append(OllirTemplates.objectinstance(variable.getKey()));
         }
 
         return Collections.singletonList(ollir.toString());
@@ -677,6 +683,13 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         ollir.append(OllirTemplates.arrayinit(sizeParts[sizeParts.length - 1]));
 
         return Collections.singletonList(ollir.toString());
+    }
+
+    private List<Object> dealWithNewObject(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        visited.add(node);
+
+        return Arrays.asList(OllirTemplates.objectinit(node.get("value")), "OBJECT_INIT");
     }
 
 

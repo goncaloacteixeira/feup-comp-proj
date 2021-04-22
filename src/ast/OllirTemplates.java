@@ -138,4 +138,12 @@ public class OllirTemplates {
     public static String arrayinit(String size) {
         return String.format("new(array, %s).array.i32", size);
     }
+
+    public static String objectinit(String objectClass) {
+        return String.format("new(%s).%s", objectClass, objectClass);
+    }
+
+    public static String objectinstance(Symbol variable) {
+        return String.format("invokespecial(%s,\"<init>\").V;", variable(variable));
+    }
 }
