@@ -24,22 +24,20 @@ public class JasminGenerator {
 
     public JasminGenerator(ClassUnit classUnit) {
         this.classUnit = classUnit;
-
-        //setDefaultVisit(this::defaultVisit);
     }
 
-    private String dealWithClass(){
+    public String dealWithClass(){
         String stringBuilder = "";
         stringBuilder += ".class " + classUnit.getClassName() + "\n";
         stringBuilder += ".method public <init>()V\n" +
                 "aload_0\n" +
                 "invokenonvirtual java/lang/Object/<init>()V\n" +
                 "return\n" +
-                ".end method";
-        return stringBuilder;
+                ".end method\n";
+        return stringBuilder + dealWithMethods();
     }
 
-    public String dealWithMethod(){
+    public String dealWithMethods() {
         //TODO limit stack
         //TODO limit locals
         String stringBuilder = "";
@@ -53,10 +51,12 @@ public class JasminGenerator {
 
                 stringBuilder += String.join(",", getConvertedParams(method.getParams()));
 
-                stringBuilder += ")";
+                stringBuilder += ")\n";
             }
 
-            for (Map.Entry<String, Descriptor> entry : OllirAccesser.getVarTable(method).entrySet()){
+            HashMap<String, Descriptor> varTable = OllirAccesser.getVarTable(method);
+
+            for (Map.Entry<String, Descriptor> entry : varTable.entrySet()){
                 if (entry.getValue().getScope().equals(VarScope.LOCAL))
                     localCount++;
             }
@@ -66,23 +66,49 @@ public class JasminGenerator {
 
 
             for (Instruction instruction : method.getInstructions()){
-                dealWithInstruction(instruction);
+                stringBuilder += dealWithInstruction(instruction, varTable) + "\n";
             }
+
+            switch (method.getReturnType().getTypeOfElement()){
+                case INT32:
+                case BOOLEAN:
+                    stringBuilder += "ireturn";
+                    break;
+                case ARRAYREF:
+                case OBJECTREF:
+                    stringBuilder += "areturn";
+                    break;
+                case VOID:
+                    stringBuilder += "return";
+                    break;
+            }
+
+            stringBuilder += "\n.endmethod\n";
 
         }
         return stringBuilder;
     }
 
-    public String dealWithInstruction(Instruction instruction){
-        String stringBuilder = "";
+    public String dealWithInstruction(Instruction instruction, HashMap<String, Descriptor> varTable){
         if (instruction instanceof AssignInstruction){
-
+            return dealWithAssignment((AssignInstruction) instruction, varTable);
+        } else if (instruction instanceof SingleOpInstruction) {
+            return dealWithSingleOpInstruction((SingleOpInstruction) instruction, varTable);
+        } else {
+            //TODO
+            return "Lidate with rest of instructions";
         }
-        return "";
     }
 
-    public String dealWithAssignment(AssignInstruction inst){
-        return dealWithInstruction(inst.getRhs());
+    public String dealWithAssignment(AssignInstruction inst, HashMap<String, Descriptor> varTable){
+        String stringBuilder = dealWithInstruction(inst.getRhs(), varTable);
+        Operand op = (Operand) inst.getDest();
+        return stringBuilder + "istore_" + varTable.get(op.getName()).getVirtualReg() + "\n";
+    }
+
+    public String dealWithSingleOpInstruction(SingleOpInstruction instruction, HashMap varTable) {
+        LiteralElement operand = (LiteralElement) instruction.getSingleOperand();
+        return "iconst_" + operand.getLiteral() + "\n";
     }
 
     public List<String> getConvertedParams(List<Element> params){
@@ -105,5 +131,4 @@ public class JasminGenerator {
         }
         return convertedParams;
     }
-
 }

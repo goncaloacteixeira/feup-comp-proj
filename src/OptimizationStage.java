@@ -43,7 +43,7 @@ public class OptimizationStage implements JmmOptimization {
         System.out.println("OLLIR Generation Successful!");
 
         // System.out.println(ollirCode);
-        /*
+
         // Para escrever o ficheiro com codigo OLLIR para efeitos de teste
         try {
             FileWriter myWriter = new FileWriter("test.ollir");
@@ -54,7 +54,7 @@ public class OptimizationStage implements JmmOptimization {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
-         */
+
 
         return new OllirResult(semanticsResult, ollirCode, semanticsResult.getReports());
     }

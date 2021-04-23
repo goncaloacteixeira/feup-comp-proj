@@ -35,7 +35,7 @@ public class OptimizeTest {
 
     @Test
     public void testHelloWorld() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Test.jmm"));
         TestUtils.noErrors(result.getReports());
     }
 
