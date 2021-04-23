@@ -53,7 +53,6 @@ public class OptimizationStage implements JmmOptimization {
             e.printStackTrace();
         }
 
-
         return new OllirResult(semanticsResult, ollirCode, semanticsResult.getReports());
     }
 
