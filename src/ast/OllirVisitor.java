@@ -70,21 +70,31 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
     private List<Object> dealWithClass(JmmNode node, List<Object> data) {
         scope = "CLASS";
 
+        List<String> fields = new ArrayList<>();
+        List<String> classBody = new ArrayList<>();
+
+        // fields
+        for (JmmNode child : node.getChildren()) {
+            String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
+            if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT")) {
+                if (child.getKind().equals("VarDeclaration")) {
+                    fields.add(ollirChild);
+                } else {
+                    classBody.add(ollirChild);
+                }
+            }
+        }
+
         StringBuilder ollir = new StringBuilder();
 
         ollir.append(OllirTemplates.classTemplate(table.getClassName()));
 
-        List<String> classBody = new ArrayList<>();
-
-        for (JmmNode child : node.getChildren()) {
-            String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
-            if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
-                classBody.add(ollirChild);
-        }
-
-        ollir.append(String.join("\n\n", classBody));
+        ollir.append(String.join("\n", fields)).append("\n\n");
+        ollir.append(OllirTemplates.constructor(table.getClassName())).append("\n\n");
+        ollir.append(String.join("\n\n", classBody)).append("\n\n");
 
         ollir.append(OllirTemplates.closeBrackets());
+
         return Collections.singletonList(ollir.toString());
     }
 
@@ -364,8 +374,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                     ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(variable)));
 
                     return Arrays.asList(ollir.toString(), variable, name);
-                }
-                else {
+                } else {
                     if (superiorOllir != null) {
                         superiorOllir.append(String.format("%s :=%s %s;\n",
                                 OllirTemplates.variable(variable),
