@@ -14,13 +14,11 @@ import static org.junit.Assert.assertEquals;
 
 public class AnalysisTest {
     private List<String> validFiles;
-    private List<String> syntacticalErrorFiles;
     private List<String> semanticErrorFiles;
 
     @Before
     public void setup() {
         validFiles = Utils.getValidFiles();
-        syntacticalErrorFiles = Utils.getSyntacticalErrorFiles();
         semanticErrorFiles = Utils.getSemanticErrorFiles();
     }
 
@@ -48,11 +46,9 @@ public class AnalysisTest {
             System.out.print("Testing: " + filename);
             String code = Utils.getJmmCode(filename);
             System.setOut(new PrintStream(new Utils.NullOutputStream()));
-
             JmmSemanticsResult result = TestUtils.analyse(code);
-            TestUtils.noErrors(result.getReports());
-
             System.setOut(Utils.realSystemOut);
+            TestUtils.noErrors(result.getReports());
             System.out.print("  - PASSED\n");
         }
     }

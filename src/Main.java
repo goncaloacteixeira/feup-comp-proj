@@ -26,7 +26,7 @@ public class Main implements JmmParser {
 			JAVAMINUSMINUSPARSER parser = new JAVAMINUSMINUSPARSER(new StringReader(jmmCode));
 			SimpleNode root = parser.Program(); // returns reference to root node
 
-    		root.dump(""); // prints the tree on the screen
+    		// root.dump(""); // prints the tree on the screen
 
     		return new JmmParserResult(root, parser.reports);
 		} catch(ParseException e) {

@@ -1,8 +1,10 @@
 package ast;
 
 import ast.exceptions.WrongArgumentType;
+import org.specs.comp.ollir.OllirAccesser;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
+import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
 import java.util.*;
 
@@ -134,5 +136,24 @@ public class JmmMethod {
         }
 
         return types;
+    }
+
+    public String isParameter(Symbol symbol) {
+        for (int i = 1; i < this.parameters.size() + 1; i++) {
+            if (parameters.get(i - 1).getKey() == symbol) {
+                return "$" + i;
+            }
+        }
+        return null;
+    }
+
+    public List<String> parametersToOllir() {
+        List<String> ollir = new ArrayList<>();
+
+        for (Map.Entry<Symbol, String> parameter : this.parameters) {
+            ollir.add(OllirTemplates.variable(parameter.getKey()));
+        }
+
+        return ollir;
     }
 }
