@@ -38,11 +38,13 @@ public class OptimizationStage implements JmmOptimization {
         // More reports from this stage
         OllirVisitor visitor = new OllirVisitor((JmmSymbolTable) semanticsResult.getSymbolTable(), semanticsResult.getReports());
         // Convert the AST to a String containing the equivalent OLLIR code
-        System.out.println("Preorder Visitor - OLLIR Generator");
-        String ollirCode = (String) visitor.visit(node, Arrays.asList("DEFAULT_VISIT")).get(0); // Convert node ...
+        System.out.println("Preorder Visitor - Generating OLLIR...");
+        String ollirCode = (String) visitor.visit(node, Arrays.asList("DEFAULT_VISIT")).get(0);
+        System.out.println("OLLIR Generation Successful!");
 
-        System.out.println(ollirCode);
-
+        // System.out.println(ollirCode);
+        /*
+        // Para escrever o ficheiro com codigo OLLIR para efeitos de teste
         try {
             FileWriter myWriter = new FileWriter("test.ollir");
             myWriter.write(ollirCode);
@@ -52,6 +54,7 @@ public class OptimizationStage implements JmmOptimization {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
+         */
 
         return new OllirResult(semanticsResult, ollirCode, semanticsResult.getReports());
     }

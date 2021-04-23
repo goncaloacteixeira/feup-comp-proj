@@ -25,6 +25,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
     private int temp_sequence = 1;
     private int if_label_sequence = 1;
+    private int while_label_sequence = 1;
 
     public OllirVisitor(JmmSymbolTable table, List<Report> reports) {
         super(OllirVisitor::reduce);
@@ -69,21 +70,31 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
     private List<Object> dealWithClass(JmmNode node, List<Object> data) {
         scope = "CLASS";
 
+        List<String> fields = new ArrayList<>();
+        List<String> classBody = new ArrayList<>();
+
+        // fields
+        for (JmmNode child : node.getChildren()) {
+            String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
+            if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT")) {
+                if (child.getKind().equals("VarDeclaration")) {
+                    fields.add(ollirChild);
+                } else {
+                    classBody.add(ollirChild);
+                }
+            }
+        }
+
         StringBuilder ollir = new StringBuilder();
 
         ollir.append(OllirTemplates.classTemplate(table.getClassName()));
 
-        List<String> classBody = new ArrayList<>();
-
-        for (JmmNode child : node.getChildren()) {
-            String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
-            if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
-                classBody.add(ollirChild);
-        }
-
-        ollir.append(String.join("\n\n", classBody));
+        ollir.append(String.join("\n", fields)).append("\n\n");
+        ollir.append(OllirTemplates.constructor(table.getClassName())).append("\n\n");
+        ollir.append(String.join("\n\n", classBody)).append("\n\n");
 
         ollir.append(OllirTemplates.closeBrackets());
+
         return Collections.singletonList(ollir.toString());
     }
 
@@ -128,6 +139,8 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         builder.append(String.join("\n", body));
 
+
+        builder.append("\nret.V 0.V;");
         builder.append(OllirTemplates.closeBrackets());
 
         return Collections.singletonList(builder.toString());
@@ -212,9 +225,9 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                 ollirVariable = temp;
             }
 
-            visitResult = visit(node.getChildren().get(1), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey()));
+            visitResult = visit(node.getChildren().get(1), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "ARRAY_ACCESS"));
         } else {
-            visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey()));
+            visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
         }
 
 
@@ -331,21 +344,52 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         Map.Entry<Symbol, Boolean> field = null;
 
+        boolean classField = false;
         if (scope.equals("CLASS")) {
+            classField = true;
             field = table.getField(node.get("name"));
         } else if (scope.equals("METHOD") && currentMethod != null) {
             field = currentMethod.getField(node.get("name"));
             if (field == null) {
+                classField = true;
                 field = table.getField(node.get("name"));
             }
         }
 
+        StringBuilder superiorOllir = null;
+        if (data.get(0).equals("ACCESS")) {
+            superiorOllir = (StringBuilder) data.get(1);
+        }
+
         if (field != null) {
             String name = currentMethod.isParameter(field.getKey());
+            if (classField && !scope.equals("CLASS")) {
+                StringBuilder ollir = new StringBuilder();
+                Symbol variable = new Symbol(field.getKey().getType(), "temporary" + temp_sequence++);
+                if (data.get(0).equals("CONDITION")) {
+                    ollir.append(String.format("%s :=%s %s;\n",
+                            OllirTemplates.variable(variable),
+                            OllirTemplates.type(variable.getType()),
+                            OllirTemplates.getfield(field.getKey())));
+                    ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(variable)));
 
-            if (data.get(0).equals("CONDITION")) {
-                return Arrays.asList(String.format("%s ==.bool 1.bool", OllirTemplates.variable(field.getKey(), name)), field.getKey(), name);
+                    return Arrays.asList(ollir.toString(), variable, name);
+                } else {
+                    if (superiorOllir != null) {
+                        superiorOllir.append(String.format("%s :=%s %s;\n",
+                                OllirTemplates.variable(variable),
+                                OllirTemplates.type(variable.getType()),
+                                OllirTemplates.getfield(field.getKey())));
+                    }
+
+                    ollir.append(OllirTemplates.variable(variable));
+                    return Arrays.asList(ollir.toString(), variable, name);
+                }
             } else {
+                if (data.get(0).equals("CONDITION")) {
+                    return Arrays.asList(String.format("%s ==.bool 1.bool", OllirTemplates.variable(field.getKey(), name)), field.getKey(), name);
+                }
+
                 return Arrays.asList(OllirTemplates.variable(field.getKey(), name), field.getKey(), name);
             }
         }
@@ -424,20 +468,40 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
+        Symbol variable = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+
         String[] expressionParts;
         if ((expressionParts = last.split("<")).length == 2) {
-            ollir.append(String.format("%s>=%s", expressionParts[0], expressionParts[1]));
+            if (data.get(0).equals("RETURN")) {
+                ollir.append(String.format("%s :=.bool %s>=%s;\n", OllirTemplates.variable(variable), expressionParts[0], expressionParts[1]));
+                ollir.append(String.format("%s", OllirTemplates.variable(variable)));
+            } else {
+                ollir.append(String.format("%s>=%s", expressionParts[0], expressionParts[1]));
+            }
         } else if ((expressionParts = last.split(">=")).length == 2) {
-            ollir.append(String.format("%s<%s", expressionParts[0], expressionParts[1]));
+            if (data.get(0).equals("RETURN")) {
+                ollir.append(String.format("%s :=.bool %s<%s;\n", OllirTemplates.variable(variable), expressionParts[0], expressionParts[1]));
+                ollir.append(String.format("%s", OllirTemplates.variable(variable)));
+            } else {
+                ollir.append(String.format("%s<%s", expressionParts[0], expressionParts[1]));
+            }
         } else if (expression.equals("0.bool")) {
             ollir.append("1.bool");
         } else if (expression.equals("1.bool")) {
             ollir.append("0.bool");
         } else {
-            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)), last));
-            ollir.append(String.format("%s !.bool %s",
-                    OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence)),
-                    OllirTemplates.variable(new Symbol(new Type("boolean", false), "temporary" + temp_sequence++))));
+            if (data.get(0).equals("RETURN")) {
+                Symbol variable1 = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+
+                ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(variable1), last));
+                ollir.append(String.format("%s :=.bool %s !.bool %s;\n", OllirTemplates.variable(variable), OllirTemplates.variable(variable1), OllirTemplates.variable(variable1)));
+                ollir.append(String.format("%s", OllirTemplates.variable(variable)));
+            } else {
+                ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(variable), last));
+                ollir.append(String.format("%s !.bool %s",
+                        OllirTemplates.variable(variable),
+                        OllirTemplates.variable(variable)));
+            }
         }
 
         return Collections.singletonList(ollir.toString());
@@ -449,6 +513,8 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         StringBuilder ollir = new StringBuilder();
 
+        int count = if_label_sequence++;
+
         String ifCondition = (String) visit(node.getChildren().get(0), Collections.singletonList("CONDITION")).get(0);
 
         String[] ifConditionParts = ifCondition.split("\n");
@@ -458,22 +524,20 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        ollir.append(String.format("if (%s) goto ifbody%d;\n", ifConditionParts[ifConditionParts.length - 1], if_label_sequence));
+        ollir.append(String.format("if (%s) goto ifbody%d;\n", ifConditionParts[ifConditionParts.length - 1], count));
 
         ollir.append(visit(node.getParent().getChildren().get(1), Collections.singletonList("ELSE")).get(0));
         ollir.append("\n");
-        ollir.append(String.format("goto endif;\n", if_label_sequence));
+        ollir.append(String.format("goto endif%d;\n", count));
 
-        ollir.append(String.format("ifbody%d:\n", if_label_sequence));
+        ollir.append(String.format("ifbody%d:\n", count));
         List<String> ifBody = new ArrayList<>();
         for (int i = 1; i < node.getChildren().size(); i++) {
             ifBody.add((String) visit(node.getChildren().get(i), Collections.singletonList("IF")).get(0));
         }
         ollir.append(String.join("\n", ifBody)).append("\n");
-        ollir.append(String.format("goto endif%d;\n", if_label_sequence));
-        ollir.append(String.format("endif%d:\n", if_label_sequence));
-
-        if_label_sequence++;
+        ollir.append(String.format("goto endif%d;\n", count));
+        ollir.append(String.format("endif%d:\n", count));
 
         return Collections.singletonList(ollir.toString());
     }
@@ -503,7 +567,15 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         StringBuilder ollir = new StringBuilder();
 
-        ollir.append("loop:\n");
+        int count = while_label_sequence++;
+
+        int nodeIndex = node.getParent().getChildren().indexOf(node);
+        if ((nodeIndex - 1 >= 0) && node.getParent().getChildren().get(nodeIndex - 1).getKind().equals("While") ||
+                (nodeIndex - 1 >= 0) && node.getParent().getChildren().get(nodeIndex - 1).getKind().equals("IfElse")) {
+            ollir.append(String.format("goto loop%d;\n", count));
+        }
+
+        ollir.append(String.format("loop%d:\n", count));
 
         String condition = (String) visit(node.getChildren().get(0), Collections.singletonList("WHILE")).get(0);
         String[] conditionParts = condition.split("\n");
@@ -513,18 +585,21 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        ollir.append(String.format("if (%s) goto loopbody;\n", conditionParts[conditionParts.length - 1]));
-        ollir.append("end:\ngoto endloop;\n");
+        ollir.append(String.format("if (%s) goto loopbody%d;\n",
+                conditionParts[conditionParts.length - 1],
+                count));
+        ollir.append(String.format("end%d:\ngoto endloop%d;\n", count, count));
 
-        ollir.append("loopbody:\n");
+        ollir.append(String.format("loopbody%d:\n", count));
         List<String> body = new ArrayList<>();
         for (int i = 1; i < node.getChildren().size(); i++) {
             body.add((String) visit(node.getChildren().get(i), Arrays.asList("IF")).get(0));
         }
         ollir.append(String.join("\n", body)).append("\n");
 
-        ollir.append("goto loop;\n");
-        ollir.append("endloop:");
+        ollir.append(String.format("goto loop%d;\n", count));
+
+        ollir.append(String.format("endloop%d:", count));
 
         return Collections.singletonList(ollir.toString());
     }
@@ -545,7 +620,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         StringBuilder ollir = new StringBuilder();
 
-        List<Object> targetReturn = visit(target, Arrays.asList("ACCESS"));
+        List<Object> targetReturn = visit(target, Arrays.asList("ACCESS", ollir));
         List<Object> methodReturn = visit(method, Arrays.asList("ACCESS", ollir));
         Symbol variable;
         boolean auxiliary = data.get(0).equals("BINARY") || data.get(0).equals("RETURN") || data.get(0).equals("CONDITION");
@@ -561,41 +636,42 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                         if (data.get(0).equals("FIELD") || data.get(0).equals("ASSIGNMENT")) {
                             assignment = (Symbol) data.get(1);
                         }
-
                         if (assignment != null) {
                             if (data.get(0).equals("FIELD")) {
                                 variable = new Symbol(assignment.getType(), "temporary" + temp_sequence++);
 
+                                Type assignmentType = assignment.getType();
+                                if (assignmentType.isArray() && data.get(2).equals("ARRAY_ACCESS")) {
+                                    assignmentType = new Type(assignment.getType().getName(), false);
+                                }
+
                                 ollir.append(String.format("%s :=%s %s;\n",
                                         OllirTemplates.variable(variable),
                                         OllirTemplates.type(variable.getType()),
-                                        OllirTemplates.invokevirtual(
+                                        OllirTemplates.invokespecial(
                                                 (String) methodReturn.get(1),
-                                                assignment.getType(),
+                                                assignmentType,
                                                 (String) methodReturn.get(2))));
 
                                 ollir.append(OllirTemplates.variable(variable));
                             } else {
                                 ollir.append(String.format("%s",
-                                        OllirTemplates.invokevirtual(
+                                        OllirTemplates.invokespecial(
                                                 (String) methodReturn.get(1),
                                                 assignment.getType(),
                                                 (String) methodReturn.get(2))));
                             }
-
-
                             returnType = assignment.getType();
                         } else {
                             ollir.append(String.format("%s",
-                                    OllirTemplates.invokevirtual(
+                                    OllirTemplates.invokespecial(
                                             (String) methodReturn.get(1),
                                             new Type("void", false),
                                             (String) methodReturn.get(2))));
 
                             returnType = new Type("void", false);
                         }
-                    }
-                    else {
+                    } else {
                         if (data.get(0).equals("FIELD")) {
                             variable = new Symbol(((JmmMethod) methodReturn.get(1)).getReturnType(), "temporary" + temp_sequence++);
 
@@ -619,14 +695,25 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                         returnType = ((JmmMethod) methodReturn.get(1)).getReturnType();
                     }
                 } else {
-                    variable = new Symbol(((JmmMethod) methodReturn.get(1)).getReturnType(), "temporary" + temp_sequence++);
+                    JmmMethod method1;
+                    Type assignmentType = new Type("void", false);
+                    if (data.get(0).equals("RETURN")) {
+                        assignmentType = currentMethod.getReturnType();
+                    }
+
+                    if (methodReturn.get(0).equals("method")) {
+                        method1 = new JmmMethod((String) methodReturn.get(1), assignmentType);
+                    } else {
+                        method1 = (JmmMethod) methodReturn.get(1);
+                    }
+                    variable = new Symbol(method1.getReturnType(), "temporary" + temp_sequence++);
 
                     ollir.append(String.format("%s :=%s %s;\n",
                             OllirTemplates.variable(variable),
                             OllirTemplates.type(variable.getType()),
                             OllirTemplates.invokevirtual(
-                                    ((JmmMethod) methodReturn.get(1)).getName(),
-                                    ((JmmMethod) methodReturn.get(1)).getReturnType(),
+                                    method1.getName(),
+                                    method1.getReturnType(),
                                     (String) methodReturn.get(2))));
 
                     if (data.get(0).equals("CONDITION")) {
@@ -634,7 +721,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                     } else {
                         ollir.append(OllirTemplates.variable(variable));
                     }
-                    returnType = ((JmmMethod) methodReturn.get(1)).getReturnType();
+                    returnType = method1.getReturnType();
                 }
             } else {
                 if (!auxiliary) {
@@ -644,11 +731,30 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                     }
 
                     if (assignment != null) {
-                        ollir.append(String.format("%s",
-                                OllirTemplates.invokestatic(target.get("name"),
-                                        (String) methodReturn.get(1),
-                                        assignment.getType(),
-                                        (String) methodReturn.get(2))));
+                        Type assignmentType = assignment.getType();
+                        if (assignmentType.isArray() && data.get(2).equals("ARRAY_ACCESS")) {
+                            assignmentType = new Type(assignment.getType().getName(), false);
+                        }
+
+                        if (data.get(0).equals("FIELD")) {
+                            Symbol temp = new Symbol(assignmentType, "temporary" + temp_sequence++);
+                            ollir.append(String.format("%s :=%s %s;\n",
+                                    OllirTemplates.variable(temp),
+                                    OllirTemplates.type(assignmentType),
+                                    OllirTemplates.invokestatic(target.get("name"),
+                                            (String) methodReturn.get(1),
+                                            assignmentType,
+                                            (String) methodReturn.get(2))));
+
+                            ollir.append(OllirTemplates.variable(temp));
+                        } else {
+                            ollir.append(String.format("%s",
+                                    OllirTemplates.invokestatic(target.get("name"),
+                                            (String) methodReturn.get(1),
+                                            assignmentType,
+                                            (String) methodReturn.get(2))));
+                        }
+
                         returnType = assignment.getType();
                     } else {
                         ollir.append(String.format("%s",
@@ -716,22 +822,26 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             } else {
                 if (methodReturn.get(0).equals("method")) {
                     Symbol assignment = null;
-                    if (targetReturn.get(0).equals("FIELD") || targetReturn.get(0).equals("ASSIGNMENT")) {
-                        assignment = (Symbol) targetReturn.get(1);
+                    if (data.get(0).equals("FIELD") || data.get(0).equals("ASSIGNMENT")) {
+                        assignment = (Symbol) data.get(1);
+                    }
+                    Type assignmentType = assignment.getType();
+                    if (assignmentType.isArray() && data.get(2).equals("ARRAY_ACCESS")) {
+                        assignmentType = new Type(assignment.getType().getName(), false);
                     }
 
                     if (!auxiliary) {
                         if (assignment != null) {
                             ollir.append(String.format("%s",
-                                    OllirTemplates.invokevirtual(
+                                    OllirTemplates.invokespecial(
                                             OllirTemplates.variable((Symbol) targetReturn.get(1)),
                                             (String) methodReturn.get(1),
-                                            assignment.getType(),
+                                            assignmentType,
                                             (String) methodReturn.get(2))));
                             returnType = assignment.getType();
                         } else {
                             ollir.append(String.format("%s",
-                                    OllirTemplates.invokevirtual(
+                                    OllirTemplates.invokespecial(
                                             OllirTemplates.variable((Symbol) targetReturn.get(1)),
                                             (String) methodReturn.get(1),
                                             new Type("void", false),
@@ -739,7 +849,6 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
                             returnType = new Type("void", false);
                         }
-
                     } else {
                         if (assignment != null) {
                             variable = new Symbol(assignment.getType(), "temporary" + temp_sequence++);
@@ -747,17 +856,18 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                             ollir.append(String.format("%s :=%s %s;\n",
                                     OllirTemplates.variable(variable),
                                     OllirTemplates.type(variable.getType()),
-                                    OllirTemplates.invokevirtual(
+                                    OllirTemplates.invokespecial(
                                             OllirTemplates.variable((Symbol) targetReturn.get(1)),
                                             (String) methodReturn.get(1),
                                             variable.getType(),
                                             (String) methodReturn.get(2))));
                             if (data.get(0).equals("CONDITION")) {
                                 ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(variable)));
+                                returnType = new Type("bool", false);
                             } else {
                                 ollir.append(OllirTemplates.variable(variable));
+                                returnType = variable.getType();
                             }
-                            returnType = new Type("bool", false);
                         } else {
                             returnType = new Type("void", false);
                         }
@@ -796,7 +906,6 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         if (data.get(0).equals("METHOD") || data.get(0).equals("IF")) {
             ollir.append(";");
         }
-
 
         return Arrays.asList(ollir.toString(), returnType);
     }
@@ -847,8 +956,15 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                 case "Variable":
                     List<Object> variable = visit(child, Arrays.asList("PARAM"));
 
+                    statements = ((String) variable.get(0)).split("\n");
+                    if (statements.length > 1) {
+                        for (int i = 0; i < statements.length - 1; i++) {
+                            ollir.append(statements[i]).append("\n");
+                        }
+                    }
+
                     params.add(((Symbol) variable.get(1)).getType());
-                    paramsOllir.add((String) variable.get(0));
+                    paramsOllir.add(statements[statements.length - 1]);
                     break;
                 case "AccessExpression":
                     List<Object> accessExpression = visit(child, Arrays.asList("PARAM"));
@@ -927,7 +1043,6 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         return Arrays.asList(visit);
     }
-
 
     private List<Object> defaultVisit(JmmNode node, List<Object> data) {
         return Collections.singletonList("DEFAULT_VISIT");
