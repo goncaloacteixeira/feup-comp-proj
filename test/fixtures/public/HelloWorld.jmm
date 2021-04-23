@@ -1,23 +1,28 @@
 import ioPlus;
 
-class HelloWorld {
+class HelloWorld extends Nice {
     int nice;
-    int[] ok;
-    HelloWorld hello;
+    int[] arr;
 
     public static void main(String[] args) {
         int a;
         int[] A;
         boolean b;
 
-        hello = new HelloWorld();
+        arr = this.init();
+
+        arr = this.foo(1);
+
+        arr = ioPlus.init(this.foo(1));
+
+        a = arr[1];
     }
 
-    public int foo() {
-        return 1 + 2;
-    }
+    public int[] foo(int a) {
+        int[] ok;
 
-    public boolean ata(int a) {
-        return true;
+        ok = new int[10];
+
+        return this.init();
     }
 }

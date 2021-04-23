@@ -62,11 +62,9 @@ public class OllirTemplates {
             ollir.append(".i32");
         } else if ("void".equals(type.getName())) {
             ollir.append(".V");
-        }
-        else if ("boolean".equals(type.getName())) {
+        } else if ("boolean".equals(type.getName())) {
             ollir.append(".bool");
-        }
-        else {
+        } else {
             ollir.append(".").append(type.getName());
         }
 
@@ -85,19 +83,29 @@ public class OllirTemplates {
         return param.toString();
     }
 
-    public static String variable(Symbol variable, String parameter) {
+    private static Symbol escapeVariable(Symbol variable) {
         if (variable.getName().charAt(0) == '$') {
-            variable = new Symbol(variable.getType(), "_" + variable.getName());
-        } else if (variable.getName().equals("ret")) {
-            variable = new Symbol(variable.getType(), "_" + variable.getName());
+            return new Symbol(variable.getType(), "dollar_" + variable.getName().substring(1));
+        } else if (variable.getName().charAt(0) == '_') {
+            return new Symbol(variable.getType(), "under_" + variable.getName().substring(1));
+        } else if (variable.getName().equals("ret") || variable.getName().equals("array")) {
+            return new Symbol(variable.getType(), "escaped_" + variable.getName());
         }
+        return variable;
+    }
+
+    public static String variable(Symbol variable, String parameter) {
+        variable = escapeVariable(variable);
 
         if (parameter == null) return variable(variable);
         return parameter + "." + variable(variable);
     }
 
     public static String arrayaccess(Symbol variable, String parameter, String index) {
-        if (parameter == null) return String.format("%s[%s]%s", variable.getName(), index, type(new Type(variable.getType().getName(), false)));
+        variable = escapeVariable(variable);
+
+        if (parameter == null)
+            return String.format("%s[%s]%s", variable.getName(), index, type(new Type(variable.getType().getName(), false)));
         return String.format("%s.%s[%s]%s", parameter, variable.getName(), index, type(new Type(variable.getType().getName(), false)));
     }
 
@@ -130,12 +138,22 @@ public class OllirTemplates {
 
     public static String invokevirtual(String var, String method, Type returnType, String parameters) {
         if (parameters.equals(""))
-            return String.format("invokevirtual(%s, \"%s\")%s", var != null ? var : "this",  method, type(returnType));
+            return String.format("invokevirtual(%s, \"%s\")%s", var != null ? var : "this", method, type(returnType));
         return String.format("invokevirtual(%s, \"%s\", %s)%s", var != null ? var : "this", method, parameters, type(returnType));
     }
 
     public static String invokevirtual(String method, Type returnType, String parameters) {
         return invokevirtual(null, method, returnType, parameters);
+    }
+
+    public static String invokespecial(String var, String method, Type returnType, String parameters) {
+        if (parameters.equals(""))
+            return String.format("invokespecial(%s, \"%s\")%s", var != null ? var : "this", method, type(returnType));
+        return String.format("invokespecial(%s, \"%s\", %s)%s", var != null ? var : "this", method, parameters, type(returnType));
+    }
+
+    public static String invokespecial(String method, Type returnType, String parameters) {
+        return invokespecial(null, method, returnType, parameters);
     }
 
     public static String arraylength(String variable) {
@@ -144,6 +162,10 @@ public class OllirTemplates {
 
     public static String putfield(String variable, String value) {
         return String.format("putfield(this, %s, %s).V", variable, value);
+    }
+
+    public static String getfield(Symbol variable) {
+        return String.format("getfield(this, %s)%s", variable(variable), type(variable.getType()));
     }
 
     public static String field(Symbol variable) {
