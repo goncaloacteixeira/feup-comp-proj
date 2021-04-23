@@ -91,7 +91,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         ollir.append(String.join("\n", fields)).append("\n\n");
         ollir.append(OllirTemplates.constructor(table.getClassName())).append("\n\n");
-        ollir.append(String.join("\n\n", classBody)).append("\n\n");
+        ollir.append(String.join("\n\n", classBody));
 
         ollir.append(OllirTemplates.closeBrackets());
 
