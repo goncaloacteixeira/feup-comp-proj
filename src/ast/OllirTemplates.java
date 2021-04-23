@@ -88,6 +88,8 @@ public class OllirTemplates {
     public static String variable(Symbol variable, String parameter) {
         if (variable.getName().charAt(0) == '$') {
             variable = new Symbol(variable.getType(), "_" + variable.getName());
+        } else if (variable.getName().equals("ret")) {
+            variable = new Symbol(variable.getType(), "_" + variable.getName());
         }
 
         if (parameter == null) return variable(variable);
@@ -126,10 +128,14 @@ public class OllirTemplates {
         return String.format("invokestatic(%s, \"%s\", %s)%s", target, method, parameters, type(returnType));
     }
 
-    public static String invokevirtual(String method, Type returnType, String parameters) {
+    public static String invokevirtual(String var, String method, Type returnType, String parameters) {
         if (parameters.equals(""))
-            return String.format("invokevirtual(this, \"%s\")%s", method, type(returnType));
-        return String.format("invokevirtual(this, \"%s\", %s)%s", method, parameters, type(returnType));
+            return String.format("invokevirtual(%s, \"%s\")%s", var != null ? var : "this",  method, type(returnType));
+        return String.format("invokevirtual(%s, \"%s\", %s)%s", var != null ? var : "this", method, parameters, type(returnType));
+    }
+
+    public static String invokevirtual(String method, Type returnType, String parameters) {
+        return invokevirtual(null, method, returnType, parameters);
     }
 
     public static String arraylength(String variable) {

@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +42,17 @@ public class OptimizationStage implements JmmOptimization {
         String ollirCode = (String) visitor.visit(node, Arrays.asList("DEFAULT_VISIT")).get(0); // Convert node ...
 
         System.out.println(ollirCode);
+
+        try {
+            FileWriter myWriter = new FileWriter("test.ollir");
+            myWriter.write(ollirCode);
+            myWriter.close();
+            System.out.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+
 
         return new OllirResult(semanticsResult, ollirCode, semanticsResult.getReports());
     }
