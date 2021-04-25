@@ -380,6 +380,11 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                                 OllirTemplates.variable(variable),
                                 OllirTemplates.type(variable.getType()),
                                 OllirTemplates.getfield(field.getKey())));
+                    } else {
+                        ollir.append(String.format("%s :=%s %s;\n",
+                                OllirTemplates.variable(variable),
+                                OllirTemplates.type(variable.getType()),
+                                OllirTemplates.getfield(field.getKey())));
                     }
 
                     ollir.append(OllirTemplates.variable(variable));
