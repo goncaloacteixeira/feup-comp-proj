@@ -1,20 +1,21 @@
 Test {
-.field public a.i32;
+.field public arr.array.i32;
 
 .construct Test().V {
 invokespecial(this, "<init>").V;
 }
 
-.method public A(d.i32).bool {
-putfield(this, a.i32, 1.i32).V;
-$1.d.i32 :=.i32 getfield(this, a.i32).i32;
-temporary2.bool :=.bool 1.bool;
-ret.bool temporary2.bool;
+.method public foo(a.i32).array.i32 {
+temporary1.i32 :=.i32 10.i32;
+ok.array.i32 :=.array.i32 new(array, temporary1.i32).array.i32;
+l.i32 :=.i32 arraylength(ok.array.i32).i32;
+ret.array.i32 ok.array.i32;
 }
 
 .method public static main(args.array.String).V {
 a.i32 :=.i32 1.i32;
-b.i32 :=.i32 a.i32 +.i32 2.i32;
+temporary2.array.i32 :=.array.i32 invokevirtual(this, "foo", 1.i32).array.i32;
+putfield(this, arr.array.i32, temporary2.array.i32).V;
 ret.V 0.V;
 }
 }

@@ -1,17 +1,9 @@
 package ast;
 
-import ast.exceptions.NoSuchMethod;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.analysis.table.Type;
-import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
-import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.specs.util.utilities.StringLines;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Input Data -> {scope, extra_data1, extra_data2, ...}
@@ -65,7 +57,7 @@ public class JasminGenerator {
             }
 
             stringBuilder += ".limit stack 100\n";
-            stringBuilder += ".limit locals " + localCount + "\n";
+            stringBuilder += ".limit locals 100\n"/* + localCount + "\n"*/;
 
 
             for (Instruction instruction : method.getInstructions()) {
@@ -92,6 +84,9 @@ public class JasminGenerator {
         else if (instruction instanceof BinaryOpInstruction) {
             return dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable);
         }
+        else if (instruction instanceof CallInstruction) {
+            return dealWithCallInstruction((CallInstruction) instruction, varTable);
+        }
         else if (instruction instanceof PutFieldInstruction) {
             return dealWithPutFieldInstruction((PutFieldInstruction) instruction, varTable);
         }
@@ -103,42 +98,47 @@ public class JasminGenerator {
         }
         else {
             //TODO
-            return "Deu coco nas Instructions";
+            return "Deu esparguete nas Instructions";
         }
     }
 
     public String dealWithAssignment(AssignInstruction inst, HashMap<String, Descriptor> varTable) {
         String stringBuilder = dealWithInstruction(inst.getRhs(), varTable);
-        Operand op = (Operand) inst.getDest();
+        Operand operand = (Operand) inst.getDest();
 
-        int virtualReg = varTable.get(op.getName()).getVirtualReg();
-        if (virtualReg > 3) {
-            return stringBuilder + "istore " + virtualReg + "\n";
-        }
-        else {
-            return stringBuilder + "istore_" + virtualReg + "\n";
-        }
+        stringBuilder += this.storeElement(operand, varTable);
+
+        return stringBuilder;
     }
 
     public String dealWithSingleOpInstruction(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        return dealWithElement(instruction.getSingleOperand(), varTable);
+        return loadElement(instruction.getSingleOperand(), varTable);
     }
 
     public String dealWithBinaryOpInstruction(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String stringBuilder = dealWithElement(instruction.getLeftOperand(), varTable);
-        stringBuilder += dealWithElement(instruction.getRightOperand(), varTable);
+        String stringBuilder = loadElement(instruction.getLeftOperand(), varTable);
+        stringBuilder += loadElement(instruction.getRightOperand(), varTable);
         return stringBuilder + dealWithOperation(instruction.getUnaryOperation());
     }
 
-    public String dealWithElement(Element element, HashMap<String, Descriptor> varTable) {
+    public String loadElement(Element element, HashMap<String, Descriptor> varTable) {
         if (element instanceof LiteralElement) {
-            return "iconst_" + ((LiteralElement) element).getLiteral() + "\n";
+            String num = ((LiteralElement) element).getLiteral();
+            if (Integer.parseInt(num) <= 5) {
+                return "iconst_" + num + "\n";
+            }
+            else {
+                return "bipush " + num + "\n";
+            }
         }
         else if (element instanceof Operand) {
             Operand operand = (Operand) element;
             switch (operand.getType().getTypeOfElement()) {
+                // TODO this appears in VarTable as local variable
+                case THIS:
+                    return "aload_0\n";
                 case INT32:
-                case BOOLEAN:
+                case BOOLEAN: {
                     int virtualReg = varTable.get(operand.getName()).getVirtualReg();
                     if (virtualReg > 3) {
                         return "iload " + virtualReg + "\n";
@@ -146,10 +146,49 @@ public class JasminGenerator {
                     else {
                         return "iload_" + virtualReg + "\n";
                     }
-
+                }
+                case ARRAYREF: {
+                    int virtualReg = varTable.get(operand.getName()).getVirtualReg();
+                    if (virtualReg > 3) {
+                        return "aload " + virtualReg + "\n";
+                    }
+                    else {
+                        return "aload_" + virtualReg + "\n";
+                    }
+                }
+                default:
+                    break;
             }
         }
-        return "Deu coco nos Elements";
+        return "Deu esparguete nos loads Elements";
+    }
+
+    public String storeElement(Operand operand, HashMap<String, Descriptor> varTable) {
+        switch (operand.getType().getTypeOfElement()) {
+            case INT32:
+            case BOOLEAN: {
+                int virtualReg = varTable.get(operand.getName()).getVirtualReg();
+                if (virtualReg > 3) {
+                    return "istore " + virtualReg + "\n";
+                }
+                else {
+                    return "istore_" + virtualReg + "\n";
+                }
+            }
+            case ARRAYREF: {
+                int virtualReg = varTable.get(operand.getName()).getVirtualReg();
+                if (virtualReg > 3) {
+                    return "astore " + virtualReg + "\n";
+                }
+                else {
+                    return "astore_" + virtualReg + "\n";
+                }
+            }
+            default:
+                break;
+        }
+
+        return "Deu esparguete nos store Elements";
     }
 
     public String dealWithOperation(Operation op) {
@@ -157,7 +196,36 @@ public class JasminGenerator {
             case ADD:
                 return "iadd\n";
         }
-        return "Deu coco nas Ops";
+        return "Deu esparguete nas Ops";
+    }
+
+    public String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String stringBuilder = "";
+        switch (OllirAccesser.getCallInvocation(instruction)) {
+            case invokevirtual:
+                Operand obj = (Operand)instruction.getFirstArg();
+                LiteralElement func = (LiteralElement) instruction.getSecondArg();
+                String parameters = "";
+
+                stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
+                for (Element element : instruction.getListOfOperands()) {
+                    stringBuilder += this.loadElement(element, varTable);
+                    parameters += this.convertElementType(element.getType().getTypeOfElement());
+                }
+                stringBuilder += "invokevirtual " + obj.getName() + "." + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertElementType(instruction.getReturnType().getTypeOfElement()) + "\n";
+                break;
+            case arraylength:
+                stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
+                stringBuilder += "arraylength\n";
+                break;
+            case NEW:
+                // TODO only dealing with array init
+                stringBuilder += this.loadElement(instruction.getListOfOperands().get(0), varTable);
+                stringBuilder += "newarray int\n";
+                break;
+        }
+
+        return stringBuilder;
     }
 
     public String dealWithPutFieldInstruction(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -165,7 +233,7 @@ public class JasminGenerator {
         Operand var = (Operand)instruction.getSecondOperand();
         Element value = instruction.getThirdOperand();
 
-        String stringBuilder = this.dealWithElement(value, varTable);
+        String stringBuilder = this.loadElement(value, varTable);
         return stringBuilder + "putfield " + obj.getName() + "/" + var.getName() + " " + convertElementType(var.getType().getTypeOfElement()) + "\n";
     }
 
@@ -188,12 +256,12 @@ public class JasminGenerator {
         switch (instruction.getOperand().getType().getTypeOfElement()) {
             case INT32:
             case BOOLEAN:
-                returnString = dealWithElement(instruction.getOperand(), varTable);
+                returnString = loadElement(instruction.getOperand(), varTable);
                 returnString += "ireturn";
                 break;
             case ARRAYREF:
             case OBJECTREF:
-                returnString = dealWithElement(instruction.getOperand(), varTable);
+                returnString = loadElement(instruction.getOperand(), varTable);
                 returnString  += "areturn";
                 break;
             default:
@@ -215,6 +283,6 @@ public class JasminGenerator {
                 return "OBJ";
         }
 
-        return "";
+        return "Deu esparguete converter ElementType";
     }
 }

@@ -1,17 +1,20 @@
 class Test {
-    int a;
+    int[] arr;
 
-    public boolean A(int d) {
-        a = 1;
-        d = a;
-        return true;
+    public int[] foo(int a) {
+        int[] ok;
+        int l;
+
+        ok = new int[10];
+        l = ok.length;
+
+        return ok;
     }
 
     public static void main(String[] args) {
         int a;
-        int b;
 
         a = 1;
-        b = a + 2;
+        arr = this.foo(1);
     }
 }
