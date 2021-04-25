@@ -39,7 +39,7 @@ public class JasminGenerator {
             int localCount = 0;
             stringBuilder += "\n.method public ";
             if (method.isConstructMethod()) {
-                stringBuilder += "<init>()V\naload_0\ninvokenonvirtual java/lang/Object/<init>()V\nreturn\n.end method\n";
+                stringBuilder += "<init>()V\naload_0\ninvokespecial java/lang/Object.<init>()V\nreturn\n.end method\n";
                 continue;
             }
             if (method.isStaticMethod()) {
@@ -48,9 +48,13 @@ public class JasminGenerator {
             else {
                 stringBuilder += method.getMethodName() + "(";
 
-                stringBuilder += String.join(",", getConvertedParams(method.getParams()));
+                List<String> convertedParams = new ArrayList<>();
+                for (Element element: method.getParams()) {
+                    convertedParams.add(convertElementType(element.getType().getTypeOfElement()));
+                }
+                stringBuilder += String.join(",", convertedParams);
 
-                stringBuilder += ")\n";
+                stringBuilder += ")" + this.convertElementType(method.getReturnType().getTypeOfElement()) + "\n";
             }
 
             HashMap<String, Descriptor> varTable = OllirAccesser.getVarTable(method);
@@ -68,18 +72,8 @@ public class JasminGenerator {
                 stringBuilder += dealWithInstruction(instruction, varTable);
             }
 
-            switch (method.getReturnType().getTypeOfElement()) {
-                case INT32:
-                case BOOLEAN:
-                    stringBuilder += "ireturn";
-                    break;
-                case ARRAYREF:
-                case OBJECTREF:
-                    stringBuilder += "areturn";
-                    break;
-                case VOID:
-                    stringBuilder += "return";
-                    break;
+            if (method.getReturnType().getTypeOfElement() == ElementType.VOID) {
+                stringBuilder += "return";
             }
 
             stringBuilder += "\n.end method\n";
@@ -98,6 +92,15 @@ public class JasminGenerator {
         else if (instruction instanceof BinaryOpInstruction) {
             return dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable);
         }
+        else if (instruction instanceof PutFieldInstruction) {
+            return dealWithPutFieldInstruction((PutFieldInstruction) instruction, varTable);
+        }
+        else if (instruction instanceof GetFieldInstruction) {
+            return dealWithGetFieldInstruction((GetFieldInstruction) instruction, varTable);
+        }
+        else if (instruction instanceof ReturnInstruction) {
+            return dealWithReturnInstruction((ReturnInstruction) instruction, varTable);
+        }
         else {
             //TODO
             return "Deu coco nas Instructions";
@@ -107,7 +110,14 @@ public class JasminGenerator {
     public String dealWithAssignment(AssignInstruction inst, HashMap<String, Descriptor> varTable) {
         String stringBuilder = dealWithInstruction(inst.getRhs(), varTable);
         Operand op = (Operand) inst.getDest();
-        return stringBuilder + "istore_" + varTable.get(op.getName()).getVirtualReg() + "\n";
+
+        int virtualReg = varTable.get(op.getName()).getVirtualReg();
+        if (virtualReg > 3) {
+            return stringBuilder + "istore " + virtualReg + "\n";
+        }
+        else {
+            return stringBuilder + "istore_" + virtualReg + "\n";
+        }
     }
 
     public String dealWithSingleOpInstruction(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -128,10 +138,18 @@ public class JasminGenerator {
             Operand operand = (Operand) element;
             switch (operand.getType().getTypeOfElement()) {
                 case INT32:
-                    return "iload_" + varTable.get(operand.getName()).getVirtualReg() + "\n";
+                case BOOLEAN:
+                    int virtualReg = varTable.get(operand.getName()).getVirtualReg();
+                    if (virtualReg > 3) {
+                        return "iload " + virtualReg + "\n";
+                    }
+                    else {
+                        return "iload_" + virtualReg + "\n";
+                    }
+
             }
         }
-        return "DEu coco nos Elements";
+        return "Deu coco nos Elements";
     }
 
     public String dealWithOperation(Operation op) {
@@ -142,24 +160,61 @@ public class JasminGenerator {
         return "Deu coco nas Ops";
     }
 
-    public List<String> getConvertedParams(List<Element> params) {
-        List<String> convertedParams = new ArrayList<>();
-        for (Element element : params) {
-            switch (element.getType().getTypeOfElement()) {
-                case INT32:
-                    convertedParams.add("I");
-                    break;
-                case BOOLEAN:
-                    convertedParams.add("Z");
-                    break;
-                case ARRAYREF:
-                    convertedParams.add("[I");
-                    break;
-                case OBJECTREF:
-                    convertedParams.add("OBJ");
-                    break;
-            }
+    public String dealWithPutFieldInstruction(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
+        Operand obj = (Operand)instruction.getFirstOperand();
+        Operand var = (Operand)instruction.getSecondOperand();
+        Element value = instruction.getThirdOperand();
+
+        String stringBuilder = this.dealWithElement(value, varTable);
+        return stringBuilder + "putfield " + obj.getName() + "/" + var.getName() + " " + convertElementType(var.getType().getTypeOfElement()) + "\n";
+    }
+
+    public String dealWithGetFieldInstruction(GetFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
+        //TODO null ??????????
+        /*Operand obj = (Operand)instruction.getFirstOperand();
+        Operand var = (Operand)instruction.getSecondOperand();
+
+        // TODO aload_0 when THIS
+        String jasminCode = "aload_" + varTable.get(obj.getName()).getVirtualReg() + "\n";
+        return jasminCode + "getfield " + convertElementType(var.getType().getTypeOfElement()) + " " + var.getName() + "\n";*/
+        return "";
+    }
+
+    public String dealWithReturnInstruction(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
+        //if(!instruction.hasReturnValue()) return "return";
+        String returnString = "";
+
+        // TODO switch to instruction.getElementType
+        switch (instruction.getOperand().getType().getTypeOfElement()) {
+            case INT32:
+            case BOOLEAN:
+                returnString = dealWithElement(instruction.getOperand(), varTable);
+                returnString += "ireturn";
+                break;
+            case ARRAYREF:
+            case OBJECTREF:
+                returnString = dealWithElement(instruction.getOperand(), varTable);
+                returnString  += "areturn";
+                break;
+            default:
+                break;
         }
-        return convertedParams;
+
+        return returnString;
+    }
+
+    public String convertElementType(ElementType type) {
+        switch (type) {
+            case INT32:
+                return "I";
+            case BOOLEAN:
+                return "Z";
+            case ARRAYREF:
+                return "[I";
+            case OBJECTREF:
+                return "OBJ";
+        }
+
+        return "";
     }
 }

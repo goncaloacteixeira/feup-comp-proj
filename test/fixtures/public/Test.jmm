@@ -1,4 +1,12 @@
 class Test {
+    int a;
+
+    public boolean A(int d) {
+        a = 1;
+        d = a;
+        return true;
+    }
+
     public static void main(String[] args) {
         int a;
         int b;
