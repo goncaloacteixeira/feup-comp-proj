@@ -26,14 +26,8 @@ public class JasminGenerator {
         this.classUnit = classUnit;
     }
 
-    public String dealWithClass(){
-        String stringBuilder = "";
-        stringBuilder += ".class " + classUnit.getClassName() + "\n";
-        stringBuilder += ".method public <init>()V\n" +
-                "aload_0\n" +
-                "invokenonvirtual java/lang/Object/<init>()V\n" +
-                "return\n" +
-                ".end method\n";
+    public String dealWithClass() {
+        String stringBuilder = ".class " + classUnit.getClassName() + "\n.super java/lang/Object\n";
         return stringBuilder + dealWithMethods();
     }
 
@@ -41,12 +35,17 @@ public class JasminGenerator {
         //TODO limit stack
         //TODO limit locals
         String stringBuilder = "";
-        for(Method method : classUnit.getMethods()){
+        for (Method method : classUnit.getMethods()) {
             int localCount = 0;
-            stringBuilder += ".method public ";
+            stringBuilder += "\n.method public ";
+            if (method.isConstructMethod()) {
+                stringBuilder += "<init>()V\naload_0\ninvokenonvirtual java/lang/Object/<init>()V\nreturn\n.end method\n";
+                continue;
+            }
             if (method.isStaticMethod()) {
                 stringBuilder += "static main([Ljava/lang/String;)V\n";
-            }else{
+            }
+            else {
                 stringBuilder += method.getMethodName() + "(";
 
                 stringBuilder += String.join(",", getConvertedParams(method.getParams()));
@@ -56,7 +55,7 @@ public class JasminGenerator {
 
             HashMap<String, Descriptor> varTable = OllirAccesser.getVarTable(method);
 
-            for (Map.Entry<String, Descriptor> entry : varTable.entrySet()){
+            for (Map.Entry<String, Descriptor> entry : varTable.entrySet()) {
                 if (entry.getValue().getScope().equals(VarScope.LOCAL))
                     localCount++;
             }
@@ -65,11 +64,11 @@ public class JasminGenerator {
             stringBuilder += ".limit locals " + localCount + "\n";
 
 
-            for (Instruction instruction : method.getInstructions()){
-                stringBuilder += dealWithInstruction(instruction, varTable) + "\n";
+            for (Instruction instruction : method.getInstructions()) {
+                stringBuilder += dealWithInstruction(instruction, varTable);
             }
 
-            switch (method.getReturnType().getTypeOfElement()){
+            switch (method.getReturnType().getTypeOfElement()) {
                 case INT32:
                 case BOOLEAN:
                     stringBuilder += "ireturn";
@@ -83,38 +82,70 @@ public class JasminGenerator {
                     break;
             }
 
-            stringBuilder += "\n.endmethod\n";
+            stringBuilder += "\n.end method\n";
 
         }
         return stringBuilder;
     }
 
-    public String dealWithInstruction(Instruction instruction, HashMap<String, Descriptor> varTable){
-        if (instruction instanceof AssignInstruction){
+    public String dealWithInstruction(Instruction instruction, HashMap<String, Descriptor> varTable) {
+        if (instruction instanceof AssignInstruction) {
             return dealWithAssignment((AssignInstruction) instruction, varTable);
-        } else if (instruction instanceof SingleOpInstruction) {
+        }
+        else if (instruction instanceof SingleOpInstruction) {
             return dealWithSingleOpInstruction((SingleOpInstruction) instruction, varTable);
-        } else {
+        }
+        else if (instruction instanceof BinaryOpInstruction) {
+            return dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable);
+        }
+        else {
             //TODO
-            return "Lidate with rest of instructions";
+            return "Deu coco nas Instructions";
         }
     }
 
-    public String dealWithAssignment(AssignInstruction inst, HashMap<String, Descriptor> varTable){
+    public String dealWithAssignment(AssignInstruction inst, HashMap<String, Descriptor> varTable) {
         String stringBuilder = dealWithInstruction(inst.getRhs(), varTable);
         Operand op = (Operand) inst.getDest();
         return stringBuilder + "istore_" + varTable.get(op.getName()).getVirtualReg() + "\n";
     }
 
-    public String dealWithSingleOpInstruction(SingleOpInstruction instruction, HashMap varTable) {
-        LiteralElement operand = (LiteralElement) instruction.getSingleOperand();
-        return "iconst_" + operand.getLiteral() + "\n";
+    public String dealWithSingleOpInstruction(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        return dealWithElement(instruction.getSingleOperand(), varTable);
     }
 
-    public List<String> getConvertedParams(List<Element> params){
+    public String dealWithBinaryOpInstruction(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String stringBuilder = dealWithElement(instruction.getLeftOperand(), varTable);
+        stringBuilder += dealWithElement(instruction.getRightOperand(), varTable);
+        return stringBuilder + dealWithOperation(instruction.getUnaryOperation());
+    }
+
+    public String dealWithElement(Element element, HashMap<String, Descriptor> varTable) {
+        if (element instanceof LiteralElement) {
+            return "iconst_" + ((LiteralElement) element).getLiteral() + "\n";
+        }
+        else if (element instanceof Operand) {
+            Operand operand = (Operand) element;
+            switch (operand.getType().getTypeOfElement()) {
+                case INT32:
+                    return "iload_" + varTable.get(operand.getName()).getVirtualReg() + "\n";
+            }
+        }
+        return "DEu coco nos Elements";
+    }
+
+    public String dealWithOperation(Operation op) {
+        switch (op.getOpType()) {
+            case ADD:
+                return "iadd\n";
+        }
+        return "Deu coco nas Ops";
+    }
+
+    public List<String> getConvertedParams(List<Element> params) {
         List<String> convertedParams = new ArrayList<>();
-        for(Element element : params){
-            switch (element.getType().getTypeOfElement()){
+        for (Element element : params) {
+            switch (element.getType().getTypeOfElement()) {
                 case INT32:
                     convertedParams.add("I");
                     break;
