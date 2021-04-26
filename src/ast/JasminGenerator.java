@@ -195,6 +195,12 @@ public class JasminGenerator {
         switch (op.getOpType()) {
             case ADD:
                 return "iadd\n";
+            case SUB:
+                return "isub\n";
+            case MUL:
+                return "imul\n";
+            case DIV:
+                return "idiv\n";
         }
         return "Deu esparguete nas Ops";
     }
