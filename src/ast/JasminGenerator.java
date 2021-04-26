@@ -13,6 +13,7 @@ public class JasminGenerator {
     private ClassUnit classUnit;
     private String jasminCode;
     private final Set<JmmNode> visited = new HashSet<>();
+    private int conditional;
 
     public JasminGenerator(ClassUnit classUnit) {
         this.classUnit = classUnit;
@@ -28,6 +29,7 @@ public class JasminGenerator {
         //TODO limit locals
         String stringBuilder = "";
         for (Method method : classUnit.getMethods()) {
+            this.conditional = 0;
             int localCount = 0;
             stringBuilder += "\n.method public ";
             if (method.isConstructMethod()) {
@@ -201,6 +203,15 @@ public class JasminGenerator {
                 return "imul\n";
             case DIV:
                 return "idiv\n";
+            case LTH:
+                String trueBranch = "True" + this.conditional;
+                String storeBranch = "Store" + this.conditional;
+                return "if_icmplt " + trueBranch + "\n" +
+                        "iconst_0\n" +
+                        "goto " + storeBranch + "\n" +
+                        trueBranch + ":\n" +
+                        "iconst_1\n" +
+                        storeBranch + ":\n";
         }
         return "Deu esparguete nas Ops";
     }
