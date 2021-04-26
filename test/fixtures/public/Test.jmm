@@ -10,6 +10,7 @@ class Test {
         d = true;
 
         e = c && d;
+        e = !c;
 
         a = 1;
         b = a + 2;

@@ -151,6 +151,15 @@ public class JasminGenerator {
                         this.getTrueLabel() + ":\n" +
                         "iconst_0\n" +
                         this.getStoreLabel() + ":\n";
+            case NOTB:
+                this.conditional++;
+                return leftOperand +
+                        "ifne " + this.getTrueLabel() + "\n" +
+                        "iconst_1\n" +
+                        "goto " + this.getStoreLabel() + "\n" +
+                        this.getTrueLabel() + ":\n" +
+                        "iconst_0\n" +
+                        this.getStoreLabel() + ":\n";
         }
         return "Deu esparguete nas Ops";
     }

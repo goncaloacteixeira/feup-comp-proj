@@ -1,5 +1,5 @@
 Test {
-.field public arr.array.i32;
+
 
 .construct Test().V {
 invokespecial(this, "<init>").V;
@@ -9,6 +9,8 @@ invokespecial(this, "<init>").V;
 c.bool :=.bool 1.bool;
 d.bool :=.bool 1.bool;
 e.bool :=.bool c.bool &&.bool d.bool;
+temporary1.bool :=.bool c.bool;
+e.bool :=.bool temporary1.bool !.bool temporary1.bool;
 a.i32 :=.i32 1.i32;
 b.i32 :=.i32 a.i32 +.i32 2.i32;
 c.bool :=.bool a.i32 <.i32 2.i32;
