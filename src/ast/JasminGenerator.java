@@ -118,9 +118,41 @@ public class JasminGenerator {
     }
 
     public String dealWithBinaryOpInstruction(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String stringBuilder = loadElement(instruction.getLeftOperand(), varTable);
-        stringBuilder += loadElement(instruction.getRightOperand(), varTable);
-        return stringBuilder + dealWithOperation(instruction.getUnaryOperation());
+        String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
+        String rightOperand = loadElement(instruction.getRightOperand(), varTable);
+        switch (instruction.getUnaryOperation().getOpType()) {
+            case ADD:
+                return leftOperand + rightOperand + "iadd\n";
+            case SUB:
+                return leftOperand + rightOperand + "isub\n";
+            case MUL:
+                return leftOperand + rightOperand + "imul\n";
+            case DIV:
+                return leftOperand + rightOperand + "idiv\n";
+            case LTH:
+                this.conditional++;
+                return leftOperand +
+                        rightOperand +
+                        "if_icmplt " + this.getTrueLabel() + "\n" +
+                        "iconst_0\n" +
+                        "goto " + this.getStoreLabel() + "\n" +
+                        this.getTrueLabel() + ":\n" +
+                        "iconst_1\n" +
+                        this.getStoreLabel() + ":\n";
+            case ANDB:
+                this.conditional++;
+                String ifeq = "ifeq " + this.getTrueLabel() + "\n";
+                return leftOperand +
+                        ifeq +
+                        rightOperand +
+                        ifeq +
+                        "iconst_1\n" +
+                        "goto " + this.getStoreLabel() + "\n" +
+                        this.getTrueLabel() + ":\n" +
+                        "iconst_0\n" +
+                        this.getStoreLabel() + ":\n";
+        }
+        return "Deu esparguete nas Ops";
     }
 
     public String loadElement(Element element, HashMap<String, Descriptor> varTable) {
@@ -191,29 +223,6 @@ public class JasminGenerator {
         }
 
         return "Deu esparguete nos store Elements";
-    }
-
-    public String dealWithOperation(Operation op) {
-        switch (op.getOpType()) {
-            case ADD:
-                return "iadd\n";
-            case SUB:
-                return "isub\n";
-            case MUL:
-                return "imul\n";
-            case DIV:
-                return "idiv\n";
-            case LTH:
-                String trueBranch = "True" + this.conditional;
-                String storeBranch = "Store" + this.conditional;
-                return "if_icmplt " + trueBranch + "\n" +
-                        "iconst_0\n" +
-                        "goto " + storeBranch + "\n" +
-                        trueBranch + ":\n" +
-                        "iconst_1\n" +
-                        storeBranch + ":\n";
-        }
-        return "Deu esparguete nas Ops";
     }
 
     public String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -307,5 +316,13 @@ public class JasminGenerator {
         }
 
         return "Deu esparguete converter ElementType";
+    }
+
+    private String getTrueLabel() {
+        return "True" + this.conditional;
+    }
+
+    private String getStoreLabel() {
+        return "Store" + this.conditional;
     }
 }
