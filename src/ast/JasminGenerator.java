@@ -41,13 +41,9 @@ public class JasminGenerator {
             }
             else {
                 stringBuilder += method.getMethodName() + "(";
-
-                List<String> convertedParams = new ArrayList<>();
                 for (Element element: method.getParams()) {
-                    convertedParams.add(convertElementType(element.getType().getTypeOfElement()));
+                    stringBuilder += convertElementType(element.getType().getTypeOfElement());
                 }
-                stringBuilder += String.join(",", convertedParams);
-
                 stringBuilder += ")" + this.convertElementType(method.getReturnType().getTypeOfElement()) + "\n";
             }
 
@@ -63,7 +59,7 @@ public class JasminGenerator {
 
 
             for (Instruction instruction : method.getInstructions()) {
-                stringBuilder += dealWithInstruction(instruction, varTable);
+                stringBuilder += dealWithInstruction(instruction, varTable, OllirAccesser.getLabels(method));
             }
 
             if (method.getReturnType().getTypeOfElement() == ElementType.VOID) {
@@ -76,36 +72,52 @@ public class JasminGenerator {
         return stringBuilder;
     }
 
-    public String dealWithInstruction(Instruction instruction, HashMap<String, Descriptor> varTable) {
+    public String dealWithInstruction(Instruction instruction, HashMap<String, Descriptor> varTable, HashMap<String, Instruction> methodLabels) {
+        String stringBuilder = "";
+        for (Map.Entry<String, Instruction> entry : methodLabels.entrySet()) {
+            if (entry.getValue().equals(instruction)){
+                stringBuilder += entry.getKey() + ":\n";
+                break;
+            }
+        }
+
         if (instruction instanceof AssignInstruction) {
-            return dealWithAssignment((AssignInstruction) instruction, varTable);
+            stringBuilder += dealWithAssignment((AssignInstruction) instruction, varTable);
         }
         else if (instruction instanceof SingleOpInstruction) {
-            return dealWithSingleOpInstruction((SingleOpInstruction) instruction, varTable);
+            stringBuilder += dealWithSingleOpInstruction((SingleOpInstruction) instruction, varTable);
         }
         else if (instruction instanceof BinaryOpInstruction) {
-            return dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable);
+            stringBuilder += dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable);
         }
         else if (instruction instanceof CallInstruction) {
-            return dealWithCallInstruction((CallInstruction) instruction, varTable);
+            stringBuilder += dealWithCallInstruction((CallInstruction) instruction, varTable);
+        }
+        else if (instruction instanceof CondBranchInstruction) {
+            stringBuilder += dealWithCondBranchInstruction((CondBranchInstruction) instruction, varTable);
+        }
+        else if (instruction instanceof GotoInstruction) {
+            stringBuilder += dealWithGotoInstrutcion((GotoInstruction) instruction, varTable);
         }
         else if (instruction instanceof PutFieldInstruction) {
-            return dealWithPutFieldInstruction((PutFieldInstruction) instruction, varTable);
+            stringBuilder += dealWithPutFieldInstruction((PutFieldInstruction) instruction, varTable);
         }
         else if (instruction instanceof GetFieldInstruction) {
-            return dealWithGetFieldInstruction((GetFieldInstruction) instruction, varTable);
+            stringBuilder += dealWithGetFieldInstruction((GetFieldInstruction) instruction, varTable);
         }
         else if (instruction instanceof ReturnInstruction) {
-            return dealWithReturnInstruction((ReturnInstruction) instruction, varTable);
+            stringBuilder += dealWithReturnInstruction((ReturnInstruction) instruction, varTable);
         }
         else {
             //TODO
-            return "Deu esparguete nas Instructions";
+            stringBuilder += "Deu esparguete nas Instructions";
         }
+
+        return stringBuilder;
     }
 
     public String dealWithAssignment(AssignInstruction inst, HashMap<String, Descriptor> varTable) {
-        String stringBuilder = dealWithInstruction(inst.getRhs(), varTable);
+        String stringBuilder = dealWithInstruction(inst.getRhs(), varTable, new HashMap<String, Instruction>());
         Operand operand = (Operand) inst.getDest();
 
         stringBuilder += this.storeElement(operand, varTable);
@@ -120,7 +132,12 @@ public class JasminGenerator {
     public String dealWithBinaryOpInstruction(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
         String rightOperand = loadElement(instruction.getRightOperand(), varTable);
-        switch (instruction.getUnaryOperation().getOpType()) {
+
+        return this.dealWithOperation(instruction.getUnaryOperation(), leftOperand, rightOperand);
+    }
+
+    private String dealWithOperation(Operation operation, String leftOperand, String rightOperand) {
+        switch (operation.getOpType()) {
             case ADD:
                 return leftOperand + rightOperand + "iadd\n";
             case SUB:
@@ -135,10 +152,10 @@ public class JasminGenerator {
                         rightOperand +
                         "if_icmplt " + this.getTrueLabel() + "\n" +
                         "iconst_0\n" +
-                        "goto " + this.getStoreLabel() + "\n" +
+                        "goto " + this.getEndIfLabel() + "\n" +
                         this.getTrueLabel() + ":\n" +
                         "iconst_1\n" +
-                        this.getStoreLabel() + ":\n";
+                        this.getEndIfLabel() + ":\n";
             case ANDB:
                 this.conditional++;
                 String ifeq = "ifeq " + this.getTrueLabel() + "\n";
@@ -147,21 +164,22 @@ public class JasminGenerator {
                         rightOperand +
                         ifeq +
                         "iconst_1\n" +
-                        "goto " + this.getStoreLabel() + "\n" +
+                        "goto " + this.getEndIfLabel() + "\n" +
                         this.getTrueLabel() + ":\n" +
                         "iconst_0\n" +
-                        this.getStoreLabel() + ":\n";
+                        this.getEndIfLabel() + ":\n";
             case NOTB:
                 this.conditional++;
                 return leftOperand +
                         "ifne " + this.getTrueLabel() + "\n" +
                         "iconst_1\n" +
-                        "goto " + this.getStoreLabel() + "\n" +
+                        "goto " + this.getEndIfLabel() + "\n" +
                         this.getTrueLabel() + ":\n" +
                         "iconst_0\n" +
-                        this.getStoreLabel() + ":\n";
+                        this.getEndIfLabel() + ":\n";
+            default:
+                return "Deu esparguete nas Ops\n";
         }
-        return "Deu esparguete nas Ops";
     }
 
     public String loadElement(Element element, HashMap<String, Descriptor> varTable) {
@@ -176,8 +194,10 @@ public class JasminGenerator {
         }
         else if (element instanceof Operand) {
             Operand operand = (Operand) element;
+            System.out.println(operand.getName());
             switch (operand.getType().getTypeOfElement()) {
                 // TODO this appears in VarTable as local variable
+                // TODO when accessing array (a[2]) it assumes as iload
                 case THIS:
                     return "aload_0\n";
                 case INT32:
@@ -264,6 +284,19 @@ public class JasminGenerator {
         return stringBuilder;
     }
 
+    public String dealWithCondBranchInstruction(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
+        // TODO improve conditions, no need to get true or false from operation to go to branch
+        String leftOperand = this.loadElement(instruction.getLeftOperand(), varTable);
+        String rightOperand = this.loadElement(instruction.getRightOperand(), varTable);
+
+        String operation = this.dealWithOperation(instruction.getCondOperation(), leftOperand, rightOperand);
+        return operation + "ifne " + instruction.getLabel() + "\n";
+    }
+
+    public String dealWithGotoInstrutcion(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
+        return String.format("goto %s\n", instruction.getLabel());
+    }
+
     public String dealWithPutFieldInstruction(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
         String stringBuilder = "";
         Operand obj = (Operand)instruction.getFirstOperand();
@@ -331,7 +364,7 @@ public class JasminGenerator {
         return "True" + this.conditional;
     }
 
-    private String getStoreLabel() {
-        return "Store" + this.conditional;
+    private String getEndIfLabel() {
+        return "EndIf" + this.conditional;
     }
 }

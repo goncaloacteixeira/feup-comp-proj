@@ -6,14 +6,20 @@ invokespecial(this, "<init>").V;
 }
 
 .method public static main(args.array.String).V {
+a.i32 :=.i32 2.i32;
+b.i32 :=.i32 1.i32;
 c.bool :=.bool 1.bool;
 d.bool :=.bool 1.bool;
-e.bool :=.bool c.bool &&.bool d.bool;
-temporary1.bool :=.bool c.bool;
-e.bool :=.bool temporary1.bool !.bool temporary1.bool;
-a.i32 :=.i32 1.i32;
-b.i32 :=.i32 a.i32 +.i32 2.i32;
-c.bool :=.bool a.i32 <.i32 2.i32;
+loop1:
+if (a.i32 <.i32 b.i32) goto loopbody1;
+end1:
+goto endloop1;
+loopbody1:
+e.bool :=.bool 1.bool;
+d.bool :=.bool 0.bool;
+goto loop1;
+endloop1:
+e.bool :=.bool 0.bool;
 ret.V 0.V;
 }
 }
