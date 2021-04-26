@@ -57,7 +57,7 @@ public class JasminGenerator {
             }
 
             stringBuilder += ".limit stack 100\n";
-            stringBuilder += ".limit locals 100\n"/* + localCount + "\n"*/;
+            stringBuilder += ".limit locals 100\n"; //+ localCount + "\n";
 
 
             for (Instruction instruction : method.getInstructions()) {
@@ -212,6 +212,7 @@ public class JasminGenerator {
                     stringBuilder += this.loadElement(element, varTable);
                     parameters += this.convertElementType(element.getType().getTypeOfElement());
                 }
+
                 stringBuilder += "invokevirtual " + obj.getName() + "." + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertElementType(instruction.getReturnType().getTypeOfElement()) + "\n";
                 break;
             case arraylength:
@@ -229,23 +230,28 @@ public class JasminGenerator {
     }
 
     public String dealWithPutFieldInstruction(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String stringBuilder = "";
         Operand obj = (Operand)instruction.getFirstOperand();
         Operand var = (Operand)instruction.getSecondOperand();
         Element value = instruction.getThirdOperand();
 
-        String stringBuilder = this.loadElement(value, varTable);
-        return stringBuilder + "putfield " + obj.getName() + "/" + var.getName() + " " + convertElementType(var.getType().getTypeOfElement()) + "\n";
+        stringBuilder += this.loadElement((Element) obj, varTable); //push object (Class ref) onto the stack
+
+        stringBuilder += this.loadElement(value, varTable); //store const element on stack
+
+        //TODO using className not this
+        return stringBuilder + "putfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertElementType(var.getType().getTypeOfElement()) + "\n";
     }
 
     public String dealWithGetFieldInstruction(GetFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
-        //TODO null ??????????
-        /*Operand obj = (Operand)instruction.getFirstOperand();
+        String jasminCode = "";
+        Operand obj = (Operand)instruction.getFirstOperand();
         Operand var = (Operand)instruction.getSecondOperand();
 
-        // TODO aload_0 when THIS
-        String jasminCode = "aload_" + varTable.get(obj.getName()).getVirtualReg() + "\n";
-        return jasminCode + "getfield " + convertElementType(var.getType().getTypeOfElement()) + " " + var.getName() + "\n";*/
-        return "";
+        jasminCode += this.loadElement((Element) obj, varTable); //push object (Class ref) onto the stack
+
+        //TODO using same syntax as putfield with className, example: https://flylib.com/books/en/2.883.1.11/1/
+        return jasminCode + "getfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertElementType(var.getType().getTypeOfElement()) +  "\n";
     }
 
     public String dealWithReturnInstruction(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
