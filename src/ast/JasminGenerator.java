@@ -182,91 +182,6 @@ public class JasminGenerator {
         }
     }
 
-    public String loadElement(Element element, HashMap<String, Descriptor> varTable) {
-        if (element instanceof LiteralElement) {
-            String num = ((LiteralElement) element).getLiteral();
-            if (Integer.parseInt(num) <= 5) {
-                return "iconst_" + num + "\n";
-            }
-            else {
-                return "bipush " + num + "\n";
-            }
-        }
-        else if (element instanceof ArrayOperand) {
-            ArrayOperand operand = (ArrayOperand) element;
-            String stringBuilder = "";
-
-            int virtualReg = varTable.get(operand.getName()).getVirtualReg();
-            if (virtualReg > 3) {
-                stringBuilder += "aload " + virtualReg + "\n";
-            }
-            else {
-                stringBuilder += "aload_" + virtualReg + "\n";
-            }
-
-            stringBuilder += loadElement(operand.getIndexOperands().get(0), varTable);
-            return stringBuilder + "iaload\n";
-        }
-        else if (element instanceof Operand) {
-            Operand operand = (Operand) element;
-            switch (operand.getType().getTypeOfElement()) {
-                // TODO this appears in VarTable as local variable
-                case THIS:
-                    return "aload_0\n";
-                case INT32:
-                case BOOLEAN: {
-                    int virtualReg = varTable.get(operand.getName()).getVirtualReg();
-                    if (virtualReg > 3) {
-                        return "iload " + virtualReg + "\n";
-                    }
-                    else {
-                        return "iload_" + virtualReg + "\n";
-                    }
-                }
-                case ARRAYREF: {
-                    int virtualReg = varTable.get(operand.getName()).getVirtualReg();
-                    if (virtualReg > 3) {
-                        return "aload " + virtualReg + "\n";
-                    }
-                    else {
-                        return "aload_" + virtualReg + "\n";
-                    }
-                }
-                default:
-                    break;
-            }
-        }
-        return "Deu esparguete nos loads Elements\n";
-    }
-
-    public String storeElement(Operand operand, HashMap<String, Descriptor> varTable) {
-        switch (operand.getType().getTypeOfElement()) {
-            case INT32:
-            case BOOLEAN: {
-                int virtualReg = varTable.get(operand.getName()).getVirtualReg();
-                if (virtualReg > 3) {
-                    return "istore " + virtualReg + "\n";
-                }
-                else {
-                    return "istore_" + virtualReg + "\n";
-                }
-            }
-            case ARRAYREF: {
-                int virtualReg = varTable.get(operand.getName()).getVirtualReg();
-                if (virtualReg > 3) {
-                    return "astore " + virtualReg + "\n";
-                }
-                else {
-                    return "astore_" + virtualReg + "\n";
-                }
-            }
-            default:
-                break;
-        }
-
-        return "Deu esparguete nos store Elements";
-    }
-
     public String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
         String stringBuilder = "";
         switch (OllirAccesser.getCallInvocation(instruction)) {
@@ -371,6 +286,70 @@ public class JasminGenerator {
         }
 
         return "Deu esparguete converter ElementType";
+    }
+
+    public String loadElement(Element element, HashMap<String, Descriptor> varTable) {
+        if (element instanceof LiteralElement) {
+            String num = ((LiteralElement) element).getLiteral();
+            if (Integer.parseInt(num) <= 5) {
+                return "iconst_" + num + "\n";
+            }
+            else {
+                return "bipush " + num + "\n";
+            }
+        }
+        else if (element instanceof ArrayOperand) {
+            ArrayOperand operand = (ArrayOperand) element;
+
+            // Load array
+            String stringBuilder = String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
+            // Load index
+            stringBuilder += loadElement(operand.getIndexOperands().get(0), varTable);
+
+            return stringBuilder + "iaload\n";
+        }
+        else if (element instanceof Operand) {
+            Operand operand = (Operand) element;
+            switch (operand.getType().getTypeOfElement()) {
+                // TODO this appears in VarTable as local variable
+                case THIS:
+                    return "aload_0\n";
+                case INT32:
+                case BOOLEAN: {
+                    return String.format("iload%s\n", this.getVirtualReg(operand.getName(), varTable));
+                }
+                case ARRAYREF: {
+                    return String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
+                }
+                default:
+                    break;
+            }
+        }
+        return "Deu esparguete nos loads Elements\n";
+    }
+
+    public String storeElement(Operand operand, HashMap<String, Descriptor> varTable) {
+        switch (operand.getType().getTypeOfElement()) {
+            case INT32:
+            case BOOLEAN: {
+                return String.format("istore%s\n", this.getVirtualReg(operand.getName(), varTable));
+            }
+            case ARRAYREF: {
+                return String.format("astore%s\n", this.getVirtualReg(operand.getName(), varTable));
+            }
+            default:
+                break;
+        }
+
+        return "Deu esparguete nos store Elements";
+    }
+
+    private String getVirtualReg(String varName, HashMap<String, Descriptor> varTable) {
+        int virtualReg = varTable.get(varName).getVirtualReg();
+        if (virtualReg > 3) {
+            return " " + virtualReg;
+        }
+        return "_" + virtualReg;
     }
 
     private String getTrueLabel() {
