@@ -192,12 +192,25 @@ public class JasminGenerator {
                 return "bipush " + num + "\n";
             }
         }
+        else if (element instanceof ArrayOperand) {
+            ArrayOperand operand = (ArrayOperand) element;
+            String stringBuilder = "";
+
+            int virtualReg = varTable.get(operand.getName()).getVirtualReg();
+            if (virtualReg > 3) {
+                stringBuilder += "aload " + virtualReg + "\n";
+            }
+            else {
+                stringBuilder += "aload_" + virtualReg + "\n";
+            }
+
+            stringBuilder += loadElement(operand.getIndexOperands().get(0), varTable);
+            return stringBuilder + "iaload\n";
+        }
         else if (element instanceof Operand) {
             Operand operand = (Operand) element;
-            System.out.println(operand.getName());
             switch (operand.getType().getTypeOfElement()) {
                 // TODO this appears in VarTable as local variable
-                // TODO when accessing array (a[2]) it assumes as iload
                 case THIS:
                     return "aload_0\n";
                 case INT32:
@@ -223,7 +236,7 @@ public class JasminGenerator {
                     break;
             }
         }
-        return "Deu esparguete nos loads Elements";
+        return "Deu esparguete nos loads Elements\n";
     }
 
     public String storeElement(Operand operand, HashMap<String, Descriptor> varTable) {
