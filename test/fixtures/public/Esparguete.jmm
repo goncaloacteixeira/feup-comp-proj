@@ -1,18 +1,21 @@
-class Test {
+class Esparguete {
     public static void main(String[] args) {
         int a;
         int b;
         boolean c;
         boolean d;
         boolean e;
+        int[] f;
 
-        a = 2;
+        f = new int[10];
+
+        a = f[2];
         b = 1;
 
         c = true;
         d = true;
 
-        while (a < b) {
+        while (c) {
             e = true;
             d = false;
         }

@@ -49,13 +49,9 @@ public class JasminGenerator {
 
             HashMap<String, Descriptor> varTable = method.getVarTable();
 
-            for (Map.Entry<String, Descriptor> entry : varTable.entrySet()) {
-                if (entry.getValue().getScope().equals(VarScope.LOCAL))
-                    localCount++;
-            }
-
             stringBuilder += ".limit stack 100\n";
-            stringBuilder += ".limit locals 100\n"; //+ localCount + "\n";
+            localCount = varTable.size() + 1;
+            stringBuilder += ".limit locals " + localCount + "\n";
 
 
             for (Instruction instruction : method.getInstructions()) {
@@ -138,7 +134,8 @@ public class JasminGenerator {
     }
 
     private String dealWithOperation(Operation operation, String leftOperand, String rightOperand) {
-        switch (operation.getOpType()) {
+        OperationType ot = operation.getOpType();
+        switch (ot) {
             case ADD:
                 return leftOperand + rightOperand + "iadd\n";
             case SUB:
@@ -148,38 +145,103 @@ public class JasminGenerator {
             case DIV:
                 return leftOperand + rightOperand + "idiv\n";
             case LTH:
-                this.conditional++;
-                return leftOperand +
-                        rightOperand +
-                        "if_icmplt " + this.getTrueLabel() + "\n" +
-                        "iconst_0\n" +
-                        "goto " + this.getEndIfLabel() + "\n" +
-                        this.getTrueLabel() + ":\n" +
-                        "iconst_1\n" +
-                        this.getEndIfLabel() + ":\n";
+            case GTE:
             case ANDB:
-                this.conditional++;
-                String ifeq = "ifeq " + this.getTrueLabel() + "\n";
-                return leftOperand +
-                        ifeq +
-                        rightOperand +
-                        ifeq +
-                        "iconst_1\n" +
-                        "goto " + this.getEndIfLabel() + "\n" +
-                        this.getTrueLabel() + ":\n" +
-                        "iconst_0\n" +
-                        this.getEndIfLabel() + ":\n";
             case NOTB:
                 this.conditional++;
-                return leftOperand +
-                        "ifne " + this.getTrueLabel() + "\n" +
-                        "iconst_1\n" +
-                        "goto " + this.getEndIfLabel() + "\n" +
-                        this.getTrueLabel() + ":\n" +
-                        "iconst_0\n" +
-                        this.getEndIfLabel() + ":\n";
+                return this.dealWithBooleanOperation(ot, leftOperand, rightOperand, "");
             default:
                 return "Deu esparguete nas Ops\n";
+        }
+    }
+
+    private String dealWithBooleanOperation(OperationType ot, String leftOperand, String rightOperand, String branchLabel) {
+        boolean defaultLabel = branchLabel.isEmpty();
+        switch (ot) {
+            case LTH:
+            case GTE: {
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append(leftOperand).append(rightOperand);
+
+                if (defaultLabel) {
+                    stringBuilder.append(this.dealWithRelationalOperation(ot, this.getTrueLabel()))
+                            .append("iconst_0\n")
+                            .append("goto ").append(this.getEndIfLabel()).append("\n")
+                            .append(this.getTrueLabel()).append(":\n")
+                            .append("iconst_1\n")
+                            .append(this.getEndIfLabel()).append(":\n");
+                }
+                else {
+                    stringBuilder.append(this.dealWithRelationalOperation(ot, branchLabel));
+                }
+
+                return stringBuilder.toString();
+            }
+            case EQ: {
+                // javap faz com ifeq
+                StringBuilder stringBuilder = new StringBuilder();
+
+                if (rightOperand.equals("iconst_1\n")) {
+                    stringBuilder.append(leftOperand)
+                            .append("ifne ").append(branchLabel).append("\n");
+                }
+
+                return stringBuilder.toString();
+            }
+            case ANDB: {
+                String ifeq = "ifeq " + this.getTrueLabel() + "\n";
+
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append(leftOperand)
+                        .append(ifeq)
+                        .append(rightOperand)
+                        .append(ifeq);
+
+                if (defaultLabel) {
+                    stringBuilder.append("iconst_1\n")
+                            .append("goto ").append(this.getEndIfLabel()).append("\n")
+                            .append(this.getTrueLabel()).append(":\n")
+                            .append("iconst_0\n")
+                            .append(this.getEndIfLabel()).append(":\n");
+                }
+                else {
+                    stringBuilder.append("goto ").append(branchLabel).append("\n");
+                    stringBuilder.append(this.getTrueLabel()).append(":\n");
+                }
+
+                return stringBuilder.toString();
+            }
+            case NOTB: {
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append(leftOperand);
+
+                if (defaultLabel) {
+                    stringBuilder.append("ifne ").append(this.getTrueLabel()).append("\n")
+                            .append("iconst_1\n")
+                            .append("goto ").append(this.getEndIfLabel()).append("\n")
+                            .append(this.getTrueLabel()).append(":\n")
+                            .append("iconst_0\n")
+                            .append(this.getEndIfLabel()).append(":\n");
+                }
+                else {
+                    stringBuilder.append("ifne ").append(branchLabel).append("\n");
+                }
+
+                return stringBuilder.toString();
+            }
+            default:
+                return "Deu esparguete nas BooleansOperations\n";
+        }
+    }
+
+    private String dealWithRelationalOperation(OperationType ot, String trueLabel) {
+        switch (ot) {
+            case LTH:
+                return String.format("if_icmplt %s\n", trueLabel);
+            case GTE:
+                return String.format("if_icmpge %s\n", trueLabel);
+            default:
+                return "Deu esparguete nas RelationalOps\n";
         }
     }
 
@@ -248,12 +310,10 @@ public class JasminGenerator {
     }
 
     public String dealWithCondBranchInstruction(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
-        // TODO improve conditions, no need to get true or false from operation to go to branch
         String leftOperand = this.loadElement(instruction.getLeftOperand(), varTable);
         String rightOperand = this.loadElement(instruction.getRightOperand(), varTable);
 
-        String operation = this.dealWithOperation(instruction.getCondOperation(), leftOperand, rightOperand);
-        return operation + "ifne " + instruction.getLabel() + "\n";
+        return this.dealWithBooleanOperation(instruction.getCondOperation().getOpType(), leftOperand, rightOperand, instruction.getLabel());
     }
 
     public String dealWithGotoInstrutcion(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
