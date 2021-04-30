@@ -345,7 +345,7 @@ public class JasminGenerator {
         if(!instruction.hasReturnValue()) return "return";
         String returnString = "";
 
-        switch (instruction.getElementType()) {
+        switch (instruction.getOperand().getType().getTypeOfElement()) {
             case VOID:
                 returnString = "return";
                 break;

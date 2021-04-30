@@ -17,7 +17,7 @@ putfield(this, arr.array.i32, temporary4.array.i32).V;
 temporary5.array.i32 :=.array.i32 getfield(this, arr.array.i32).array.i32;
 temporary6.i32 :=.i32 1.i32;
 a.i32 :=.i32 temporary5[temporary6.i32].i32;
-ret.V 0.V;
+ret.V;
 }
 
 .method public foo(a.i32).array.i32 {
