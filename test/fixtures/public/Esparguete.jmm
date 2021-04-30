@@ -17,7 +17,7 @@ class Esparguete {
 
         while (c) {
             e = true;
-            d = false;
+            c = false;
         }
         e = false;
     }

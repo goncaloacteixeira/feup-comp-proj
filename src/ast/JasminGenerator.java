@@ -58,10 +58,6 @@ public class JasminGenerator {
                 stringBuilder += dealWithInstruction(instruction, varTable, method.getLabels());
             }
 
-            if (method.getReturnType().getTypeOfElement() == ElementType.VOID) {
-                stringBuilder += "return";
-            }
-
             stringBuilder += "\n.end method\n";
 
         }
@@ -346,11 +342,13 @@ public class JasminGenerator {
     }
 
     public String dealWithReturnInstruction(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
-        //if(!instruction.hasReturnValue()) return "return";
+        if(!instruction.hasReturnValue()) return "return";
         String returnString = "";
 
-        // TODO switch to instruction.getElementType
-        switch (instruction.getOperand().getType().getTypeOfElement()) {
+        switch (instruction.getElementType()) {
+            case VOID:
+                returnString = "return";
+                break;
             case INT32:
             case BOOLEAN:
                 returnString = loadElement(instruction.getOperand(), varTable);
