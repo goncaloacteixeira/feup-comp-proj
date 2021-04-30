@@ -26,7 +26,7 @@ public class AnalysisTest {
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
 
-        String code = Utils.getJmmCode("LazySort.jmm");
+        String code = Utils.getJmmCode("HelloWorld.jmm");
 
         // QuickSort.jmm
         JmmParserResult parserResult = TestUtils.parse(code);

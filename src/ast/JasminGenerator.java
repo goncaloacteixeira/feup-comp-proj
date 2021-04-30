@@ -120,7 +120,8 @@ public class JasminGenerator {
         String stringBuilder = dealWithInstruction(inst.getRhs(), varTable, new HashMap<String, Instruction>());
         Operand operand = (Operand) inst.getDest();
 
-        stringBuilder += this.storeElement(operand, varTable);
+        if(!operand.getType().getTypeOfElement().equals(ElementType.OBJECTREF))
+            stringBuilder += this.storeElement(operand, varTable);
 
         return stringBuilder;
     }
@@ -185,28 +186,60 @@ public class JasminGenerator {
     public String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
         String stringBuilder = "";
         switch (OllirAccesser.getCallInvocation(instruction)) {
+            case invokestatic:
+            case invokespecial:
             case invokevirtual:
-                Operand obj = (Operand)instruction.getFirstArg();
-                LiteralElement func = (LiteralElement) instruction.getSecondArg();
-                String parameters = "";
-
-                stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
-                for (Element element : instruction.getListOfOperands()) {
-                    stringBuilder += this.loadElement(element, varTable);
-                    parameters += this.convertElementType(element.getType().getTypeOfElement());
-                }
-
-                stringBuilder += "invokevirtual " + obj.getName() + "." + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertElementType(instruction.getReturnType().getTypeOfElement()) + "\n";
+                stringBuilder += this.dealWithInvoke(instruction, varTable, OllirAccesser.getCallInvocation(instruction));
                 break;
             case arraylength:
                 stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
                 stringBuilder += "arraylength\n";
                 break;
             case NEW:
-                // TODO only dealing with array init
-                stringBuilder += this.loadElement(instruction.getListOfOperands().get(0), varTable);
-                stringBuilder += "newarray int\n";
+                stringBuilder += this.dealWithNewObject(instruction, varTable);
                 break;
+        }
+
+        return stringBuilder;
+    }
+
+    public String dealWithInvoke(CallInstruction instruction, HashMap<String, Descriptor> varTable, CallType type){
+        String stringBuilder = ""; //TODO deal with invokes
+        String className;
+
+        Operand obj = (Operand)instruction.getFirstArg();
+        LiteralElement func = (LiteralElement) instruction.getSecondArg();
+        String parameters = "";
+
+        stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
+        for (Element element : instruction.getListOfOperands()) {
+            stringBuilder += this.loadElement(element, varTable);
+            parameters += this.convertElementType(element.getType().getTypeOfElement());
+        }
+
+        if(obj.getName().equals("this"))
+            className = classUnit.getClassName() + "." ;
+        else
+            className = "";
+
+        stringBuilder += type.name() + " " + className + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertElementType(instruction.getReturnType().getTypeOfElement()) + "\n";
+
+        if(obj.getType().getTypeOfElement().equals(ElementType.OBJECTREF))
+            stringBuilder += this.storeElement(obj, varTable);
+
+        return stringBuilder;
+    }
+
+    public String dealWithNewObject(CallInstruction instruction, HashMap<String, Descriptor> varTable){
+        Element e = instruction.getFirstArg();
+        String stringBuilder = "";
+
+        if (e.getType().getTypeOfElement().equals(ElementType.ARRAYREF)) {
+            stringBuilder += this.loadElement(instruction.getListOfOperands().get(0), varTable);
+            stringBuilder += "newarray int\n";
+        }
+        else if (e.getType().getTypeOfElement().equals(ElementType.OBJECTREF)){
+            stringBuilder += "new " + ((Operand)e).getName() + "\ndup\n";
         }
 
         return stringBuilder;
@@ -283,8 +316,9 @@ public class JasminGenerator {
                 return "[I";
             case OBJECTREF:
                 return "OBJ";
+            case VOID:
+                return "V";
         }
-
         return "Deu esparguete converter ElementType";
     }
 
@@ -321,10 +355,17 @@ public class JasminGenerator {
                 case ARRAYREF: {
                     return String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
+                case CLASS: { //TODO deal with class
+                    return "";
+                }
+                case OBJECTREF:{
+                    return ""; // CALL Operand: q OBJECTREF, Literal: "<init>"
+                }
                 default:
                     break;
             }
         }
+        System.out.println(element);
         return "Deu esparguete nos loads Elements\n";
     }
 
@@ -335,6 +376,9 @@ public class JasminGenerator {
                 return String.format("istore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
             case ARRAYREF: {
+                return String.format("astore%s\n", this.getVirtualReg(operand.getName(), varTable));
+            }
+            case OBJECTREF: {
                 return String.format("astore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
             default:
