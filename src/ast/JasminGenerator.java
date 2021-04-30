@@ -47,7 +47,7 @@ public class JasminGenerator {
                 stringBuilder += ")" + this.convertElementType(method.getReturnType().getTypeOfElement()) + "\n";
             }
 
-            HashMap<String, Descriptor> varTable = OllirAccesser.getVarTable(method);
+            HashMap<String, Descriptor> varTable = method.getVarTable();
 
             for (Map.Entry<String, Descriptor> entry : varTable.entrySet()) {
                 if (entry.getValue().getScope().equals(VarScope.LOCAL))
@@ -59,7 +59,7 @@ public class JasminGenerator {
 
 
             for (Instruction instruction : method.getInstructions()) {
-                stringBuilder += dealWithInstruction(instruction, varTable, OllirAccesser.getLabels(method));
+                stringBuilder += dealWithInstruction(instruction, varTable, method.getLabels());
             }
 
             if (method.getReturnType().getTypeOfElement() == ElementType.VOID) {
@@ -185,11 +185,13 @@ public class JasminGenerator {
 
     public String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
         String stringBuilder = "";
-        switch (OllirAccesser.getCallInvocation(instruction)) {
+        CallType type = instruction.getInvocationType();
+
+        switch (type) {
             case invokestatic:
             case invokespecial:
             case invokevirtual:
-                stringBuilder += this.dealWithInvoke(instruction, varTable, OllirAccesser.getCallInvocation(instruction));
+                stringBuilder += this.dealWithInvoke(instruction, varTable, type);
                 break;
             case arraylength:
                 stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
