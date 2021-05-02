@@ -49,7 +49,7 @@ public class JasminGenerator {
 
             HashMap<String, Descriptor> varTable = method.getVarTable();
 
-            stringBuilder += ".limit stack 100\n";
+            stringBuilder += ".limit stack 99\n";
             localCount = varTable.size() + 1;
             stringBuilder += ".limit locals " + localCount + "\n";
 
@@ -246,13 +246,15 @@ public class JasminGenerator {
         CallType type = instruction.getInvocationType();
 
         switch (type) {
-            case invokestatic:
             case invokespecial:
-                stringBuilder += "invokespecial Simple.<init>()V\n";
-                stringBuilder += "astore_3\n";
+                stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((ClassType)instruction.getFirstArg().getType()).getName());
+                stringBuilder += this.storeElement((Operand)instruction.getFirstArg(), varTable);
+                break;
+            case invokestatic:
+                stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((Operand)instruction.getFirstArg()).getName());
                 break;
             case invokevirtual:
-                stringBuilder += this.dealWithInvoke(instruction, varTable, type);
+                stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((ClassType)instruction.getFirstArg().getType()).getName());
                 break;
             case arraylength:
                 stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
@@ -266,9 +268,8 @@ public class JasminGenerator {
         return stringBuilder;
     }
 
-    public String dealWithInvoke(CallInstruction instruction, HashMap<String, Descriptor> varTable, CallType type){
+    public String dealWithInvoke(CallInstruction instruction, HashMap<String, Descriptor> varTable, CallType type, String className){
         String stringBuilder = ""; //TODO deal with invokes
-        String className;
 
         Operand obj = (Operand)instruction.getFirstArg();
         LiteralElement func = (LiteralElement) instruction.getSecondArg();
@@ -283,10 +284,7 @@ public class JasminGenerator {
             parameters += this.convertElementType(element.getType().getTypeOfElement());
         }
 
-        stringBuilder += type.name() + " " + classUnit.getClassName() + "." + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertElementType(instruction.getReturnType().getTypeOfElement()) + "\n";
-
-        if(obj.getType().getTypeOfElement().equals(ElementType.OBJECTREF)) //store OBJECTREF after invokespecial
-            stringBuilder += this.storeElement(obj, varTable);
+        stringBuilder += type.name() + " " + className + "." + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertElementType(instruction.getReturnType().getTypeOfElement()) + "\n";
 
         return stringBuilder;
     }
