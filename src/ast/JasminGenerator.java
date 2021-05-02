@@ -248,6 +248,9 @@ public class JasminGenerator {
         switch (type) {
             case invokestatic:
             case invokespecial:
+                stringBuilder += "invokespecial Simple.<init>()V\n";
+                stringBuilder += "astore_3\n";
+                break;
             case invokevirtual:
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type);
                 break;
@@ -271,20 +274,18 @@ public class JasminGenerator {
         LiteralElement func = (LiteralElement) instruction.getSecondArg();
         String parameters = "";
 
-        stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
+        if (!func.getLiteral().equals("\"<init>\"")) {  //does not load element because its a new object, its already done in dealWithNewObject with new and dup
+            stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
+        }
+
         for (Element element : instruction.getListOfOperands()) {
             stringBuilder += this.loadElement(element, varTable);
             parameters += this.convertElementType(element.getType().getTypeOfElement());
         }
 
-        if(obj.getName().equals("this"))
-            className = classUnit.getClassName() + "." ;
-        else
-            className = "";
+        stringBuilder += type.name() + " " + classUnit.getClassName() + "." + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertElementType(instruction.getReturnType().getTypeOfElement()) + "\n";
 
-        stringBuilder += type.name() + " " + className + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertElementType(instruction.getReturnType().getTypeOfElement()) + "\n";
-
-        if(obj.getType().getTypeOfElement().equals(ElementType.OBJECTREF))
+        if(obj.getType().getTypeOfElement().equals(ElementType.OBJECTREF)) //store OBJECTREF after invokespecial
             stringBuilder += this.storeElement(obj, varTable);
 
         return stringBuilder;
@@ -412,14 +413,12 @@ public class JasminGenerator {
                 case BOOLEAN: {
                     return String.format("iload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
+                case OBJECTREF:
                 case ARRAYREF: {
                     return String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
                 case CLASS: { //TODO deal with class
                     return "";
-                }
-                case OBJECTREF:{
-                    return ""; // CALL Operand: q OBJECTREF, Literal: "<init>"
                 }
                 default:
                     break;
@@ -435,10 +434,8 @@ public class JasminGenerator {
             case BOOLEAN: {
                 return String.format("istore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
+            case OBJECTREF:
             case ARRAYREF: {
-                return String.format("astore%s\n", this.getVirtualReg(operand.getName(), varTable));
-            }
-            case OBJECTREF: {
                 return String.format("astore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
             default:
