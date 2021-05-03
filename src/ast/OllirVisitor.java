@@ -226,7 +226,13 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                 }
 
                 if (!classField) {
-                    ollir.append(String.format("%s :=%s %s;", ollirVariable, ollirType, parts[parts.length - 1]));
+                    String temp = "temporary" + temp_sequence++ + ".i32";
+                    ollir.append(String.format("%s :=.i32 %s;\n", temp, parts2[parts2.length - 1]));
+
+                    ollir.append(String.format("%s :=%s %s;\n",
+                            OllirTemplates.arrayaccess(variable.getKey(), name, parts[parts.length - 1]),
+                            OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
+                            temp));
                 } else {
                     String temp = "temporary" + temp_sequence++ + ollirType;
 
@@ -735,9 +741,10 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                         ollirExpression = OllirTemplates.invokespecial((String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
                     }
                 } else if (!methodReturn.get(0).equals("length")){
-                    // Declared method called on "this"
+                    Symbol targetVariable = (Symbol) targetReturn.get(1);
+
                     JmmMethod called = (JmmMethod) methodReturn.get(1);
-                    ollirExpression = OllirTemplates.invokevirtual(called.getName(), called.getReturnType(), (String) methodReturn.get(2));
+                    ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), called.getName(), called.getReturnType(), (String) methodReturn.get(2));
                     expectedType = called.getReturnType();
                 } else {
                     ollirExpression = OllirTemplates.arraylength(OllirTemplates.variable((Symbol) targetReturn.get(1), (String) targetReturn.get(2)));
