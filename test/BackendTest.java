@@ -65,7 +65,7 @@ public class BackendTest {
         System.out.println(result.getJasminCode());
 
         String output = result.run().replace("\r\n", "\n");
-        assertEquals(SpecsIo.getResource("fixtures/public/QuickSort.txt").trim(), output.trim());
+        assertEquals(SpecsIo.getResource("fixtures/public/QuickSort.txt").replace("\r\n", "\n").trim(), output.trim());
     }
     @Test
     public void testWhileAndIF() {
@@ -75,7 +75,7 @@ public class BackendTest {
         System.out.println(result.getJasminCode());
 
         String output = result.run().replace("\r\n", "\n");
-        assertEquals(SpecsIo.getResource("fixtures/public/WhileAndIF.txt").trim(), output.trim());
+        assertEquals(SpecsIo.getResource("fixtures/public/WhileAndIF.txt").replace("\r\n", "\n").trim(), output.trim());
     }
 
 }

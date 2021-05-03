@@ -43,12 +43,12 @@ public class AnalysisStage implements JmmAnalysis {
         JmmSymbolTable table = new JmmSymbolTable();
         List<Report> reports = new ArrayList<>();
 
-        System.out.println("Preorder Visitor - Filling Symbol Table...");
+        System.out.println("Visitor - Filling Symbol Table...");
         SymbolTableVisitor visitor = new SymbolTableVisitor(table, reports);
         visitor.visit(node, "");
         System.out.println("Symbol Table Filled!");
 
-        System.out.println("Postorder Visitor - Semantic Analysis...");
+        System.out.println("Visitor - Semantic Analysis...");
         JmmExpressionAnalyser expressionsAnalyser = new JmmExpressionAnalyser(table, reports);
         expressionsAnalyser.visit(node, null);
         System.out.println("Semantic Analysis Done!");
