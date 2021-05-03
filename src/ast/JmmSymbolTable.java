@@ -13,7 +13,7 @@ public class JmmSymbolTable implements SymbolTable {
     private String className;
     private String superClassName;
     // Map from Symbol to Value -> null if the field is not initialized yet
-    private final Map<Symbol, String> fields = new HashMap<>();
+    private final Map<Symbol, Boolean> fields = new HashMap<>();
     private final List<JmmMethod> methods = new ArrayList<>();
     private JmmMethod currentMethod;
 
@@ -42,7 +42,7 @@ public class JmmSymbolTable implements SymbolTable {
     }
 
     public void addField(Symbol field) {
-        fields.put(field, null);
+        fields.put(field, false);
     }
 
     public boolean fieldExists(String name) {
@@ -65,34 +65,20 @@ public class JmmSymbolTable implements SymbolTable {
         throw new NoSuchMethod(name);
     }
 
-    private void updateField(Symbol symbol, String newValue) {
-        this.fields.put(symbol, newValue);
-    }
-
-    public boolean updateField(String name, String newValue) {
-        Symbol field = null;
-
-        for (Symbol localVariable : this.fields.keySet()) {
-            if (localVariable.getName().equals(name)) {
-                field = localVariable;
-                break;
-            }
-        }
-
-        if (field != null) {
-            this.updateField(field, newValue);
-            return true;
-        }
-
-        return false;
-    }
-
-    public Map.Entry<Symbol, String> getField(String name) {
-        for (Map.Entry<Symbol, String> field : this.fields.entrySet()) {
+    public Map.Entry<Symbol, Boolean> getField(String name) {
+        for (Map.Entry<Symbol, Boolean> field : this.fields.entrySet()) {
             if (field.getKey().getName().equals(name))
                 return field;
         }
         return null;
+    }
+
+    public boolean initializeField(Symbol symbol) {
+        if (this.fields.containsKey(symbol)) {
+            this.fields.put(symbol, true);
+            return true;
+        }
+        return false;
     }
 
     public void addMethod(String name, Type returnType) {
@@ -110,8 +96,8 @@ public class JmmSymbolTable implements SymbolTable {
         builder.append("Class Name: ").append(className).append(" | Extends: ").append(superClassName).append("\n");
 
         builder.append("--- Local Variables ---").append("\n");
-        for (Map.Entry<Symbol, String> field : fields.entrySet())
-            builder.append("\t").append(field.getKey()).append(" = ").append(field.getValue()).append("\n");
+        for (Map.Entry<Symbol, Boolean> field : fields.entrySet())
+            builder.append("\t").append(field.getKey()).append(" Initialized: ").append(field.getValue()).append("\n");
 
         builder.append("--- Methods ---").append("\n");
         for (JmmMethod method : this.methods) {

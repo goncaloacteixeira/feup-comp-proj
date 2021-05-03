@@ -1,6 +1,13 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import ast.JmmSymbolTable;
+import ast.OllirVisitor;
+import ast.SymbolTableVisitor;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
@@ -28,13 +35,27 @@ public class OptimizationStage implements JmmOptimization {
 
         JmmNode node = semanticsResult.getRootNode();
 
-        // Convert the AST to a String containing the equivalent OLLIR code
-        String ollirCode = ""; // Convert node ...
-
         // More reports from this stage
-        List<Report> reports = new ArrayList<>();
+        OllirVisitor visitor = new OllirVisitor((JmmSymbolTable) semanticsResult.getSymbolTable(), semanticsResult.getReports());
+        // Convert the AST to a String containing the equivalent OLLIR code
+        System.out.println("Preorder Visitor - Generating OLLIR...");
+        String ollirCode = (String) visitor.visit(node, Arrays.asList("DEFAULT_VISIT")).get(0);
+        System.out.println("OLLIR Generation Successful!");
 
-        return new OllirResult(semanticsResult, ollirCode, reports);
+        // System.out.println(ollirCode);
+
+        // Para escrever o ficheiro com codigo OLLIR para efeitos de teste
+        /*try {
+            FileWriter myWriter = new FileWriter("test.ollir");
+            myWriter.write(ollirCode);
+            myWriter.close();
+            System.out.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }*/
+
+        return new OllirResult(semanticsResult, ollirCode, semanticsResult.getReports());
     }
 
     @Override

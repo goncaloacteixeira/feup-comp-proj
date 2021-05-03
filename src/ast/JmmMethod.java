@@ -1,8 +1,10 @@
 package ast;
 
 import ast.exceptions.WrongArgumentType;
+import org.specs.comp.ollir.OllirAccesser;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
+import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
 import java.util.*;
 
@@ -12,7 +14,7 @@ public class JmmMethod {
     private final List<Map.Entry<Symbol, String>> parameters = new ArrayList<>();
 
     // Map from Symbol to Value -> null if the field is not initialized yet
-    private final Map<Symbol, String> localVariables = new HashMap<>();
+    private final Map<Symbol, Boolean> localVariables = new HashMap<>();
 
     public JmmMethod(String name, Type returnType) {
         this.name = name;
@@ -28,31 +30,8 @@ public class JmmMethod {
         return params;
     }
 
-    private void updateField(Symbol symbol, String newValue) {
-        this.localVariables.put(symbol, newValue);
-    }
-
-    public boolean updateField(String name, String newValue) {
-        Symbol field = null;
-
-        for (Symbol localVariable : this.localVariables.keySet()) {
-            if (localVariable.getName().equals(name)) {
-                field = localVariable;
-                break;
-            }
-        }
-
-        if (field != null) {
-            this.updateField(field, newValue);
-            return true;
-        }
-
-        return false;
-    }
-
-
     public void addLocalVariable(Symbol variable) {
-        localVariables.put(variable, null);
+        localVariables.put(variable, false);
     }
 
     public String getName() {
@@ -83,18 +62,26 @@ public class JmmMethod {
         return false;
     }
 
-    public Map.Entry<Symbol, String> getField(String name) {
-        for (Map.Entry<Symbol, String> field : this.localVariables.entrySet()) {
+    public Map.Entry<Symbol, Boolean> getField(String name) {
+        for (Map.Entry<Symbol, Boolean> field : this.localVariables.entrySet()) {
             if (field.getKey().getName().equals(name))
                 return field;
         }
 
         for (Map.Entry<Symbol, String> param : this.parameters) {
             if (param.getKey().getName().equals(name))
-                return param;
+                return Map.entry(param.getKey(), true);
         }
 
         return null;
+    }
+
+    public boolean initializeField(Symbol symbol) {
+        if (this.localVariables.containsKey(symbol)) {
+            this.localVariables.put(symbol, true);
+            return true;
+        }
+        return false;
     }
 
     public List<Symbol> getParameters() {
@@ -120,8 +107,8 @@ public class JmmMethod {
             builder.append("\t").append(param.getKey()).append("\n");
 
         builder.append("Local Variables").append("\n");
-        for (Map.Entry<Symbol, String> localVariable : this.localVariables.entrySet()) {
-            builder.append("\t").append(localVariable.getKey()).append(" = ").append(localVariable.getValue()).append("\n");
+        for (Map.Entry<Symbol, Boolean> localVariable : this.localVariables.entrySet()) {
+            builder.append("\t").append(localVariable.getKey()).append(" Initialized: ").append(localVariable.getValue()).append("\n");
         }
 
         return builder.toString();
@@ -149,5 +136,24 @@ public class JmmMethod {
         }
 
         return types;
+    }
+
+    public String isParameter(Symbol symbol) {
+        for (int i = 1; i < this.parameters.size() + 1; i++) {
+            if (parameters.get(i - 1).getKey() == symbol) {
+                return "$" + i;
+            }
+        }
+        return null;
+    }
+
+    public List<String> parametersToOllir() {
+        List<String> ollir = new ArrayList<>();
+
+        for (Map.Entry<Symbol, String> parameter : this.parameters) {
+            ollir.add(OllirTemplates.variable(parameter.getKey()));
+        }
+
+        return ollir;
     }
 }

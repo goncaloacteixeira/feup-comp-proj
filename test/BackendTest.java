@@ -17,19 +17,65 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.jasmin.JasminBackend;
+import pt.up.fe.comp.jmm.jasmin.JasminResult;
+import pt.up.fe.comp.jmm.ollir.OllirResult;
+import pt.up.fe.comp.jmm.ollir.OllirUtils;
 import pt.up.fe.specs.util.SpecsIo;
 
-public class BackendTest {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-    /**
-     * TODO Comentado porque ainda não está implementado
-     */
+public class BackendTest {
+    private final List<String> validFiles = Arrays.asList(
+            "fixtures/public/HelloWorld.jmm",
+            "fixtures/public/Simple.jmm",
+            "fixtures/public/QuickSort.jmm",
+            "fixtures/public/WhileAndIF.jmm"
+    );
+
     @Test
     public void testHelloWorld() {
-        /*var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(result.getReports());
 
-        var output = result.run();
-        assertEquals("Hello, World!", output.trim());*/
+        System.out.println(result.getJasminCode());
+
+        String output = result.run();
+        assertEquals("Hello, World!", output.trim());
     }
+
+    @Test
+    public void testSimple() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Simple.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        System.out.println(result.getJasminCode());
+
+        String output = result.run();
+        assertEquals("30", output.trim());
+    }
+
+    @Test
+    public void testQuickSort() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/QuickSort.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        System.out.println(result.getJasminCode());
+
+        String output = result.run().replace("\r\n", "\n");
+        assertEquals(SpecsIo.getResource("fixtures/public/QuickSort.txt").replace("\r\n", "\n").trim(), output.trim());
+    }
+    @Test
+    public void testWhileAndIF() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        System.out.println(result.getJasminCode());
+
+        String output = result.run().replace("\r\n", "\n");
+        assertEquals(SpecsIo.getResource("fixtures/public/WhileAndIF.txt").replace("\r\n", "\n").trim(), output.trim());
+    }
+
 }

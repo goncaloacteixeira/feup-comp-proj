@@ -19,7 +19,7 @@ import java.util.Map;
  *
  * @author JBispo
  */
-public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, String>, Map.Entry<String, String>> {
+public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry<String, String>> {
     private final JmmSymbolTable table;
     private final List<Report> reports;
     private String scope;
@@ -31,9 +31,12 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
 
         // DATA -> <return type, result (expression eval)>
 
-        // TODO - Fazer os assignments às variáveis neste visitor uma vez que é possivel fazer isso com preorder
-
         addVisit("BinaryOperation", this::dealWithBinaryOperation);
+        addVisit("RelationalExpression", this::dealWithRelationalExpression);
+        addVisit("AndExpression", this::dealWithAndExpression);
+        addVisit("NotExpression", this::dealWithNotExpression);
+        addVisit("IfCondition", this::dealConditionalExpression);
+        addVisit("WhileCondition", this::dealConditionalExpression);
         addVisit("IntegerLiteral", this::dealWithPrimitive);
         addVisit("BooleanLiteral", this::dealWithPrimitive);
         addVisit("ArrayInit", this::dealWithArrayInit);
@@ -41,19 +44,21 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         addVisit("Variable", this::dealWithVariable);
         addVisit("Assignment", this::dealWithAssignment);
 
-        // keep track of scopes, TODO - mais scopes, como acessos ou invocação de métodos
         addVisit("ClassDeclaration", this::dealWithClassDeclaration);
         addVisit("MainMethod", this::dealWithMainDeclaration);
         addVisit("ClassMethod", this::dealWithMethodDeclaration);
         addVisit("AccessExpression", this::dealWithAccessExpression);
         addVisit("MethodCall", this::dealWithMethodCall);
         addVisit("Length", this::dealWithMethodCall);
+        addVisit("NewObject", this::dealWithNewObject);
+
+        addVisit("Return", this::dealWithReturn);
     }
 
 
-    private Map.Entry<String, String> dealWithArrayAccess(JmmNode node, Map.Entry<String, String> data) {
+    private Map.Entry<String, String> dealWithArrayAccess(JmmNode node, Boolean data) {
         JmmNode index = node.getChildren().get(0);
-        Map.Entry<String, String> indexReturn = visit(index);
+        Map.Entry<String, String> indexReturn = visit(index, true);
 
         if (!indexReturn.getKey().equals("int")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(index.get("line")), Integer.parseInt(index.get("col")), "Array access index is not an Integer: " + index));
@@ -63,108 +68,207 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         return Map.entry("index", indexReturn.getValue());
     }
 
-    private Map.Entry<String, String> dealWithArrayInit(JmmNode node, Map.Entry<String, String> data) {
+    private Map.Entry<String, String> dealWithArrayInit(JmmNode node, Boolean data) {
         JmmNode size = node.getChildren().get(0);
-        Map.Entry<String, String> sizeReturn = visit(size);
+        Map.Entry<String, String> sizeReturn = visit(size, true);
 
         if (!sizeReturn.getKey().equals("int")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(size.get("line")), Integer.parseInt(size.get("col")), "Array init size is not an Integer: " + size));
             return Map.entry("error", "null");
         }
 
-        int sizeValue = Integer.parseInt(sizeReturn.getValue());
-        StringBuffer array = new StringBuffer(sizeValue);
-        array.append(sizeReturn.getValue());
-        for (int i = 0; i < sizeValue; i++){
-            array.append(",0");
-        }
-
-        return Map.entry("int []", array.toString());
+        return Map.entry("int []", "null");
     }
 
-    private Map.Entry<String, String> dealWithBinaryOperation(JmmNode node, Map.Entry<String, String> data) {
-        JmmNode left = node.getChildren().get(0);
-        JmmNode right = node.getChildren().get(1);
+    private Map.Entry<String, String> dealConditionalExpression(JmmNode node, Boolean data) {
+        JmmNode condition = node.getChildren().get(0);
+        Map.Entry<String, String> conditionReturn = visit(condition, true);
 
-        Map.Entry<String, String> leftReturn = visit(left);
-        Map.Entry<String, String> rightReturn = visit(right);
+        Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
 
-        Map.Entry<String, String> dataReturn = Map.entry("int", "null");
-
-        if (!leftReturn.getKey().equals("int")) {
+        if (!conditionReturn.getKey().equals("boolean")) {
             dataReturn = Map.entry("error", "null");
-            // para não apresentar o mesmo erro mais do que uma vez
-            if (leftReturn.getKey().equals("error"))
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer"));
-        }
-        if (!rightReturn.getKey().equals("int")) {
-            dataReturn = Map.entry("error", "null");
-            // para não apresentar o mesmo erro mais do que uma vez
-            if (rightReturn.getKey().equals("error"))
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer"));
-        }
-
-
-        if (dataReturn.getKey().equals("int")) {
-            try {
-                String result = expressionEval(leftReturn.getValue(), rightReturn.getValue(), node.get("operation"));
-                dataReturn = Map.entry(dataReturn.getKey(), result);
-            } catch (DivisionByZero divisionByZero) {
-                dataReturn = Map.entry("error", "null");
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Division by Zero"));
-            } catch (UnsupportedOperation unsupportedOperation) {
-                dataReturn = Map.entry("error", "null");
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Operation not supported"));
-            }
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(condition.get("line")), Integer.parseInt(condition.get("col")), "Conditional expression not boolean"));
         }
 
         return dataReturn;
     }
 
+    private Map.Entry<String, String> dealWithRelationalExpression(JmmNode node, Boolean data) {
+        JmmNode left = node.getChildren().get(0);
+        JmmNode right = node.getChildren().get(1);
 
-    private String expressionEval(String a, String b, String operation) throws DivisionByZero, UnsupportedOperation {
-        switch (operation) {
-            case "*":
-                return String.valueOf(Integer.parseInt(a) * Integer.parseInt(b));
-            case "/":
-                if (Integer.parseInt(b) == 0) {
-                    throw new DivisionByZero();
-                }
-                return String.valueOf(Integer.parseInt(a) / Integer.parseInt(b));
-            case "+":
-                return String.valueOf(Integer.parseInt(a) + Integer.parseInt(b));
-            case "-":
-                return String.valueOf(Integer.parseInt(a) - Integer.parseInt(b));
-            default:
-                throw new UnsupportedOperation();
+        Map.Entry<String, String> leftReturn = visit(left, true);
+        Map.Entry<String, String> rightReturn = visit(right, true);
+
+        Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
+
+        if (!leftReturn.getValue().equals("true") && left.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not initialized: " + left));
+            }
+        }
+        if (!rightReturn.getValue().equals("true") && right.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not initialized: " + right));
+            }
+        }
+
+        if (!leftReturn.getKey().equals("int")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer: " + left));
+            }
+        }
+        if (!rightReturn.getKey().equals("int")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer: " + right));
+            }
+        }
+
+        if (dataReturn.getKey().equals("boolean")) {
+            return dataReturn;
+        } else {
+            return Map.entry("error", "null");
+        }
+    }
+
+    private Map.Entry<String, String> dealWithAndExpression(JmmNode node, Boolean data) {
+        JmmNode left = node.getChildren().get(0);
+        JmmNode right = node.getChildren().get(1);
+
+        Map.Entry<String, String> leftReturn = visit(left, true);
+        Map.Entry<String, String> rightReturn = visit(right, true);
+
+        Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
+
+        if (!leftReturn.getValue().equals("true") && left.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not initialized: " + left));
+            }
+        }
+        if (!rightReturn.getValue().equals("true") && right.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not initialized: " + right));
+            }
+        }
+
+        if (!leftReturn.getKey().equals("boolean")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not boolean: " + left));
+            }
+        }
+        if (!rightReturn.getKey().equals("boolean")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not boolean: " + right));
+            }
+        }
+
+        if (dataReturn.getKey().equals("boolean")) {
+            return dataReturn;
+        } else {
+            return Map.entry("error", "null");
+        }
+    }
+
+    private Map.Entry<String, String> dealWithNotExpression(JmmNode node, Boolean data) {
+        JmmNode bool = node.getChildren().get(0);
+
+        Map.Entry<String, String> boolReturn = visit(bool, true);
+
+        Map.Entry<String, String> dataReturn = Map.entry("boolean", "null");
+
+        if (!boolReturn.getValue().equals("true") && bool.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(bool.get("line")), Integer.parseInt(bool.get("col")), "Member not initialized: " + bool));
+            }
+        }
+
+        if (!boolReturn.getKey().equals("boolean")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(bool.get("line")), Integer.parseInt(bool.get("col")), "Operator '!' cannot be applied to " + boolReturn.getKey().replace(" ","")));
+            }
+        }
+
+        if (dataReturn.getKey().equals("boolean")) {
+            return dataReturn;
+        } else {
+            return Map.entry("error", "null");
+        }
+    }
+
+    private Map.Entry<String, String> dealWithBinaryOperation(JmmNode node, Boolean data) {
+        JmmNode left = node.getChildren().get(0);
+        JmmNode right = node.getChildren().get(1);
+
+        Map.Entry<String, String> leftReturn = visit(left, true);
+        Map.Entry<String, String> rightReturn = visit(right, true);
+
+        Map.Entry<String, String> dataReturn = Map.entry("int", "null");
+
+        if (!leftReturn.getValue().equals("true") && left.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not initialized: " + left));
+            }
+        }
+        if (!rightReturn.getValue().equals("true") && right.getKind().equals("Variable")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not initialized: " + right));
+            }
+        }
+
+        if (!leftReturn.getKey().equals("int") && !leftReturn.getKey().equals("access")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(left.get("line")), Integer.parseInt(left.get("col")), "Left Member not integer: " + left));
+            }
+        }
+        if (!rightReturn.getKey().equals("int") && !rightReturn.getKey().equals("access")) {
+            dataReturn = Map.entry("error", "null");
+            if (data != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(right.get("line")), Integer.parseInt(right.get("col")), "Right Member not integer: " + right));
+            }
+        }
+
+        if (dataReturn.getKey().equals("int")) {
+            return dataReturn;
+        } else {
+            return Map.entry("error", "null");
         }
     }
 
 
-    private Map.Entry<String, String> dealWithPrimitive(JmmNode node, Map.Entry<String, String> data) {
+    private Map.Entry<String, String> dealWithPrimitive(JmmNode node, Boolean data) {
         String return_type;
-        String result;
 
         switch (node.getKind()) {
             case "IntegerLiteral":
                 return_type = "int";
-                result = node.get("value");
                 break;
             case "BooleanLiteral":
                 return_type = "boolean";
-                result = node.get("value");
                 break;
             default:
                 return_type = "error";
-                result = "null";
                 break;
         }
 
-        return Map.entry(return_type, result);
+        return Map.entry(return_type, "true");
     }
 
-    private Map.Entry<String, String> dealWithVariable(JmmNode node, Map.Entry<String, String> data) {
-        Map.Entry<Symbol, String> field = null;
+    private Map.Entry<String, String> dealWithVariable(JmmNode node, Boolean data) {
+        Map.Entry<Symbol, Boolean> field = null;
 
         if (scope.equals("CLASS")) {
             field = table.getField(node.get("name"));
@@ -175,33 +279,27 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
             }
         }
 
-        //TODO - ver se a variavel foi inicializada
-        //LocalVariables dao coco quando temos funções overloaded
-
-        //ver se a variavel se refere a um acesso, ou a um metodo
-
-
-        if (field == null && table.getImports().contains(node.get("name"))){
-            return Map.entry("access", "null");
-        }else if (field == null && node.get("name").equals("this")){
-            return Map.entry("method", "null");
+        if (field == null && table.getImports().contains(node.get("name"))) {
+            return Map.entry("access", "true");
+        } else if (field == null && node.get("name").equals("this")) {
+            return Map.entry("method", "true");
         }
 
         if (field == null) {
             return Map.entry("error", "null");
         } else {
-            return Map.entry(field.getKey().getType().getName() + (field.getKey().getType().isArray() ? " []" : ""), field.getValue() != null ? field.getValue() : "null");
+            return Map.entry(field.getKey().getType().getName() + (field.getKey().getType().isArray() ? " []" : ""), field.getValue() ? "true" : "null");
         }
     }
 
 
-    private Map.Entry<String, String> dealWithClassDeclaration(JmmNode node, Map.Entry<String, String> data) {
+    private Map.Entry<String, String> dealWithClassDeclaration(JmmNode node, Boolean data) {
         scope = "CLASS";
         return null;
     }
 
 
-    private Map.Entry<String, String> dealWithMethodDeclaration(JmmNode node, Map.Entry<String, String> data) {
+    private Map.Entry<String, String> dealWithMethodDeclaration(JmmNode node, Boolean data) {
         scope = "METHOD";
 
         List<Type> params = JmmMethod.parseParameters(node.get("params"));
@@ -216,7 +314,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         return null;
     }
 
-    private Map.Entry<String, String> dealWithMainDeclaration(JmmNode node, Map.Entry<String, String> data) {
+    private Map.Entry<String, String> dealWithMainDeclaration(JmmNode node, Boolean data) {
         scope = "METHOD";
 
         try {
@@ -229,61 +327,53 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         return null;
     }
 
-    private Map.Entry<String, String> dealWithAccessExpression(JmmNode node, Map.Entry<String, String> space){
+    private Map.Entry<String, String> dealWithAccessExpression(JmmNode node, Boolean requested) {
         JmmNode target = node.getChildren().get(0);
         JmmNode method = node.getChildren().get(1);
 
-        Map.Entry<String, String> targetReturn = visit(target);
-        Map.Entry<String, String> methodReturn = visit(method);
+        Map.Entry<String, String> targetReturn = visit(target, true);
+        Map.Entry<String, String> methodReturn = visit(method, true);
 
+        if (targetReturn.getKey().equals("error")) {
+            if (requested != null || !node.getParent().getKind().equals("Assignment"))
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Invalid Access"));
+            return Map.entry("error", "null");
+        }
 
-        if (targetReturn.getKey().equals("error")){
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Unknown target: " + target.get("name")));
-        } else if (targetReturn.getValue().equals("null")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Uninitialized variable: " + target.get("name")));
-        } else if (targetReturn.getKey().equals("method")){
-            if (methodReturn.getKey().equals("error") && table.getSuper() == null){
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method: " + method.get("value")));
+        if (methodReturn.getKey().equals("error")) {
+            if (targetReturn.getKey().equals("access")) {
+                return Map.entry("access", "null");
             } else {
-                return Map.entry(methodReturn.getValue(), "1");
+                if (requested != null || !node.getParent().getKind().equals("Assignment"))
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "No such method"));
+                return Map.entry("error", "null");
             }
-        } else if (targetReturn.getKey().equals("int") || targetReturn.getKey().equals("boolean")){
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Target cannot be primitive: " + target));
-        } else if (targetReturn.getKey().equals("int []") && methodReturn.getKey().equals("index")) {
-            String value = getArrayValue(targetReturn.getValue(), Integer.parseInt(methodReturn.getValue()));
-            if (value == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Array index out of bounds: " + target));
-            } else {
-                return Map.entry("int", value);
+        }
+
+        else if (targetReturn.getKey().equals("method") || targetReturn.getKey().equals(table.getClassName())) {
+            return Map.entry(methodReturn.getValue(), "null");
+        } else if (targetReturn.getKey().equals("access")) {
+            return Map.entry("access", "null");
+        } else if (targetReturn.getKey().equals("int") || targetReturn.getKey().equals("boolean")) {
+            if (requested != null) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Target cannot be primitive"));
+            return Map.entry("error", "null");
+        } else if (targetReturn.getKey().equals("int []")) {
+            if (methodReturn.getKey().equals("length")) {
+                return Map.entry("int", "length");
             }
-        } else if (targetReturn.getKey().equals("int []") && methodReturn.getKey().equals("length")) {
-            return Map.entry("int", targetReturn.getValue().split(",",2)[0]);
+            if (methodReturn.getKey().equals("index")) {
+                return Map.entry("int", "index");
+            }
+        } else if (target.get("name").equals(table.getClassName())) {
+            return Map.entry(methodReturn.getValue(), "index");
+        } else if (table.getImports().contains(target.get("name"))) {
+            return Map.entry("access", "null");
         }
 
         return Map.entry("error", "null");
     }
 
-    private String getArrayValue(String array, int index) {
-        String[] parts = array.split(",");
-
-        if (Integer.parseInt(parts[0]) <= index) {
-            return null;
-        }
-        return parts[index + 1];
-    }
-
-    private String updateArray(String array, int index, String new_value) {
-        String[] parts = array.split(",");
-
-        if (Integer.parseInt(parts[0]) <= index) {
-            return null;
-        }
-
-        parts[index + 1] = new_value;
-        return String.join(",", parts);
-    }
-
-    private Map.Entry<String, String> dealWithMethodCall(JmmNode node, Map.Entry<String, String> space) {
+    private Map.Entry<String, String> dealWithMethodCall(JmmNode node, Boolean space) {
         if (node.getKind().equals("Length")) {
             return Map.entry("length", "null");
         }
@@ -295,17 +385,21 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         try {
             table.getMethod(node.get("value"), params, returnType);
         } catch (NoSuchMethod noSuchMethod) {
-            return Map.entry("error", "noSuchMethod");
+            if (this.table.getSuper() == null) {
+                return Map.entry("error", "noSuchMethod");
+            } else {
+                return Map.entry("method", "access");
+            }
         }
 
         return Map.entry("method", returnType.getName() + (returnType.isArray() ? " []" : ""));
     }
 
-    private List<Type> getParametersList(List<JmmNode> children){
+    private List<Type> getParametersList(List<JmmNode> children) {
         //TODO - visitor para os parametros em vez disto maybe
         List<Type> params = new ArrayList<>();
-        for(JmmNode child : children){
-            switch (child.getKind()){
+        for (JmmNode child : children) {
+            switch (child.getKind()) {
                 case "IntegerLiteral":
                     params.add(new Type("int", false));
                     break;
@@ -315,7 +409,7 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
                 case "Variable":
                 case "AccessExpression":
                 case "BinaryOperation":
-                    Map.Entry<String,String> var = visit(child);
+                    Map.Entry<String, String> var = visit(child, true);
                     String[] type = var.getKey().split(" ");
                     params.add(new Type(type[0], type.length == 2));
                     break;
@@ -326,52 +420,94 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Map.Entry<String, 
         return params;
     }
 
-    private Map.Entry<String, String> dealWithAssignment(JmmNode node, Map.Entry<String, String> space) {
+    private Map.Entry<String, String> dealWithAssignment(JmmNode node, Boolean space) {
         List<JmmNode> children = node.getChildren();
 
         if (children.size() == 1) {
-            Map.Entry<String, String> assignment = visit(node.getChildren().get(0));
+            Map.Entry<String, String> assignment = visit(node.getChildren().get(0), true);
 
-            Map.Entry<Symbol, String> variable;
+            if (assignment.getKey().equals("error")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Undeclared Variable: " + node.getChildren().get(0)));
+                return null;
+            }
+
+            Map.Entry<Symbol, Boolean> variable;
             if ((variable = currentMethod.getField(node.get("variable"))) == null) {
                 variable = table.getField(node.get("variable"));
             }
 
-            String[] parts = assignment.getKey().split(" ");
-            if (variable.getKey().getType().getName().equals(parts[0])) {
-                if (!(parts.length == 2 && variable.getKey().getType().isArray()) && !(parts.length == 1 && !variable.getKey().getType().isArray())) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Mismatched types: "));
-                    return null;
-                }
-            } else {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Mismatched types: "));
+            // IF assignment is related to an access to an imported static method
+            if (assignment.getKey().equals("access")) {
+                variable.setValue(true);
                 return null;
             }
 
+            String[] parts = assignment.getKey().split(" ");
 
-            if (!currentMethod.updateField(node.get("variable"), assignment.getValue())) {
-                table.updateField(node.get("variable"), assignment.getValue());
+            // Matching Types
+            if (variable.getKey().getType().getName().equals(parts[0])) {
+                if (!(parts.length == 2 && variable.getKey().getType().isArray()) && !(parts.length == 1 && !variable.getKey().getType().isArray())) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Mismatched types: " + variable.getKey().getType() + " and " + assignment.getKey()));
+                    return null;
+                }
+            } else {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Mismatched types: " + variable.getKey().getType() + " and " + assignment.getKey()));
+                return null;
             }
-        } else {
-            Map.Entry<String, String> index = visit(node.getChildren().get(0));
-            Map.Entry<String, String> value = visit(node.getChildren().get(1));
 
-            Map.Entry<Symbol, String> array;
+            if (!currentMethod.initializeField(variable.getKey())) {
+                table.initializeField(variable.getKey());
+            }
+
+        } else {
+            Map.Entry<Symbol, Boolean> array;
             if ((array = currentMethod.getField(node.get("variable"))) == null) {
                 array = table.getField(node.get("variable"));
             }
 
-            String updated_array = this.updateArray(array.getValue(), Integer.parseInt(index.getValue()), value.getValue());
-            if (updated_array == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Array index out of bounds: " + node.get("variable") + "[" + index.getValue() + "]"));
-                return null;
+            Map.Entry<Symbol, Boolean> variable;
+            if ((variable = currentMethod.getField(node.get("variable"))) == null) {
+                variable = table.getField(node.get("variable"));
             }
 
-            if (!currentMethod.updateField(node.get("variable"), updated_array)) {
-                table.updateField(node.get("variable"), updated_array);
+            if (!array.getKey().getType().equals(variable.getKey().getType())) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Mismatched types: " + variable.getKey().getType() + " and " + array.getKey().getType()));
+            } else {
+                if (!currentMethod.initializeField(variable.getKey())) {
+                    table.initializeField(variable.getKey());
+                }
             }
         }
 
         return null;
+    }
+
+    private Map.Entry<String, String> dealWithReturn(JmmNode node, Boolean space) {
+        String returnType = visit(node.getChildren().get(0), true).getKey();
+
+        if (returnType.equals("access")) {
+            return null;
+        }
+
+        String[] parts = returnType.split(" ");
+        if (parts.length == 2 && currentMethod.getReturnType().isArray()) {
+            if (!parts[0].equals(currentMethod.getReturnType().getName())) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Return type mismatch"));
+            }
+            return null;
+        } else if (parts.length == 1 && !currentMethod.getReturnType().isArray()) {
+            if (!parts[0].equals(currentMethod.getReturnType().getName())) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Return type mismatch"));
+            }
+            return null;
+        } else {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Return type mismatch"));
+        }
+
+        return null;
+    }
+
+    private Map.Entry<String, String> dealWithNewObject(JmmNode node, Boolean data) {
+        return Map.entry(node.get("value"), "object");
     }
 }
