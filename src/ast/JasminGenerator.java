@@ -259,9 +259,11 @@ public class JasminGenerator {
 
         switch (type) {
             case invokespecial:
-                stringBuilder += this.loadElement((Operand) instruction.getFirstArg(), varTable);
+                // TODO Fix invokespecials
+                Operand arg = (Operand) instruction.getFirstArg();
+                if(arg.getType().getTypeOfElement() != ElementType.THIS) stringBuilder += this.loadElement(arg, varTable);
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((ClassType)instruction.getFirstArg().getType()).getName());
-                stringBuilder += this.storeElement((Operand) instruction.getFirstArg(), varTable);
+                if(arg.getType().getTypeOfElement() != ElementType.THIS) stringBuilder += this.storeElement(arg, varTable);
                 break;
             case invokestatic:
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((Operand)instruction.getFirstArg()).getName());
