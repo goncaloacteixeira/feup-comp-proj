@@ -56,6 +56,9 @@ public class JasminGenerator {
 
             for (Instruction instruction : method.getInstructions()) {
                 stringBuilder += dealWithInstruction(instruction, varTable, method.getLabels());
+                if (instruction instanceof CallInstruction && ((CallInstruction) instruction).getReturnType().getTypeOfElement() != ElementType.VOID) {
+                    stringBuilder += "pop\n";
+                }
             }
 
             stringBuilder += "\n.end method\n";
@@ -121,6 +124,7 @@ public class JasminGenerator {
         }
 
         stringBuilder += dealWithInstruction(inst.getRhs(), varTable, new HashMap<String, Instruction>());
+
         stringBuilder += this.storeElement(operand, varTable);
 
         return stringBuilder;
@@ -255,7 +259,9 @@ public class JasminGenerator {
 
         switch (type) {
             case invokespecial:
+                stringBuilder += this.loadElement((Operand) instruction.getFirstArg(), varTable);
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((ClassType)instruction.getFirstArg().getType()).getName());
+                stringBuilder += this.storeElement((Operand) instruction.getFirstArg(), varTable);
                 break;
             case invokestatic:
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((Operand)instruction.getFirstArg()).getName());
