@@ -278,7 +278,6 @@ public class JasminGenerator {
     public String dealWithInvoke(CallInstruction instruction, HashMap<String, Descriptor> varTable, CallType type, String className){
         String stringBuilder = ""; //TODO deal with invokes
 
-        Operand obj = (Operand)instruction.getFirstArg();
         LiteralElement func = (LiteralElement) instruction.getSecondArg();
         String parameters = "";
 
@@ -391,12 +390,7 @@ public class JasminGenerator {
     public String loadElement(Element element, HashMap<String, Descriptor> varTable) {
         if (element instanceof LiteralElement) {
             String num = ((LiteralElement) element).getLiteral();
-            if (Integer.parseInt(num) <= 5) {
-                return "iconst_" + num + "\n";
-            }
-            else {
-                return "bipush " + num + "\n";
-            }
+            return this.selectConstType(num) + "\n";
         }
         else if (element instanceof ArrayOperand) {
             ArrayOperand operand = (ArrayOperand) element;
@@ -467,5 +461,15 @@ public class JasminGenerator {
 
     private String getEndIfLabel() {
         return "EndIf" + this.conditional;
+    }
+
+    private String selectConstType(String literal){
+        return Integer.parseInt(literal) < -1 || Integer.parseInt(literal) > 5 ?
+                    Integer.parseInt(literal) < -128 || Integer.parseInt(literal) > 127 ?
+                        Integer.parseInt(literal) < -32768 || Integer.parseInt(literal) > 32767 ?
+                            "ldc " + literal :
+                        "sipush " + literal :
+                    "bipush " + literal :
+                "iconst_" + literal;
     }
 }
