@@ -9,6 +9,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OllirTemplates {
+    public static String classTemplate(String name, String extended) {
+        if (extended == null) return classTemplate(name);
+
+        StringBuilder ollir = new StringBuilder();
+        ollir.append(String.format("%s extends %s", name, extended)).append(openBrackets());
+        return ollir.toString();
+    }
+
     public static String classTemplate(String name) {
         StringBuilder ollir = new StringBuilder();
         ollir.append(name).append(openBrackets());
