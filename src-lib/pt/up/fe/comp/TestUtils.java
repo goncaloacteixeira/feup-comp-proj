@@ -24,11 +24,6 @@ public class TestUtils {
     private static final Properties OPTIMIZE_CONFIG = TestUtils.loadProperties("optimize.properties");
     private static final Properties BACKEND_CONFIG = TestUtils.loadProperties("backend.properties");
 
-    /**
-     * Method used to load properties from the *.properties files
-     * @param filename the filename of a *.properties file
-     * @return a Properties object
-     */
     public static Properties loadProperties(String filename) {
         try {
             Properties props = new Properties();
@@ -39,13 +34,6 @@ public class TestUtils {
         }
     }
 
-    /**
-     * Starts by getting the parser Class Name from the file parser.properties, creates the Class and retrieves a instance
-     * of a JmmParser from that Class. With the JmmParser, parses the String representing JMM code received from the arguments
-     *
-     * @param code String representing JMM code
-     * @return The JmmParserResult
-     */
     public static JmmParserResult parse(String code) {
         try {
 
@@ -66,13 +54,6 @@ public class TestUtils {
 
     }
 
-    /**
-     * Starts by getting the analyser Class Name from the file analysis.properties, creates the Class and retrieves a instance
-     * of a JmmAnalysis from that Class. With the JmmAnalysis, analyses the JmmParserResult received from the arguments
-     *
-     * @param parserResult JmmParserResult to be analysed
-     * @return JmmSemanticsResult
-     */
     public static JmmSemanticsResult analyse(JmmParserResult parserResult) {
         try {
 
@@ -93,12 +74,6 @@ public class TestUtils {
 
     }
 
-    /**
-     * Starting from a String representing JMM code, parses the String, checks if there no errors and analyses the resulting
-     * JmmParserResult, resulting in a JmmSemanticsResult
-     * @param code String representing JMM code
-     * @return JmmSemanticsResult
-     */
     public static JmmSemanticsResult analyse(String code) {
         var parseResults = TestUtils.parse(code);
         noErrors(parseResults.getReports());
@@ -179,6 +154,11 @@ public class TestUtils {
                 .filter(report -> report.getType() == ReportType.ERROR)
                 .findFirst()
                 .ifPresent(report -> {
+                    if (report.getException().isPresent()) {
+                        throw new RuntimeException("Found at least one error report: " + report,
+                                report.getException().get());
+                    }
+
                     throw new RuntimeException("Found at least one error report: " + report);
                 });
     }

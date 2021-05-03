@@ -33,22 +33,22 @@ public interface JmmNode {
     /**
      * Sets the value of an attribute.
      * 
-     * @param attribute Value of the attribute that will be modified
-     * @param value String with new value for the attribute
+     * @param attribute
+     * @param value
      */
     void put(String attribute, String value);
 
     /**
-     * Returns the Value of an attribute
-     * @param attribute Attribute to get the value from
-     * @return the value of an attribute. To see all the attributes iterate the list provided by
-     *          {@link #getAttributes()}
+     * 
+     * @param attribute
+     * @returns the value of an attribute. To see all the attributes iterate the list provided by
+     *          {@link JmmNode#getAttributes()}
      */
     String get(String attribute);
 
     /**
-     * TODO Dunno what this is supposed to be
-     * @param attribute Attribute to search for
+     * 
+     * @param attribute
      * @return the value of the attribute wrapper around an Optional, or Optional.empty() if there is no value for the
      *         given attribute
      */
@@ -65,8 +65,8 @@ public interface JmmNode {
     }
 
     /**
-     * Retrieves the ancestor of a node with a certain Kind
-     * @param kind kind of the ancestor
+     * 
+     * @param kind
      * @return the first ancestor of the given kind, or Optional.empty() if no ancestor of that kind was found
      */
     default Optional<JmmNode> getAncestor(String kind) {
@@ -98,7 +98,7 @@ public interface JmmNode {
     /**
      * Adds a new node at the end of the children list
      * 
-     * @param child JmmNode to be added
+     * @param child
      */
     default void add(JmmNode child) {
         add(child, getNumChildren());
@@ -107,13 +107,14 @@ public interface JmmNode {
     /**
      * Inserts a node at the given position
      * 
-     * @param child JmmNode to be added
-     * @param index Position where node will be added
+     * @param child
+     * @param index
      */
     void add(JmmNode child, int index);
 
     default String toJson() {
         Gson gson = new GsonBuilder()
+                .excludeFieldsWithoutExposeAnnotation()
                 .setPrettyPrinting()
                 .registerTypeAdapter(JmmNode.class, new JmmSerializer())
                 .create();
@@ -124,10 +125,6 @@ public interface JmmNode {
         return JmmNodeImpl.fromJson(json);
     }
 
-    /**
-     * Converts to JSON and back from JSON
-     * @return JmmNode sanitized
-     */
     default JmmNode sanitize() {
         return fromJson(this.toJson());
     }
