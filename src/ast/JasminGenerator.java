@@ -109,11 +109,19 @@ public class JasminGenerator {
     }
 
     public String dealWithAssignment(AssignInstruction inst, HashMap<String, Descriptor> varTable) {
-        String stringBuilder = dealWithInstruction(inst.getRhs(), varTable, new HashMap<String, Instruction>());
+        String stringBuilder = "";
         Operand operand = (Operand) inst.getDest();
+        if (operand instanceof ArrayOperand) {
+            ArrayOperand aoperand = (ArrayOperand) operand;
 
-        if(!operand.getType().getTypeOfElement().equals(ElementType.OBJECTREF))
-            stringBuilder += this.storeElement(operand, varTable);
+            // Load array
+            stringBuilder += String.format("aload%s\n", this.getVirtualReg(aoperand.getName(), varTable));
+            // Load index
+            stringBuilder += loadElement(aoperand.getIndexOperands().get(0), varTable);
+        }
+
+        stringBuilder += dealWithInstruction(inst.getRhs(), varTable, new HashMap<String, Instruction>());
+        stringBuilder += this.storeElement(operand, varTable);
 
         return stringBuilder;
     }
@@ -248,7 +256,6 @@ public class JasminGenerator {
         switch (type) {
             case invokespecial:
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((ClassType)instruction.getFirstArg().getType()).getName());
-                stringBuilder += this.storeElement((Operand)instruction.getFirstArg(), varTable);
                 break;
             case invokestatic:
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((Operand)instruction.getFirstArg()).getName());
@@ -427,6 +434,9 @@ public class JasminGenerator {
     }
 
     public String storeElement(Operand operand, HashMap<String, Descriptor> varTable) {
+        if (operand instanceof ArrayOperand) {
+            return "iastore\n";
+        }
         switch (operand.getType().getTypeOfElement()) {
             case INT32:
             case BOOLEAN: {

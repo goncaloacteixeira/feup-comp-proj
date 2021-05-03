@@ -31,16 +31,16 @@ public class BackendTest {
      */
     @Test
     public void testHelloWorld() {
-        JasminResult result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/test.ollir")),
+        /*JasminResult result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/test.ollir")),
                 null, new ArrayList<>()));
 
         String output = result.run().trim();
-        System.out.println(output);
-        /*
+        System.out.println(output);*/
+
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(result.getReports());
 
         var output = result.run();
-        assertEquals("Hello, World!", output.trim());*/
+        //assertEquals("Hello, World!", output.trim());
     }
 }
