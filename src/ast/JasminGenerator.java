@@ -1,18 +1,12 @@
 package ast;
 
 import org.specs.comp.ollir.*;
-import pt.up.fe.comp.jmm.JmmNode;
 
 import java.util.*;
 
-/**
- * Input Data -> {scope, extra_data1, extra_data2, ...}
- * Output Data -> {OLLIR, extra_data1, extra_data2, ...}
- */
 public class JasminGenerator {
     private ClassUnit classUnit;
     private String jasminCode;
-    private final Set<JmmNode> visited = new HashSet<>();
     private int conditional;
 
     public JasminGenerator(ClassUnit classUnit) {
@@ -20,7 +14,14 @@ public class JasminGenerator {
     }
 
     public String dealWithClass() {
-        String stringBuilder = ".class " + classUnit.getClassName() + "\n.super java/lang/Object\n";
+        String stringBuilder = ".class " + classUnit.getClassName() + "\n";
+        if (classUnit.getSuperClass() != null) {
+            stringBuilder += ".super " + classUnit.getSuperClass() + "\n";
+        }
+        else {
+            stringBuilder += ".super java/lang/Object\n";
+        }
+
         return stringBuilder + dealWithMethods();
     }
 
@@ -30,7 +31,7 @@ public class JasminGenerator {
         String stringBuilder = "";
         for (Method method : classUnit.getMethods()) {
             this.conditional = 0;
-            int localCount = 0;
+
             stringBuilder += "\n.method public ";
             if (method.isConstructMethod()) {
                 stringBuilder += "<init>()V\naload_0\ninvokespecial java/lang/Object.<init>()V\nreturn\n.end method\n";
@@ -50,7 +51,7 @@ public class JasminGenerator {
             HashMap<String, Descriptor> varTable = method.getVarTable();
 
             stringBuilder += ".limit stack 99\n";
-            localCount = varTable.size() + 1;
+            int localCount = varTable.size() + 1;
             stringBuilder += ".limit locals " + localCount + "\n";
 
 
@@ -255,13 +256,11 @@ public class JasminGenerator {
 
         switch (type) {
             case invokespecial:
+            case invokevirtual:
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((ClassType)instruction.getFirstArg().getType()).getName());
                 break;
             case invokestatic:
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((Operand)instruction.getFirstArg()).getName());
-                break;
-            case invokevirtual:
-                stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((ClassType)instruction.getFirstArg().getType()).getName());
                 break;
             case arraylength:
                 stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
@@ -327,7 +326,7 @@ public class JasminGenerator {
         Operand var = (Operand)instruction.getSecondOperand();
         Element value = instruction.getThirdOperand();
 
-        stringBuilder += this.loadElement((Element) obj, varTable); //push object (Class ref) onto the stack
+        stringBuilder += this.loadElement(obj, varTable); //push object (Class ref) onto the stack
 
         stringBuilder += this.loadElement(value, varTable); //store const element on stack
 
@@ -340,7 +339,7 @@ public class JasminGenerator {
         Operand obj = (Operand)instruction.getFirstOperand();
         Operand var = (Operand)instruction.getSecondOperand();
 
-        jasminCode += this.loadElement((Element) obj, varTable); //push object (Class ref) onto the stack
+        jasminCode += this.loadElement(obj, varTable); //push object (Class ref) onto the stack
 
         //TODO using same syntax as putfield with className, example: https://flylib.com/books/en/2.883.1.11/1/
         return jasminCode + "getfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertElementType(var.getType().getTypeOfElement()) +  "\n";

@@ -17,6 +17,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.ollir.OllirUtils;
@@ -33,9 +34,6 @@ public class BackendTest {
             "fixtures/public/WhileAndIF.jmm"
     );
 
-    /**
-     * TODO Comentado porque ainda não está implementado
-     */
     @Test
     public void testHelloWorld() {
         /*JasminResult result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/test.ollir")),
@@ -44,10 +42,12 @@ public class BackendTest {
         String output = result.run().trim();
         System.out.println(output);*/
 
-        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
         TestUtils.noErrors(result.getReports());
 
-        var output = result.run();
+        System.out.println(result.getJasminCode());
+
+        String output = result.run();
         //assertEquals("Hello, World!", output.trim());
     }
 
@@ -57,8 +57,11 @@ public class BackendTest {
         for (String filename : this.validFiles) {
             System.out.printf("Testing: %-40s\n", filename);
 
-            var result = TestUtils.backend(SpecsIo.getResource(filename));
+            JasminResult result = TestUtils.backend(SpecsIo.getResource(filename));
             TestUtils.noErrors(result.getReports());
+
+            System.out.println(result.getJasminCode());
+
             result.run();
 
             System.out.printf("Testing: %-40s - PASSED\n\n", filename);
