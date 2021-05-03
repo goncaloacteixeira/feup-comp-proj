@@ -234,25 +234,31 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                             OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
                             temp));
                 } else {
-                    String temp = "temporary" + temp_sequence++ + ollirType;
+                    String temp = "temporary" + temp_sequence++;
 
-                    ollir.append(String.format("%s :=%s %s;\n", temp, ollirType, OllirTemplates.getfield(variable.getKey())));
+                    ollir.append(String.format("%s :=%s %s;\n", temp + ollirType, ollirType, OllirTemplates.getfield(variable.getKey())));
 
                     ollir.append(String.format("%s :=%s %s;\n",
-                            OllirTemplates.arrayaccess(variable.getKey(), null, parts[parts.length - 1]),
+                            OllirTemplates.arrayaccess(new Symbol(new Type("int", true), temp), null, parts[parts.length - 1]),
                             OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
                             parts2[parts2.length - 1]));
                 }
             } else {
                 if (!classField) {
-                    ollir.append(String.format("%s :=%s %s;", ollirVariable, ollirType, parts[parts.length - 1]));
-                } else {
-                    String temp = "temporary" + temp_sequence++ + ollirType;
-
-                    ollir.append(String.format("%s :=%s %s;\n", temp, ollirType, OllirTemplates.getfield(variable.getKey())));
+                    String temp = "temporary" + temp_sequence++ + ".i32";
+                    ollir.append(String.format("%s :=.i32 %s;\n", temp, result));
 
                     ollir.append(String.format("%s :=%s %s;\n",
-                            OllirTemplates.arrayaccess(variable.getKey(), null, parts[parts.length - 1]),
+                            OllirTemplates.arrayaccess(variable.getKey(), name, parts[parts.length - 1]),
+                            OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
+                            temp));
+                } else {
+                    String temp = "temporary" + temp_sequence++;
+
+                    ollir.append(String.format("%s :=%s %s;\n", temp + ollirType, ollirType, OllirTemplates.getfield(variable.getKey())));
+
+                    ollir.append(String.format("%s :=%s %s;\n",
+                            OllirTemplates.arrayaccess(new Symbol(new Type("int", true), temp), null, parts[parts.length - 1]),
                             OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
                             result));
                 }
