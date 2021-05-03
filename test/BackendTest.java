@@ -23,8 +23,15 @@ import pt.up.fe.comp.jmm.ollir.OllirUtils;
 import pt.up.fe.specs.util.SpecsIo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class BackendTest {
+    private List<String> validFiles = Arrays.asList(
+            "fixtures/public/HelloWorld.jmm",
+            "fixtures/public/Simple.jmm",
+            "fixtures/public/WhileAndIF.jmm"
+    );
 
     /**
      * TODO Comentado porque ainda não está implementado
@@ -37,10 +44,24 @@ public class BackendTest {
         String output = result.run().trim();
         System.out.println(output);*/
 
-        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
         TestUtils.noErrors(result.getReports());
 
         var output = result.run();
         //assertEquals("Hello, World!", output.trim());
+    }
+
+    @Test
+    public void testOllirToJasmin() {
+        System.out.println("\nTesting Valid Files in test/public\n");
+        for (String filename : this.validFiles) {
+            System.out.printf("Testing: %-40s\n", filename);
+
+            var result = TestUtils.backend(SpecsIo.getResource(filename));
+            TestUtils.noErrors(result.getReports());
+            result.run();
+
+            System.out.printf("Testing: %-40s - PASSED\n\n", filename);
+        }
     }
 }
