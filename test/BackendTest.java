@@ -28,13 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BackendTest {
-    private final List<String> validFiles = Arrays.asList(
-            "fixtures/public/HelloWorld.jmm",
-            "fixtures/public/Simple.jmm",
-            "fixtures/public/QuickSort.jmm",
-            "fixtures/public/WhileAndIF.jmm"
-    );
-
     @Test
     public void testHelloWorld() {
         JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
@@ -44,6 +37,17 @@ public class BackendTest {
 
         String output = result.run();
         assertEquals("Hello, World!", output.trim());
+    }
+
+    @Test
+    public void testFindMaximum() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        System.out.println(result.getJasminCode());
+
+        String output = result.run();
+        assertEquals("Result: 28", output.trim());
     }
 
     @Test
@@ -64,8 +68,8 @@ public class BackendTest {
 
         System.out.println(result.getJasminCode());
 
-        String output = result.run().replace("\r\n", "\n");
-        assertEquals(SpecsIo.getResource("fixtures/public/QuickSort.txt").replace("\r\n", "\n").trim(), output.trim());
+        String output = result.run();
+        assertEquals(SpecsIo.getResource("fixtures/public/QuickSort.txt").trim().replace("\r\n", "\n"), output.trim().replace("\r\n", "\n"));
     }
     @Test
     public void testWhileAndIF() {
@@ -74,8 +78,7 @@ public class BackendTest {
 
         System.out.println(result.getJasminCode());
 
-        String output = result.run().replace("\r\n", "\n");
-        assertEquals(SpecsIo.getResource("fixtures/public/WhileAndIF.txt").replace("\r\n", "\n").trim(), output.trim());
+        String output = result.run();
+        assertEquals(SpecsIo.getResource("fixtures/public/WhileAndIF.txt").trim().replace("\r\n", "\n"), output.trim().replace("\r\n", "\n"));
     }
-
 }
