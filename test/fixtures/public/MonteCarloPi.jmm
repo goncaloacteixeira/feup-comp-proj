@@ -1,7 +1,7 @@
-import MathUtils;
+import MathUtils; //lowerLimit,upperLimit
 import ioPlus;
 
-class MonteCarloPi extends idk{
+class MonteCarloPi {
 	public boolean performSingleEstimate() {
 		int rand1;
 		int rand2;
