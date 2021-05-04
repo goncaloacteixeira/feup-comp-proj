@@ -14,12 +14,20 @@ public class JasminGenerator {
     }
 
     public String dealWithClass() {
+        // class declaration
         String stringBuilder = ".class " + classUnit.getClassName() + "\n";
+
+        // extends declaration
         if (classUnit.getSuperClass() != null) {
             stringBuilder += ".super " + classUnit.getSuperClass() + "\n";
         }
         else {
             stringBuilder += ".super java/lang/Object\n";
+        }
+
+        // fields declaration
+        for (Field f : classUnit.getFields()) {
+            stringBuilder += ".field \'" + f.getFieldName() + "\' " + this.convertElementType(f.getFieldType().getTypeOfElement()) + "\n";
         }
 
         return stringBuilder + dealWithMethods();
