@@ -614,11 +614,12 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         int count = while_label_sequence++;
 
-        int nodeIndex = node.getParent().getChildren().indexOf(node);
+       /* int nodeIndex = node.getParent().getChildren().indexOf(node);
         if ((nodeIndex - 1 >= 0) && node.getParent().getChildren().get(nodeIndex - 1).getKind().equals("While") ||
                 (nodeIndex - 1 >= 0) && node.getParent().getChildren().get(nodeIndex - 1).getKind().equals("IfElse")) {
+
             ollir.append(String.format("goto loop%d;\n", count));
-        }
+        }*/
 
         ollir.append(String.format("loop%d:\n", count));
 
@@ -630,12 +631,12 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        ollir.append(String.format("if (%s) goto loopbody%d;\n",
-                conditionParts[conditionParts.length - 1],
-                count));
-        ollir.append(String.format("end%d:\ngoto endloop%d;\n", count, count));
+        Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+        ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), conditionParts[conditionParts.length - 1]));
 
-        ollir.append(String.format("loopbody%d:\n", count));
+        ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n",
+                OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+
         List<String> body = new ArrayList<>();
         for (int i = 1; i < node.getChildren().size(); i++) {
             body.add((String) visit(node.getChildren().get(i), Arrays.asList("IF")).get(0));
