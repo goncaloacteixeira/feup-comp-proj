@@ -16,8 +16,14 @@ public class JasminGenerator {
     }
 
     public String dealWithClass() {
+        StringBuilder stringBuilder = new StringBuilder("");
+
+        /*for(String imp : classUnit.getImports()){
+            stringBuilder.append("[L").append(imp.replace('.','/')).append(";\n");
+        }*/
+
         // class declaration
-        StringBuilder stringBuilder = new StringBuilder(".class " + classUnit.getClassName() + "\n");
+        stringBuilder.append(".class ").append(classUnit.getClassName()).append("\n");
 
         // extends declaration
         if (classUnit.getSuperClass() != null) {
