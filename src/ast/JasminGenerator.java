@@ -8,6 +8,8 @@ public class JasminGenerator {
     private ClassUnit classUnit;
     private String jasminCode;
     private int conditional;
+    private int stack_counter;
+    private int max_counter;
 
     public JasminGenerator(ClassUnit classUnit) {
         this.classUnit = classUnit;
@@ -15,65 +17,79 @@ public class JasminGenerator {
 
     public String dealWithClass() {
         // class declaration
-        String stringBuilder = ".class " + classUnit.getClassName() + "\n";
+        StringBuilder stringBuilder = new StringBuilder(".class " + classUnit.getClassName() + "\n");
 
         // extends declaration
         if (classUnit.getSuperClass() != null) {
-            stringBuilder += ".super " + classUnit.getSuperClass() + "\n";
+            stringBuilder.append(".super ").append(classUnit.getSuperClass()).append("\n");
         }
         else {
-            stringBuilder += ".super java/lang/Object\n";
+            stringBuilder.append(".super java/lang/Object\n");
         }
 
         // fields declaration
         for (Field f : classUnit.getFields()) {
-            stringBuilder += ".field \'" + f.getFieldName() + "\' " + this.convertElementType(f.getFieldType().getTypeOfElement()) + "\n";
+            stringBuilder.append(".field \'").append(f.getFieldName()).append("\' ").append(this.convertElementType(f.getFieldType().getTypeOfElement())).append("\n");
         }
 
-        return stringBuilder + dealWithMethods();
-    }
-
-    public String dealWithMethods() {
-        //TODO limit stack
-        //TODO limit locals
-        String stringBuilder = "";
         for (Method method : classUnit.getMethods()) {
             this.conditional = 0;
+            this.stack_counter = 0;
+            this.max_counter = 0;
 
-            stringBuilder += "\n.method public ";
-            if (method.isConstructMethod()) {
-                stringBuilder += "<init>()V\naload_0\ninvokespecial java/lang/Object.<init>()V\nreturn\n.end method\n";
-                continue;
+            stringBuilder.append(this.dealWithMethodHeader(method));
+            String instructions = this.dealtWithMethodIntructions(method);
+            if (!method.isConstructMethod()) {
+                stringBuilder.append(this.dealWithMethodLimits(method));
+                stringBuilder.append(instructions);
             }
-            if (method.isStaticMethod()) {
-                stringBuilder += "static main([Ljava/lang/String;)V\n";
-            }
-            else {
-                stringBuilder += method.getMethodName() + "(";
-                for (Element element: method.getParams()) {
-                    stringBuilder += convertElementType(element.getType().getTypeOfElement());
-                }
-                stringBuilder += ")" + this.convertElementType(method.getReturnType().getTypeOfElement()) + "\n";
-            }
-
-            HashMap<String, Descriptor> varTable = method.getVarTable();
-
-            stringBuilder += ".limit stack 99\n";
-            int localCount = varTable.size() + 1;
-            stringBuilder += ".limit locals " + localCount + "\n";
-
-
-            for (Instruction instruction : method.getInstructions()) {
-                stringBuilder += dealWithInstruction(instruction, varTable, method.getLabels());
-                if (instruction instanceof CallInstruction && ((CallInstruction) instruction).getReturnType().getTypeOfElement() != ElementType.VOID) {
-                    stringBuilder += "pop\n";
-                }
-            }
-
-            stringBuilder += "\n.end method\n";
-
         }
-        return stringBuilder;
+
+        return stringBuilder.toString();
+    }
+
+    private String dealWithMethodHeader(Method method) {
+        StringBuilder stringBuilder = new StringBuilder("\n.method public ");
+        if (method.isConstructMethod()) {
+            stringBuilder.append("<init>()V\naload_0\ninvokespecial java/lang/Object.<init>()V\nreturn\n.end method\n");
+            return stringBuilder.toString();
+        }
+        if (method.isStaticMethod()) {
+            stringBuilder.append("static main([Ljava/lang/String;)V\n");
+        }
+        else {
+            stringBuilder.append(method.getMethodName()).append("(");
+            for (Element element: method.getParams()) {
+                stringBuilder.append(convertElementType(element.getType().getTypeOfElement()));
+            }
+            stringBuilder.append(")").append(this.convertElementType(method.getReturnType().getTypeOfElement())).append("\n");
+        }
+
+        return stringBuilder.toString();
+    }
+
+    private String dealWithMethodLimits(Method method) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        int localCount = method.getVarTable().size() + 1;
+        stringBuilder.append(".limit locals ").append(localCount).append("\n");
+        stringBuilder.append(".limit stack ").append(" 99").append("\n");
+
+        return stringBuilder.toString();
+    }
+
+    private String dealtWithMethodIntructions(Method method) {
+        StringBuilder stringBuilder = new StringBuilder();
+        method.getVarTable();
+        for (Instruction instruction : method.getInstructions()) {
+            stringBuilder.append(dealWithInstruction(instruction, method.getVarTable(), method.getLabels()));
+            if (instruction instanceof CallInstruction && ((CallInstruction) instruction).getReturnType().getTypeOfElement() != ElementType.VOID) {
+                stringBuilder.append("pop\n");
+            }
+        }
+
+        stringBuilder.append("\n.end method\n");
+        return stringBuilder.toString();
     }
 
     public String dealWithInstruction(Instruction instruction, HashMap<String, Descriptor> varTable, HashMap<String, Instruction> methodLabels) {
@@ -133,7 +149,9 @@ public class JasminGenerator {
         }
 
         stringBuilder += dealWithInstruction(inst.getRhs(), varTable, new HashMap<String, Instruction>());
-        stringBuilder += this.storeElement(operand, varTable);
+        if(!(operand.getType().getTypeOfElement().equals(ElementType.OBJECTREF) && inst.getRhs() instanceof CallInstruction)) { //if its a new object call does not store yet
+            stringBuilder += this.storeElement(operand, varTable);
+        }
 
         return stringBuilder;
     }
@@ -267,9 +285,7 @@ public class JasminGenerator {
 
         switch (type) {
             case invokespecial:
-                // TODO Fix invokespecials
                 Operand arg = (Operand) instruction.getFirstArg();
-                if(arg.getType().getTypeOfElement() != ElementType.THIS) stringBuilder += this.loadElement(arg, varTable);
                 stringBuilder += this.dealWithInvoke(instruction, varTable, type, ((ClassType)instruction.getFirstArg().getType()).getName());
                 if(arg.getType().getTypeOfElement() != ElementType.THIS) stringBuilder += this.storeElement(arg, varTable);
                 break;
@@ -301,9 +317,11 @@ public class JasminGenerator {
             stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
         }
 
+        int num_params = 0;
         for (Element element : instruction.getListOfOperands()) {
             stringBuilder += this.loadElement(element, varTable);
             parameters += this.convertElementType(element.getType().getTypeOfElement());
+            num_params++;
         }
 
         stringBuilder += type.name() + " " + className + "." + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertElementType(instruction.getReturnType().getTypeOfElement()) + "\n";
@@ -347,7 +365,10 @@ public class JasminGenerator {
 
         stringBuilder += this.loadElement(value, varTable); //store const element on stack
 
-        //TODO using className not this
+        // ..., objectref, value →
+        this.decrementStackCounter();
+        this.decrementStackCounter();
+
         return stringBuilder + "putfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertElementType(var.getType().getTypeOfElement()) + "\n";
     }
 
@@ -358,7 +379,10 @@ public class JasminGenerator {
 
         jasminCode += this.loadElement(obj, varTable); //push object (Class ref) onto the stack
 
-        //TODO using same syntax as putfield with className, example: https://flylib.com/books/en/2.883.1.11/1/
+        // ..., objectref →
+        // ..., value
+        // No need to change stack
+
         return jasminCode + "getfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertElementType(var.getType().getTypeOfElement()) +  "\n";
     }
 
@@ -373,11 +397,17 @@ public class JasminGenerator {
             case INT32:
             case BOOLEAN:
                 returnString = loadElement(instruction.getOperand(), varTable);
+
+                // value →
+                this.decrementStackCounter();
                 returnString += "ireturn";
                 break;
             case ARRAYREF:
             case OBJECTREF:
                 returnString = loadElement(instruction.getOperand(), varTable);
+
+                // objectref →
+                this.decrementStackCounter();
                 returnString  += "areturn";
                 break;
             default:
@@ -406,6 +436,7 @@ public class JasminGenerator {
     public String loadElement(Element element, HashMap<String, Descriptor> varTable) {
         if (element instanceof LiteralElement) {
             String num = ((LiteralElement) element).getLiteral();
+            this.incrementStackCounter();
             return this.selectConstType(num) + "\n";
         }
         else if (element instanceof ArrayOperand) {
@@ -413,9 +444,13 @@ public class JasminGenerator {
 
             // Load array
             String stringBuilder = String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
+            this.incrementStackCounter();
+
             // Load index
             stringBuilder += loadElement(operand.getIndexOperands().get(0), varTable);
 
+            // iaload pops arrayref and index and pushes value
+            this.decrementStackCounter();
             return stringBuilder + "iaload\n";
         }
         else if (element instanceof Operand) {
@@ -423,13 +458,16 @@ public class JasminGenerator {
             switch (operand.getType().getTypeOfElement()) {
                 // TODO this appears in VarTable as local variable
                 case THIS:
+                    this.incrementStackCounter();
                     return "aload_0\n";
                 case INT32:
                 case BOOLEAN: {
+                    this.incrementStackCounter();
                     return String.format("iload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
                 case OBJECTREF:
                 case ARRAYREF: {
+                    this.incrementStackCounter();
                     return String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
                 case CLASS: { //TODO deal with class
@@ -445,15 +483,21 @@ public class JasminGenerator {
 
     public String storeElement(Operand operand, HashMap<String, Descriptor> varTable) {
         if (operand instanceof ArrayOperand) {
+            // arrayref, index, value →
+            this.decrementStackCounter();
+            this.decrementStackCounter();
+            this.decrementStackCounter();
             return "iastore\n";
         }
         switch (operand.getType().getTypeOfElement()) {
             case INT32:
             case BOOLEAN: {
+                this.decrementStackCounter();
                 return String.format("istore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
             case OBJECTREF:
             case ARRAYREF: {
+                this.decrementStackCounter();
                 return String.format("astore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
             default:
@@ -487,5 +531,14 @@ public class JasminGenerator {
                         "sipush " + literal :
                     "bipush " + literal :
                 "iconst_" + literal;
+    }
+
+    private void incrementStackCounter() {
+        this.stack_counter++;
+        if (this.stack_counter > this.max_counter) this.max_counter = stack_counter;
+    }
+
+    private void decrementStackCounter(){
+        this.stack_counter--;
     }
 }
