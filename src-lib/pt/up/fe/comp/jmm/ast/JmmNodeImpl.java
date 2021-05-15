@@ -81,6 +81,7 @@ public class JmmNodeImpl implements JmmNode {
 
     public void add(JmmNodeImpl child) {
         children.add(child);
+        child.setParent(this);
     }
 
     @Override
@@ -94,6 +95,7 @@ public class JmmNodeImpl implements JmmNode {
 
     public void add(JmmNodeImpl child, int index) {
         this.children.add(index, child);
+        child.setParent(this);
     }
 
     /**
@@ -126,5 +128,53 @@ public class JmmNodeImpl implements JmmNode {
                         .map(attr -> attr + ": " + get(attr))
                         .collect(Collectors.joining(", ", " (", ")"));
         return getKind() + attrsString;
+    }
+
+    @Override
+    public JmmNode removeChild(int index) {
+        int numChildren = children.size();
+        if (index >= numChildren) {
+            System.out.println(
+                    "[WARNING] Tried to remove child at index " + index + ", but node only has " + numChildren
+                            + " children");
+            return null;
+        }
+
+        var removedChild = (JmmNodeImpl) children.remove(index);
+        removedChild.parent = null;
+        return removedChild;
+    }
+
+    @Override
+    public int removeChild(JmmNode node) {
+        // Find index of node
+        for (int i = 0; i < children.size(); i++) {
+            var child = children.get(i);
+
+            // Test if same node
+            if (node != child) {
+                continue;
+            }
+
+            // Found node
+            removeChild(i);
+            return i;
+        }
+
+        System.out
+                .println("[WARNING] Tried to remove child from node, but could not find it.\nChild:" + node
+                        + "\nParent:" + this);
+        return -1;
+    }
+
+    @Override
+    public void delete() {
+        var parent = getParent();
+        if (parent == null) {
+            System.out.println("[WARNING] Tried to remove itself from the tree, but node has no parent");
+            return;
+        }
+
+        parent.removeChild(this);
     }
 }
