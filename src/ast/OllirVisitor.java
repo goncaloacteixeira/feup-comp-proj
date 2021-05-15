@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.specs.util.utilities.StringLines;
 
+import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -566,19 +567,21 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        ollir.append(String.format("if (%s) goto ifbody%d;\n", ifConditionParts[ifConditionParts.length - 1], count));
+        Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+        ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), ifConditionParts[ifConditionParts.length - 1]));
 
-        ollir.append(visit(node.getParent().getChildren().get(1), Collections.singletonList("ELSE")).get(0));
-        ollir.append("\n");
-        ollir.append(String.format("goto endif%d;\n", count));
+        ollir.append(String.format("if (%s !.bool %s) goto else%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
 
-        ollir.append(String.format("ifbody%d:\n", count));
         List<String> ifBody = new ArrayList<>();
         for (int i = 1; i < node.getChildren().size(); i++) {
             ifBody.add((String) visit(node.getChildren().get(i), Collections.singletonList("IF")).get(0));
         }
         ollir.append(String.join("\n", ifBody)).append("\n");
         ollir.append(String.format("goto endif%d;\n", count));
+
+        ollir.append(visit(node.getParent().getChildren().get(1), Arrays.asList("ELSE", count)).get(0));
+        ollir.append("\n");
+
         ollir.append(String.format("endif%d:\n", count));
 
         return Collections.singletonList(ollir.toString());
@@ -590,7 +593,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         StringBuilder ollir = new StringBuilder();
 
-        ollir.append(String.format("else%d:\n", if_label_sequence));
+        ollir.append(String.format("else%d:\n", data.get(1)));
 
         List<String> elseBody = new ArrayList<>();
 
