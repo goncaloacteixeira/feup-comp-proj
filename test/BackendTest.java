@@ -81,4 +81,14 @@ public class BackendTest {
         String output = result.run();
         assertEquals(SpecsIo.getResource("fixtures/public/WhileAndIF.txt").trim().replace("\r\n", "\n"), output.trim().replace("\r\n", "\n"));
     }
+
+    @Test
+    public void testLazySort() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        System.out.println(result.getJasminCode());
+
+        String output = result.run();
+    }
 }
