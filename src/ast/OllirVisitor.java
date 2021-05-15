@@ -669,8 +669,13 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             if (!targetReturn.get(1).equals("this")) {
                 String targetVariable = (String) targetReturn.get(1);
                 if (assignment != null) {
-                    ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
-                    expectedType = assignment.getType();
+                    if (data.get(2).equals("ARRAY_ACCESS")) {
+                        ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), new Type(assignment.getType().getName(), false), (String) methodReturn.get(2));
+                        expectedType = new Type(assignment.getType().getName(), false);
+                    } else {
+                        ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
+                        expectedType = assignment.getType();
+                    }
                 } else {
                     expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                     ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));

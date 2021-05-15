@@ -35,7 +35,7 @@ public class OptimizeTest {
 
     @Test
     public void testHelloWorld() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
         TestUtils.noErrors(result.getReports());
     }
 
