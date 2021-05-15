@@ -73,6 +73,14 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         List<String> fields = new ArrayList<>();
         List<String> classBody = new ArrayList<>();
 
+        StringBuilder ollir = new StringBuilder();
+
+        // imports
+        for (String importStmt : this.table.getImports()) {
+            ollir.append(String.format("import %s;\n", importStmt));
+        }
+        ollir.append("\n");
+
         // fields
         for (JmmNode child : node.getChildren()) {
             String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
@@ -85,7 +93,6 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        StringBuilder ollir = new StringBuilder();
 
         ollir.append(OllirTemplates.classTemplate(table.getClassName(), table.getSuper()));
 
