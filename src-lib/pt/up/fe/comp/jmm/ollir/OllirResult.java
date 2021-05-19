@@ -1,5 +1,6 @@
 package pt.up.fe.comp.jmm.ollir;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.specs.comp.ollir.ClassUnit;
@@ -14,15 +15,24 @@ import pt.up.fe.specs.util.SpecsCollections;
  */
 public class OllirResult {
 
+    private final String ollirCode;
     private final ClassUnit ollirClass;
     private final SymbolTable symbolTable;
     private final List<Report> reports;
     private String ollir;
 
-    public OllirResult(ClassUnit ollirClass, SymbolTable symbolTable, List<Report> reports) {
+    private OllirResult(String ollirCode, ClassUnit ollirClass, SymbolTable symbolTable, List<Report> reports) {
+        this.ollirCode = ollirCode;
         this.ollirClass = ollirClass;
         this.symbolTable = symbolTable;
         this.reports = reports;
+    }
+
+    public OllirResult(String ollirCode) {
+        this.ollirCode = ollirCode;
+        this.ollirClass = OllirUtils.parse(ollirCode);
+        this.symbolTable = null;
+        this.reports = Collections.emptyList();
     }
 
     /**
@@ -33,13 +43,17 @@ public class OllirResult {
      * @param reports
      */
     public OllirResult(JmmSemanticsResult semanticsResult, String ollirCode, List<Report> reports) {
-        this(OllirUtils.parse(ollirCode), semanticsResult.getSymbolTable(),
+        this(ollirCode, OllirUtils.parse(ollirCode), semanticsResult.getSymbolTable(),
                 SpecsCollections.concat(semanticsResult.getReports(), reports));
         ollir = ollirCode;
     }
 
     public String getOllir() {
         return ollir;
+    }
+
+    public String getOllirCode() {
+        return ollirCode;
     }
 
     public ClassUnit getOllirClass() {
