@@ -787,7 +787,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             ollir.append(ollirExpression);
         }
 
-        if (data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("WHILE")) {
+        if (data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("ELSE") || data.get(0).equals("WHILE")) {
             ollir.append(";");
         }
 
