@@ -19,7 +19,6 @@ public class OllirResult {
     private final ClassUnit ollirClass;
     private final SymbolTable symbolTable;
     private final List<Report> reports;
-    private String ollir;
 
     private OllirResult(String ollirCode, ClassUnit ollirClass, SymbolTable symbolTable, List<Report> reports) {
         this.ollirCode = ollirCode;
@@ -45,11 +44,6 @@ public class OllirResult {
     public OllirResult(JmmSemanticsResult semanticsResult, String ollirCode, List<Report> reports) {
         this(ollirCode, OllirUtils.parse(ollirCode), semanticsResult.getSymbolTable(),
                 SpecsCollections.concat(semanticsResult.getReports(), reports));
-        ollir = ollirCode;
-    }
-
-    public String getOllir() {
-        return ollir;
     }
 
     public String getOllirCode() {

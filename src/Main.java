@@ -58,7 +58,7 @@ public class Main implements JmmParser {
 		/* OLLIR CODE */
 		try {
 			FileWriter myWriter = new FileWriter(path + "/" + ollirResult.getSymbolTable().getClassName() + ".ollir");
-			myWriter.write(ollirResult.getOllir());
+			myWriter.write(ollirResult.getOllirCode());
 			myWriter.close();
 		} catch (IOException e) {
 			System.out.println("An error occurred.");
