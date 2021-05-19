@@ -567,10 +567,14 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
-        ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), ifConditionParts[ifConditionParts.length - 1]));
-
-        ollir.append(String.format("if (%s !.bool %s) goto else%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        if (ifConditionParts[ifConditionParts.length - 1].contains(":=.bool 1.bool")) {
+            String condition = ifConditionParts[ifConditionParts.length - 1].split(" :=.bool ")[0];
+            ollir.append(String.format("if (%s !.bool %s goto else%d;\n", condition, condition, count));
+        } else {
+            Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), ifConditionParts[ifConditionParts.length - 1]));
+            ollir.append(String.format("if (%s !.bool %s) goto else%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        }
 
         List<String> ifBody = new ArrayList<>();
         for (int i = 1; i < node.getChildren().size(); i++) {
@@ -614,13 +618,6 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         int count = while_label_sequence++;
 
-       /* int nodeIndex = node.getParent().getChildren().indexOf(node);
-        if ((nodeIndex - 1 >= 0) && node.getParent().getChildren().get(nodeIndex - 1).getKind().equals("While") ||
-                (nodeIndex - 1 >= 0) && node.getParent().getChildren().get(nodeIndex - 1).getKind().equals("IfElse")) {
-
-            ollir.append(String.format("goto loop%d;\n", count));
-        }*/
-
         ollir.append(String.format("loop%d:\n", count));
 
         String condition = (String) visit(node.getChildren().get(0), Collections.singletonList("WHILE")).get(0);
@@ -631,11 +628,14 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
-        ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), conditionParts[conditionParts.length - 1]));
-
-        ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n",
-                OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        if (conditionParts[conditionParts.length - 1].contains(":=.bool 1.bool")) {
+            String conditionAux = conditionParts[conditionParts.length - 1].split(" :=.bool ")[0];
+            ollir.append(String.format("if (%s !.bool %s goto endloop%d;\n", conditionAux, conditionAux, count));
+        } else {
+            Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), conditionParts[conditionParts.length - 1]));
+            ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        }
 
         List<String> body = new ArrayList<>();
         for (int i = 1; i < node.getChildren().size(); i++) {

@@ -33,8 +33,9 @@ public class Main implements JmmParser {
 		JasminResult jasminResult = new BackendStage().toJasmin(ollirResult);
 
 		Path path = Paths.get(ollirResult.getSymbolTable().getClassName() + "/");
-		Files.createDirectory(path);
-
+		if (!Files.exists(path)) {
+			Files.createDirectory(path);
+		}
 		/* AST */
 		try {
 			FileWriter myWriter = new FileWriter(path + "/ast.json");
