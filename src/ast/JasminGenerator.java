@@ -221,17 +221,6 @@ public class JasminGenerator {
 
                 return stringBuilder.toString();
             }
-            case EQ: {
-                // javap faz com ifeq
-                StringBuilder stringBuilder = new StringBuilder();
-
-                if (rightOperand.equals("iconst_1\n")) {
-                    stringBuilder.append(leftOperand)
-                            .append("ifne ").append(branchLabel).append("\n");
-                }
-
-                return stringBuilder.toString();
-            }
             case ANDB: {
                 String ifeq = "ifeq " + this.getTrueLabel() + "\n";
 
