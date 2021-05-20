@@ -35,7 +35,6 @@ public class JasminGenerator {
         }
 
         for (Method method : classUnit.getMethods()) {
-            this.conditional = 0;
             this.stack_counter = 0;
             this.max_counter = 0;
 
@@ -85,7 +84,7 @@ public class JasminGenerator {
 
         int localCount = method.getVarTable().size() + 1;
         stringBuilder.append(".limit locals ").append(localCount).append("\n");
-        stringBuilder.append(".limit stack ").append(" 99").append("\n");
+        stringBuilder.append(".limit stack ").append(max_counter).append("\n");
 
         return stringBuilder.toString();
     }
@@ -166,69 +165,88 @@ public class JasminGenerator {
     }
 
     private String dealWithBinaryOpInstruction(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
-        String rightOperand = loadElement(instruction.getRightOperand(), varTable);
-
-        // TODO Deal with Ifs and Conditionals
-        return this.dealWithOperation(instruction.getUnaryOperation(), leftOperand, rightOperand);
-    }
-
-    private String dealWithOperation(Operation operation, String leftOperand, String rightOperand) {
-        OperationType ot = operation.getOpType();
-        switch (ot) {
-            // ..., value1, value2 →
-            // ..., result
+        switch (instruction.getUnaryOperation().getOpType()) {
             case ADD:
-                this.decrementStackCounter(1);
-                return leftOperand + rightOperand + "iadd\n";
             case SUB:
-                this.decrementStackCounter(1);
-                return leftOperand + rightOperand + "isub\n";
             case MUL:
-                this.decrementStackCounter(1);
-                return leftOperand + rightOperand + "imul\n";
             case DIV:
-                this.decrementStackCounter(1);
-                return leftOperand + rightOperand + "idiv\n";
+                return this.dealWithIntOperation(instruction, varTable);
             case LTH:
             case GTE:
             case ANDB:
             case NOTB:
-                // TODO Deal with Ifs and Conditionals
-                this.conditional++;
-                return this.dealWithBooleanOperation(ot, leftOperand, rightOperand, "");
+                return this.dealWithBooleanOperation(instruction, varTable);
             default:
-                return "Error in Operations\n";
+                return "Error in BinaryOpInstruction";
         }
     }
 
-    private String dealWithBooleanOperation(OperationType ot, String leftOperand, String rightOperand, String branchLabel) {
-        boolean defaultLabel = branchLabel.isEmpty();
-        switch (ot) {
+    private String dealWithIntOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
+        String rightOperand = loadElement(instruction.getRightOperand(), varTable);
+        String operation;
+
+        switch (instruction.getUnaryOperation().getOpType()) {
+            // ..., value1, value2 →
+            // ..., result
+            case ADD:
+                operation = "iadd\n";
+                break;
+            case SUB:
+                operation = "isub\n";
+                break;
+            case MUL:
+                operation = "imul\n";
+                break;
+            case DIV:
+                operation = "idiv\n";
+                break;
+            default:
+                return "Error in IntOperation\n";
+        }
+
+        this.decrementStackCounter(1);
+        return leftOperand + rightOperand + operation;
+    }
+
+    private String dealWithBooleanOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        OperationType ot = instruction.getUnaryOperation().getOpType();
+        StringBuilder stringBuilder = new StringBuilder();
+
+        switch (instruction.getUnaryOperation().getOpType()) {
             case LTH:
             case GTE: {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(leftOperand).append(rightOperand);
+                // ..., value1, value2 →
+                // ...
 
-                stringBuilder.append(this.dealWithRelationalOperation(ot, this.getTrueLabel()))
+                String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
+                String rightOperand = loadElement(instruction.getRightOperand(), varTable);
+
+                stringBuilder.append(leftOperand)
+                        .append(rightOperand)
+                        .append(this.dealWithRelationalOperation(ot, this.getTrueLabel()))
                         .append("iconst_1\n")
                         .append("goto ").append(this.getEndIfLabel()).append("\n")
                         .append(this.getTrueLabel()).append(":\n")
                         .append("iconst_0\n")
                         .append(this.getEndIfLabel()).append(":\n");
 
-                this.incrementStackCounter(1);
-
-                return stringBuilder.toString();
+                // if_icmp decrements 2, iconst increments 1
+                this.decrementStackCounter(1);
+                break;
             }
             case ANDB: {
+                // ..., value →
+                // ...
                 String ifeq = "ifeq " + this.getTrueLabel() + "\n";
 
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(leftOperand)
-                        .append(ifeq)
-                        .append(rightOperand)
-                        .append(ifeq);
+                // Compare left operand
+                stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
+                this.decrementStackCounter(1);
+
+                // Compare right operand
+                stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
+                this.decrementStackCounter(1);
 
                 stringBuilder.append("iconst_1\n")
                         .append("goto ").append(this.getEndIfLabel()).append("\n")
@@ -236,38 +254,33 @@ public class JasminGenerator {
                         .append("iconst_0\n")
                         .append(this.getEndIfLabel()).append(":\n");
 
-                return stringBuilder.toString();
+                // iconst
+                this.incrementStackCounter(1);
+                break;
             }
             case NOTB: {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(leftOperand);
+                String operand = loadElement(instruction.getLeftOperand(), varTable);
 
-                if (defaultLabel) {
-                    stringBuilder.append("ifne ").append(this.getTrueLabel()).append("\n")
-                            .append("iconst_1\n")
-                            .append("goto ").append(this.getEndIfLabel()).append("\n")
-                            .append(this.getTrueLabel()).append(":\n")
-                            .append("iconst_0\n")
-                            .append(this.getEndIfLabel()).append(":\n");
-                }
-                else {
-                    //..., value →
-                    // ...
-                    stringBuilder.append("ifeq ").append(branchLabel).append("\n");
-                    this.decrementStackCounter(1);
-                }
+                stringBuilder.append(operand)
+                        .append("ifne ").append(this.getTrueLabel()).append("\n")
+                        .append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
 
-                return stringBuilder.toString();
+                // No need to change stack, load increments 1, ifne would dec.1 and iconst would inc.1
+                break;
             }
             default:
                 return "Error in BooleansOperations\n";
         }
+
+        this.conditional++;
+        return stringBuilder.toString();
     }
 
     private String dealWithRelationalOperation(OperationType ot, String trueLabel) {
-        // ..., value1, value2 →
-        // ...
-        this.decrementStackCounter(2);
         switch (ot) {
             case LTH:
                 return String.format("if_icmpge %s\n", trueLabel);
@@ -276,6 +289,30 @@ public class JasminGenerator {
             default:
                 return "Error in RelationalOperations\n";
         }
+    }
+
+    private String dealWithCondBranchInstruction(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
+        StringBuilder stringBuilder = new StringBuilder();
+        switch (instruction.getCondOperation().getOpType()) {
+            case NOTB:
+                stringBuilder.append(this.loadElement(instruction.getLeftOperand(), varTable))
+                        .append("ifeq ")
+                        .append(instruction.getLabel())
+                        .append("\n");
+
+                // ..., value →
+                // ...
+                this.decrementStackCounter(1);
+                break;
+            default:
+                return "Error in CondBranchInstruction";
+        }
+
+        return stringBuilder.toString();
+    }
+
+    private String dealWithGotoInstrutcion(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
+        return String.format("goto %s\n", instruction.getLabel());
     }
 
     private String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -370,17 +407,6 @@ public class JasminGenerator {
         }
 
         return stringBuilder;
-    }
-
-    private String dealWithCondBranchInstruction(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String leftOperand = this.loadElement(instruction.getLeftOperand(), varTable);
-        String rightOperand = this.loadElement(instruction.getRightOperand(), varTable);
-
-        return this.dealWithBooleanOperation(instruction.getCondOperation().getOpType(), leftOperand, rightOperand, instruction.getLabel());
-    }
-
-    private String dealWithGotoInstrutcion(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
-        return String.format("goto %s\n", instruction.getLabel());
     }
 
     private String dealWithPutFieldInstruction(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
