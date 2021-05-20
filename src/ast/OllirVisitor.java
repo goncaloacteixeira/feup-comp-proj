@@ -755,12 +755,13 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                 }
             } else {
                 if (methodReturn.get(0).equals("method")) {
+                    System.out.println(targetReturn);
                     if (assignment != null) {
-                        ollirExpression = OllirTemplates.invokespecial((String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
                         expectedType = assignment.getType();
                     } else {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
-                        ollirExpression = OllirTemplates.invokespecial((String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
                     }
                 } else if (!methodReturn.get(0).equals("length")){
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
