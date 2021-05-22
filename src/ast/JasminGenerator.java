@@ -321,9 +321,7 @@ public class JasminGenerator {
 
         switch (callType) {
             case invokespecial:
-                Operand arg = (Operand) instruction.getFirstArg();
                 stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((ClassType)instruction.getFirstArg().getType()).getName());
-                if(arg.getType().getTypeOfElement() != ElementType.THIS) stringBuilder += this.storeElement(arg, varTable);
                 break;
             case invokestatic:
                 stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((Operand)instruction.getFirstArg()).getName());
@@ -352,10 +350,10 @@ public class JasminGenerator {
     private String dealWithInvoke(CallInstruction instruction, HashMap<String, Descriptor> varTable, CallType callType, String className){
         String stringBuilder = ""; //TODO deal with invokes
 
-        LiteralElement func = (LiteralElement) instruction.getSecondArg();
+        String functionLiteral = ((LiteralElement) instruction.getSecondArg()).getLiteral();
         String parameters = "";
 
-        if (!func.getLiteral().equals("\"<init>\"")) {  //does not load element because its a new object, its already done in dealWithNewObject with new and dup
+        if (!functionLiteral.equals("\"<init>\"")) {  //does not load element because its a new object, its already done in dealWithNewObject with new and dup
             stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
         }
 
@@ -376,7 +374,11 @@ public class JasminGenerator {
             this.incrementStackCounter(1);
         }
 
-        stringBuilder += callType.name() + " " + this.getOjectClassName(className) + "." + func.getLiteral().replace("\"","") + "(" + parameters + ")" + this.convertType(instruction.getReturnType()) + "\n";
+        stringBuilder += callType.name() + " " + this.getOjectClassName(className) + "." + functionLiteral.replace("\"","") + "(" + parameters + ")" + this.convertType(instruction.getReturnType()) + "\n";
+
+        if (functionLiteral.equals("\"<init>\"") && !className.equals("this")) {
+            stringBuilder += this.storeElement((Operand) instruction.getFirstArg(), varTable);
+        }
 
         return stringBuilder;
     }

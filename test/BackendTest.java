@@ -51,9 +51,6 @@ public class BackendTest {
         JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
         TestUtils.noErrors(result.getReports());
 
-        // TODO check quicksort
-        System.out.println(result.getJasminCode());
-
         String output = result.run();
     }
 
