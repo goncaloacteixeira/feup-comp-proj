@@ -1,5 +1,5 @@
 import io;
-class Life {
+class Life10iter {
 
     int UNDERPOP_LIM;
     int OVERPOP_LIM;
@@ -12,16 +12,19 @@ class Life {
     int[] field;
 
     public static void main(String[] a) {
-		Life l;
-		int unused;
+        Life10iter l;
+        int unused;
+        int iter;
 
-		l = new Life();
-		l.init();
+        l = new Life10iter();
+        l.init();
 
-        while (true) {
+        iter = 0;
+        while (iter < 10) {
             l.printField();
             l.update();
-            unused = io.read();
+            unused = 1;
+            iter = iter + 1;
         }
 
     }
@@ -49,8 +52,8 @@ class Life {
         return true;
     }
 
-    /* Change this! 
-     * (might want to write a script 
+    /* Change this!
+     * (might want to write a script
      * to autogenerate every assignment...)
      *
      * lineLen is "pass by reference",
@@ -180,7 +183,7 @@ class Life {
         while (i < field.length) {
             cur = field[i];
             neighN = this.getLiveNeighborN(i);
-            
+
 
             // Live cell
             if (!(cur < 1)) {
@@ -334,40 +337,40 @@ class Life {
     public boolean busyWait(int ms) {
         int i;
         int n;
-        
+
         n = ms * LOOPS_PER_MS;
-        
+
         // Try optimizing this away!
         i = 0;
         while (i < n) {
             i = i + 1;
         }
-        
+
         return true;
     }
-    
+
     public boolean eq(int a, int b) {
-		return (!this.lt(a, b) && !this.lt(b, a));
-	}
-	
-	public boolean ne(int a, int b) {
-		return (!this.eq(a, b));
-	}
-	
+        return (!this.lt(a, b) && !this.lt(b, a));
+    }
+
+    public boolean ne(int a, int b) {
+        return (!this.eq(a, b));
+    }
+
     public boolean lt(int a, int b) {
-		return (a < b);
+        return (a < b);
     }
-    
+
     public boolean le(int a, int b) {
-		return !(!this.lt(a, b) && !this.eq(a, b));
+        return !(!this.lt(a, b) && !this.eq(a, b));
     }
-    
+
     public boolean gt(int a, int b) {
-		return (!this.le(a, b));
+        return (!this.le(a, b));
     }
-    
+
     public boolean ge(int a, int b) {
-		return !(!this.gt(a, b) && !this.eq(a, b));
-	}
+        return !(!this.gt(a, b) && !this.eq(a, b));
+    }
 
 }

@@ -42,19 +42,6 @@ public class OptimizationStage implements JmmOptimization {
         String ollirCode = (String) visitor.visit(node, Arrays.asList("DEFAULT_VISIT")).get(0);
         System.out.println("OLLIR Generation Successful!");
 
-        // System.out.println(ollirCode);
-
-        // Para escrever o ficheiro com codigo OLLIR para efeitos de teste
-        try {
-            FileWriter myWriter = new FileWriter("test.ollir");
-            myWriter.write(ollirCode);
-            myWriter.close();
-            System.out.println("Successfully wrote to the file.");
-        } catch (IOException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-
         return new OllirResult(semanticsResult, ollirCode, semanticsResult.getReports());
     }
 

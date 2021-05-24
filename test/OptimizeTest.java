@@ -23,7 +23,7 @@ public class OptimizeTest {
     private List<String> validFiles = Arrays.asList(
             "fixtures/public/FindMaximum.jmm",
             "fixtures/public/HelloWorld.jmm",
-            "fixtures/public/LazySort.jmm",
+            "fixtures/public/Lazysort.jmm",
             "fixtures/public/Life.jmm",
             "fixtures/public/MonteCarloPi.jmm",
             "fixtures/public/QuickSort.jmm",

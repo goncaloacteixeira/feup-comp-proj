@@ -567,10 +567,14 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
-        ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), ifConditionParts[ifConditionParts.length - 1]));
-
-        ollir.append(String.format("if (%s !.bool %s) goto else%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        if (ifConditionParts[ifConditionParts.length - 1].contains("==.bool 1.bool")) {
+            String condition = ifConditionParts[ifConditionParts.length - 1].split(" ==.bool ")[0];
+            ollir.append(String.format("if (%s !.bool %s) goto else%d;\n", condition, condition, count));
+        } else {
+            Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), ifConditionParts[ifConditionParts.length - 1]));
+            ollir.append(String.format("if (%s !.bool %s) goto else%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        }
 
         List<String> ifBody = new ArrayList<>();
         for (int i = 1; i < node.getChildren().size(); i++) {
@@ -614,13 +618,6 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         int count = while_label_sequence++;
 
-       /* int nodeIndex = node.getParent().getChildren().indexOf(node);
-        if ((nodeIndex - 1 >= 0) && node.getParent().getChildren().get(nodeIndex - 1).getKind().equals("While") ||
-                (nodeIndex - 1 >= 0) && node.getParent().getChildren().get(nodeIndex - 1).getKind().equals("IfElse")) {
-
-            ollir.append(String.format("goto loop%d;\n", count));
-        }*/
-
         ollir.append(String.format("loop%d:\n", count));
 
         String condition = (String) visit(node.getChildren().get(0), Collections.singletonList("WHILE")).get(0);
@@ -631,11 +628,14 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             }
         }
 
-        Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
-        ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), conditionParts[conditionParts.length - 1]));
-
-        ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n",
-                OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        if (conditionParts[conditionParts.length - 1].contains("==.bool 1.bool")) {
+            String conditionAux = conditionParts[conditionParts.length - 1].split(" ==.bool ")[0];
+            ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n", conditionAux, conditionAux, count));
+        } else {
+            Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), conditionParts[conditionParts.length - 1]));
+            ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        }
 
         List<String> body = new ArrayList<>();
         for (int i = 1; i < node.getChildren().size(); i++) {
@@ -672,7 +672,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         Symbol assignment = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
 
         String ollirExpression = null;
-        Type expectedType = (data.get(0).equals("BINARY")) ? new Type("int", false) : null;
+        Type expectedType = (data.get(0).equals("BINARY") || (data.size() > 2 && data.get(2).equals("ARRAY_ACCESS"))) ? new Type("int", false) : null;
 
         // static methods and this calls
         if (targetReturn.get(0).equals("ACCESS")) {
@@ -755,12 +755,13 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
                 }
             } else {
                 if (methodReturn.get(0).equals("method")) {
+                    System.out.println(targetReturn);
                     if (assignment != null) {
-                        ollirExpression = OllirTemplates.invokespecial((String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
                         expectedType = assignment.getType();
                     } else {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
-                        ollirExpression = OllirTemplates.invokespecial((String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
                     }
                 } else if (!methodReturn.get(0).equals("length")){
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
@@ -787,7 +788,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
             ollir.append(ollirExpression);
         }
 
-        if (data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("WHILE")) {
+        if (data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("ELSE") || data.get(0).equals("WHILE")) {
             ollir.append(";");
         }
 
@@ -806,12 +807,20 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         List<JmmNode> children = node.getChildren();
         Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
-        Type returnType = table.getReturnType(node.get("value"));
+
+        String methodString = node.get("value");
+        if (params.getKey().size() > 0) {
+            for (Type param : params.getKey()) {
+                methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
+            }
+        }
+
+        Type returnType = table.getReturnType(methodString);
 
         try {
             JmmMethod method = table.getMethod(node.get("value"), params.getKey(), returnType);
             return Arrays.asList("class_method", method, params.getValue());
-        } catch (NoSuchMethod noSuchMethod) {
+        } catch (Exception e) {
             return Arrays.asList("method", node.get("value"), params.getValue());
         }
     }

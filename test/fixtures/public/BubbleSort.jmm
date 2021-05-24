@@ -1,0 +1,78 @@
+import MathUtils;
+import io;
+import ioPlus;
+
+class BubbleSort {
+    int[] arr;
+
+    public int bubbleSort() {
+        int n;
+        int temp;
+        int i;
+        int j;
+
+        n = arr.length;
+        temp = 0;
+        i = 0;
+
+        while (i < n) {
+            j = 1;
+            while (j < (n - i)) {
+                if (arr[j] < arr[j - 1]) {
+                    //swap elements
+                    temp = arr[j - 1];
+                    arr[j - 1] = arr[j];
+                    arr[j] = temp;
+                } else {
+
+                }
+                j = j + 1;
+            }
+            i = i + 1;
+        }
+        return 0;
+    }
+
+    public int printArray() {
+        int i;
+        i = 0;
+        while (i < arr.length) {
+            io.println(arr[i]);
+            i = i + 1;
+        }
+        return 0;
+    }
+
+    public int buildArray(int size) {
+        int i;
+        int number;
+        arr = new int[size];
+
+        i = 0;
+        while (i < size) {
+            arr[i] = MathUtils.random(0-50, 50);
+            i = i + 1;
+        }
+
+        return 0;
+    }
+
+    public int[] getArr() {
+        return arr;
+    }
+
+    public static void main(String[] args) {
+        BubbleSort bs;
+        int size;
+
+        size = ioPlus.requestNumber();
+        io.println();
+        bs = new BubbleSort();
+
+        bs.buildArray(size);
+        bs.printArray();
+        bs.bubbleSort();
+        io.println();
+        bs.printArray();
+    }
+}
