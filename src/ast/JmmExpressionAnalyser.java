@@ -380,11 +380,19 @@ public class JmmExpressionAnalyser extends PreorderJmmVisitor<Boolean, Map.Entry
 
         List<JmmNode> children = node.getChildren();
         List<Type> params = getParametersList(children);
-        Type returnType = table.getReturnType(node.get("value"));
+
+        String method = node.get("value");
+        if (params.size() > 0) {
+            for (Type param : params) {
+                method += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
+            }
+        }
+
+        Type returnType = table.getReturnType(method);
 
         try {
             table.getMethod(node.get("value"), params, returnType);
-        } catch (NoSuchMethod noSuchMethod) {
+        } catch (Exception e) {
             if (this.table.getSuper() == null) {
                 return Map.entry("error", "noSuchMethod");
             } else {

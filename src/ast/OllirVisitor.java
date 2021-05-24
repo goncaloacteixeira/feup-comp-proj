@@ -807,12 +807,20 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
 
         List<JmmNode> children = node.getChildren();
         Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
-        Type returnType = table.getReturnType(node.get("value"));
+
+        String methodString = node.get("value");
+        if (params.getKey().size() > 0) {
+            for (Type param : params.getKey()) {
+                methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
+            }
+        }
+
+        Type returnType = table.getReturnType(methodString);
 
         try {
             JmmMethod method = table.getMethod(node.get("value"), params.getKey(), returnType);
             return Arrays.asList("class_method", method, params.getValue());
-        } catch (NoSuchMethod noSuchMethod) {
+        } catch (Exception e) {
             return Arrays.asList("method", node.get("value"), params.getValue());
         }
     }
