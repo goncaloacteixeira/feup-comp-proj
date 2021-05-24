@@ -672,7 +672,7 @@ public class OllirVisitor extends PreorderJmmVisitor<List<Object>, List<Object>>
         Symbol assignment = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
 
         String ollirExpression = null;
-        Type expectedType = (data.get(0).equals("BINARY")) ? new Type("int", false) : null;
+        Type expectedType = (data.get(0).equals("BINARY") || (data.size() > 2 && data.get(2).equals("ARRAY_ACCESS"))) ? new Type("int", false) : null;
 
         // static methods and this calls
         if (targetReturn.get(0).equals("ACCESS")) {

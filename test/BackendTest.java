@@ -100,4 +100,12 @@ public class BackendTest {
         String output = result.run();
         assertEquals(SpecsIo.getResource("fixtures/public/WhileAndIF.txt").trim().replace("\r\n", "\n"), output.trim().replace("\r\n", "\n"));
     }
+
+    @Test
+    public void testBubbleSort() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/BubbleSort.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        String output = result.run("20");
+    }
 }
