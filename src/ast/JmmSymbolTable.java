@@ -142,9 +142,29 @@ public class JmmSymbolTable implements SymbolTable {
 
     @Override
     public Type getReturnType(String methodName) {
-        for (JmmMethod method : methods){
-            if(method.getName().equals(methodName)){
-                return method.getReturnType();
+        List<Type> params = new ArrayList<>();
+        String[] parts = methodName.split("::");
+        methodName = parts[0];
+
+        if (parts.length > 1) {
+            for (int i = 1; i < parts.length; i++) {
+                String[] parts2 = parts[i].split(":");
+                params.add(new Type(parts2[0], parts2[1].equals("true")));
+            }
+        }
+
+        for (JmmMethod method : methods) {
+            if(method.getName().equals(methodName)) {
+                List<Symbol> currentparams = method.getParameters();
+                boolean found = true;
+                if (currentparams.size() != params.size()) continue;
+                for (int i=0; i<params.size(); i++) {
+                    if (!currentparams.get(i).getType().equals(params.get(i))) {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found) return method.getReturnType();
             }
         }
         return null;
