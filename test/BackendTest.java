@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2021 SPeCS.
  * 
@@ -12,20 +11,12 @@
  * specific language governing permissions and limitations under the License. under the License.
  */
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-
 import pt.up.fe.comp.TestUtils;
-import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
-import pt.up.fe.comp.jmm.ollir.OllirResult;
-import pt.up.fe.comp.jmm.ollir.OllirUtils;
 import pt.up.fe.specs.util.SpecsIo;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import static org.junit.Assert.assertEquals;
 
 public class BackendTest {
     @Test
@@ -56,8 +47,8 @@ public class BackendTest {
 
     // Created 10 iteration version for tests because of while(true)
     @Test
-    public void testLife10itr() {
-        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Life10itr.jmm"));
+    public void testLife10iter() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Life10iter.jmm"));
         TestUtils.noErrors(result.getReports());
 
         String output = result.run();
