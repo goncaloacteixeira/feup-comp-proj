@@ -3,30 +3,45 @@ import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.specs.util.SpecsIo;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
 public class ParserTest {
-    private List<String> validFiles;
-    private List<String> syntacticalErrorFiles;
+    private final List<String> validFiles = Arrays.asList(
+            "fixtures/public/FindMaximum.jmm",
+            "fixtures/public/HelloWorld.jmm",
+            "fixtures/public/Lazysort.jmm",
+            "fixtures/public/Life.jmm",
+            "fixtures/public/MonteCarloPi.jmm",
+            "fixtures/public/QuickSort.jmm",
+            "fixtures/public/Simple.jmm",
+            "fixtures/public/TicTacToe.jmm",
+            "fixtures/public/WhileAndIF.jmm"
+    );
 
-    @Before
-    public void setup() {
-        validFiles = Utils.getValidFiles();
-        syntacticalErrorFiles = Utils.getSyntacticalErrorFiles();
-    }
+    private final List<String> syntacticalErrorFiles = Arrays.asList(
+            "fixtures/public/fail/syntactical/BlowUp.jmm",
+            "fixtures/public/fail/syntactical/CompleteWhileTest.jmm",
+            "fixtures/public/fail/syntactical/LengthError.jmm",
+            "fixtures/public/fail/syntactical/MissingRightPar.jmm",
+            "fixtures/public/fail/syntactical/MultipleSequential.jmm",
+            "fixtures/public/fail/syntactical/NestedLoop.jmm"
+    );
+
 
     @Test
-    public void unitTest() throws IOException {
+    public void unitTest() {
         System.out.println("Unit Test");
-        String code = Utils.getJmmCode("MergeSort.jmm");
+        String code = SpecsIo.getResource("fixtures/public/HelloWorld.jmm");
 
         JmmParserResult parserResult = TestUtils.parse(code);
 
@@ -43,9 +58,8 @@ public class ParserTest {
      */
     public void generateJSON() throws IOException {
         System.out.println("Unit Test");
-        System.setOut(new PrintStream(new Utils.NullOutputStream()));
         for (String filename : validFiles) {
-            String code = Utils.getJmmCode(filename);
+            String code = SpecsIo.getResource(filename);
             String astJson = TestUtils.parse(code).getRootNode().toJson();
             File jmm = new File(filename);
             int i = jmm.getName().lastIndexOf('.');
@@ -56,31 +70,26 @@ public class ParserTest {
             fos.write(astJson.getBytes(StandardCharsets.UTF_8));
             fos.close();
         }
-        System.setOut(Utils.realSystemOut);
     }
 
     @Test
-    public void testParser() throws IOException {
+    public void testParser() {
         System.out.println("\nTesting Valid Files");
         for (String filename : this.validFiles) {
             System.out.print("Testing: " + filename);
-            String code = Utils.getJmmCode(filename);
-            System.setOut(new PrintStream(new Utils.NullOutputStream()));
+            String code = SpecsIo.getResource(filename);
             assertEquals("Program", TestUtils.parse(code).getRootNode().getKind());
-            System.setOut(Utils.realSystemOut);
             System.out.print("  - PASSED\n");
         }
 	}
 
 	@Test
-    public void testSyntacticalErrors() throws IOException {
+    public void testSyntacticalErrors() {
         System.out.println("\nTesting Syntactical Errors");
         for (String filename : this.syntacticalErrorFiles) {
             System.out.print("Testing: " + filename);
-            String code = Utils.getJmmCode(filename);
-            System.setOut(new PrintStream(new Utils.NullOutputStream()));
+            String code = SpecsIo.getResource(filename);
             JmmParserResult result = TestUtils.parse(code);
-            System.setOut(Utils.realSystemOut);
             TestUtils.mustFail(result.getReports());
             System.out.print("  - PASSED\n");
         }
