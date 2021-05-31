@@ -110,10 +110,37 @@ public class BackendTest {
     }
 
     @Test
+    public void testBinarySearch() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/BinarySearch.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        String output = result.run("7");
+    }
+
+    @Test
     public void testMergeSort() {
         JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/MergeSort.jmm"));
         TestUtils.noErrors(result.getReports());
 
         String output = result.run("50");
+    }
+
+    @Test
+    public void testFibonacci() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Fibonacci.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+
+        String output = result.run("30");
+        int resultFib = Integer.parseInt(output.trim().replace("Insert number: Result: ", ""));
+        assertEquals(832040, resultFib);
+    }
+
+    @Test
+    public void testMontyHall() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/MontyHall.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        String output = result.run("10000000");
     }
 }

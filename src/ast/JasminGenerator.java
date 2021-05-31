@@ -82,7 +82,8 @@ public class JasminGenerator {
     private String dealWithMethodLimits(Method method) {
         StringBuilder stringBuilder = new StringBuilder();
 
-        int localCount = method.getVarTable().size() + 1;
+        int localCount = method.getVarTable().size();
+        if (!method.isStaticMethod()) localCount++;
         stringBuilder.append(".limit locals ").append(localCount).append("\n");
         stringBuilder.append(".limit stack ").append(max_counter).append("\n");
 

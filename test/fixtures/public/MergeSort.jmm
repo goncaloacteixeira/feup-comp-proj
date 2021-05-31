@@ -2,7 +2,7 @@ import io;
 import MathUtils;
 import ioPlus;
 
-class MergeSort {
+class MergeSort extends Utils {
     int[] arr;
 
     public int printArray() {
@@ -44,6 +44,7 @@ class MergeSort {
         int i;
         int j;
         int k;
+        boolean condition;
 
         n1 = m - l + 1;
         n2 = r - m;
@@ -73,7 +74,8 @@ class MergeSort {
         // Initial index of merged subarry array
         k = l;
         while (i < n1 && j < n2) {
-            if (!(R[j] < L[i])) {
+            condition = this.le(L[i], R[j]);
+            if (condition) {
                 arr[k] = L[i];
                 i = i + 1;
             } else {

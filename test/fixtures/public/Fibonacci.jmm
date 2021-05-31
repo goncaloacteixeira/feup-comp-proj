@@ -1,0 +1,44 @@
+import ioPlus;
+
+class Fibonacci {
+    public int dpFibonacci(int n) {
+        int[] arr;
+        int i;
+
+        arr = new int[n + 1];
+        arr[0] = 0;
+        arr[1] = 1;
+
+        i = 2;
+        while (!(n < i)) {
+            arr[i] = arr[i - 1] + arr[i - 2];
+            i = i + 1;
+        }
+
+        return arr[n];
+    }
+
+    public int recFibonacci(int n) {
+        int result;
+        if (!(1 < n)) {
+            result = n;
+        } else {
+            result = this.recFibonacci(n - 1) + this.recFibonacci(n - 2);
+        }
+        return result;
+    }
+
+    public static void main(String[] args) {
+        int number;
+        Fibonacci fib;
+        int result;
+
+        number = ioPlus.requestNumber();
+        fib = new Fibonacci();
+        result = fib.dpFibonacci(number);
+        result = fib.recFibonacci(number);
+
+        ioPlus.printResult(result);
+    }
+
+}

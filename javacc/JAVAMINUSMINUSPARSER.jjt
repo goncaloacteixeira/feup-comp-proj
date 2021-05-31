@@ -40,7 +40,6 @@ void error_skipto(int kind, boolean expection) #Error {
   Token t;
   do
   {
-    //if(getToken(1).kind == OPENCURLY) break;
     t = getNextToken();
   }
   while (t.kind != kind && t.kind != EOF);
