@@ -1,0 +1,139 @@
+import io;
+import MathUtils;
+import ioPlus;
+
+class MergeSort {
+    int[] arr;
+
+    public int printArray() {
+        int i;
+        i = 0;
+        while (i < arr.length) {
+            io.println(arr[i]);
+            i = i + 1;
+        }
+        return 0;
+    }
+
+    public int buildArray(int size) {
+        int i;
+        arr = new int[size];
+
+        i = 0;
+        while (i < size) {
+            arr[i] = MathUtils.random(0 - 100, 100);
+            i = i + 1;
+        }
+
+        return 0;
+    }
+
+    public int[] getArray() {
+        return arr;
+    }
+
+    // Merges two subarrays of arr[].
+    // First subarray is arr[l..m]
+    // Second subarray is arr[m+1..r]
+    public int merge(int[] arr, int l, int m, int r) {
+        // Find sizes of two subarrays to be merged
+        int n1;
+        int n2;
+        int[] L;
+        int[] R;
+        int i;
+        int j;
+        int k;
+
+        n1 = m - l + 1;
+        n2 = r - m;
+
+        /* Create temp arrays */
+        L = new int[n1];
+        R = new int[n2];
+
+        /*Copy data to temp arrays*/
+        i = 0;
+        while (i < n1) {
+            L[i] = arr[l + i];
+            i = i + 1;
+        }
+        j = 0;
+        while (j < n2) {
+            R[j] = arr[m + 1 + j];
+            j = j + 1;
+        }
+
+        /* Merge the temp arrays */
+
+        // Initial indexes of first and second subarrays
+        i = 0;
+        j = 0;
+
+        // Initial index of merged subarry array
+        k = l;
+        while (i < n1 && j < n2) {
+            if (!(R[j] < L[i])) {
+                arr[k] = L[i];
+                i = i + 1;
+            } else {
+                arr[k] = R[j];
+                j = j + 1;
+            }
+            k = k + 1;
+        }
+
+        /* Copy remaining elements of L[] if any */
+        while (i < n1) {
+            arr[k] = L[i];
+            i = i + 1;
+            k = k + 1;
+        }
+
+        /* Copy remaining elements of R[] if any */
+        while (j < n2) {
+            arr[k] = R[j];
+            j = j + 1;
+            k = k + 1;
+        }
+
+        return 0;
+    }
+
+    // Main function that sorts arr[l..r] using
+    // merge()
+    public int merge(int[] arr, int l, int r) {
+        int m;
+        if (l < r) {
+            // Find the middle point
+            m = l + (r - l) / 2;
+
+            // Sort first and second halves
+            this.merge(arr, l, m);
+            this.merge(arr, m + 1, r);
+
+            // Merge the sorted halves
+            this.merge(arr, l, m, r);
+        } else {
+
+        }
+
+        return 0;
+    }
+
+    public static void main(String[] args) {
+        MergeSort mergeSort;
+        int size;
+        int[] array;
+
+        mergeSort = new MergeSort();
+
+        size = ioPlus.requestNumber();
+        mergeSort.buildArray(size);
+        mergeSort.printArray();
+        io.println();
+        array = mergeSort.getArray();
+        mergeSort.merge(array, 0, array.length - 1);
+        mergeSort.printArray();
+    }
+}
