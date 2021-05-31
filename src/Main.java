@@ -78,6 +78,8 @@ public class Main implements JmmParser {
 
 		/* JAVA compiled class */
 		jasminResult.compile(path.toFile());
+		/* Put .class on compiled libs directory (for convenience) */
+		jasminResult.compile(Path.of("test/fixtures/libs/compiled").toFile());
 	}
 
 	/**
@@ -86,7 +88,6 @@ public class Main implements JmmParser {
 	 * @return 			JmmParserResult
 	 */
 	public JmmParserResult parse(String jmmCode) {
-
 		try {
 			JAVAMINUSMINUSPARSER parser = new JAVAMINUSMINUSPARSER(new StringReader(jmmCode));
 			SimpleNode root = parser.Program(); // returns reference to root node

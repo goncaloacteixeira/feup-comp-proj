@@ -116,4 +116,12 @@ public class BackendTest {
 
         String output = result.run("7");
     }
+
+    @Test
+    public void testMergeSort() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/MergeSort.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        String output = result.run("50");
+    }
 }
