@@ -108,4 +108,12 @@ public class BackendTest {
 
         String output = result.run("20");
     }
+
+    @Test
+    public void testBinarySearch() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/BinarySearch.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        String output = result.run("7");
+    }
 }

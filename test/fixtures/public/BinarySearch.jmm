@@ -1,0 +1,59 @@
+import MathUtils;
+import io;
+import ioPlus;
+
+class BinarySearch extends BubbleSort {
+    // Returns index of x if it is present in arr[l..r], else return -1
+    public int binarySearch(int[] arr, int l, int r, int x)
+    {
+        int mid;
+        int result;
+        result = 0-1;
+        if (!(r < l)) {
+            mid = l + (r - l) / 2;
+
+            // If the element is present at the
+            // middle itself
+            if (!(arr[mid] < x) && !(x < arr[mid])) {
+                result = mid;
+            } else {
+                // If element is smaller than mid, then
+                // it can only be present in left subarray
+                if (x < arr[mid]) {
+                    result = this.binarySearch(arr, l, mid - 1, x);
+                } else {
+                    // Else the element can only be present
+                    // in right subarray
+                    result = this.binarySearch(arr, mid + 1, r, x);
+                }
+            }
+        } else {}
+
+        // We reach here when element is not present
+        // in array
+        return result;
+    }
+
+    // Driver method to test above
+    public static void main(String[] args)
+    {
+        BinarySearch bs;
+        int unused;
+        int[] arr;
+        int n;
+        int x;
+        int result;
+
+        bs = new BinarySearch();
+        unused = bs.buildArray(15); // Create random array with size 15
+        unused = bs.printArray(); // Print created array
+        unused = bs.bubbleSort(); // Sort
+        io.println();
+        unused = bs.printArray(); // Print sorted  array
+        arr = bs.getArr();
+        n = arr.length;
+        x = ioPlus.requestNumber(); // Number to search for
+        result = bs.binarySearch(arr, 0, n-1, x);
+        ioPlus.printResult(result);
+    }
+}
