@@ -26,7 +26,7 @@ public class ParserTest {
     @Test
     public void unitTest() throws IOException {
         System.out.println("Unit Test");
-        String code = Utils.getJmmCode("HelloWorld.jmm");
+        String code = Utils.getJmmCode("MergeSort.jmm");
 
         JmmParserResult parserResult = TestUtils.parse(code);
 
