@@ -124,4 +124,15 @@ public class BackendTest {
 
         String output = result.run("50");
     }
+
+    @Test
+    public void testFibonacci() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Fibonacci.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+
+        String output = result.run("30");
+        int resultFib = Integer.parseInt(output.trim().replace("Insert number: Result: ", ""));
+        assertEquals(832040, resultFib);
+    }
 }
