@@ -135,4 +135,12 @@ public class BackendTest {
         int resultFib = Integer.parseInt(output.trim().replace("Insert number: Result: ", ""));
         assertEquals(832040, resultFib);
     }
+
+    @Test
+    public void testMontyHall() {
+        JasminResult result = TestUtils.backend(SpecsIo.getResource("fixtures/public/MontyHall.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        String output = result.run("10000000");
+    }
 }

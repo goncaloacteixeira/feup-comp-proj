@@ -1,0 +1,95 @@
+import MathUtils;
+import ioPlus;
+import io;
+
+class MontyHall extends Utils {
+    public int simulate(int iterations) {
+        int correctDoor;
+        int guestChoice;
+        int hostChoice;
+        int stayedWon;
+        int changedWon;
+        int sum;
+        int i;
+
+        boolean aux1;
+        boolean aux2;
+        int aux3;
+
+        stayedWon = 0;
+        changedWon = 0;
+
+        i = 0;
+        while (i < iterations) {
+            // chooses the correct door
+            correctDoor = MathUtils.random(0, 2);
+            // Guest Choice
+            guestChoice = MathUtils.random(0, 2);
+
+            aux1 = this.eq(correctDoor, 1);
+            aux2 = this.eq(guestChoice, 1);
+
+            if (aux1 && aux2) {
+                hostChoice = 0;
+            }
+            else {
+                sum = correctDoor + guestChoice;
+                aux1 = this.ne(sum, 0);
+                aux2 = this.ne(sum, 4);
+                aux1 = !(aux1 && aux2);
+                aux2 = this.ne(sum, 2);
+                aux1 = !aux1 && !aux2;
+
+                if (aux1) {
+                    hostChoice = 1;
+                } else {
+                    aux1 = this.eq(sum, 1);
+                    if (aux1) {
+                        hostChoice = 2;
+                    } else {
+                        hostChoice = 0;
+                    }
+                }
+            }
+
+            // Guest keeps (0) or changes (1)
+            aux3 = MathUtils.random(0, 1);
+            aux1 = this.eq(aux3, 1);
+
+            if (aux1){
+                guestChoice = 3 - (hostChoice + guestChoice);
+                aux1 = this.eq(guestChoice, correctDoor);
+                if (aux1) {
+                    changedWon = changedWon + 1;
+                } else {
+
+                }
+            } else {
+                aux1 = this.eq(guestChoice, correctDoor);
+                if (aux1) {
+                    stayedWon = stayedWon + 1;
+                } else {
+
+                }
+            }
+
+            i = i + 1;
+        }
+
+        io.println(stayedWon);
+        io.println(changedWon);
+
+        return 0;
+    }
+
+    public static void main(String[] args) {
+        int iterations;
+        MontyHall montyHall;
+
+        iterations = ioPlus.requestNumber();
+        montyHall = new MontyHall();
+        io.println();
+
+        montyHall.simulate(iterations);
+    }
+}
