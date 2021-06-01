@@ -156,4 +156,17 @@ public class JmmMethod {
 
         return ollir;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        JmmMethod jmmMethod = (JmmMethod) o;
+        return Objects.equals(name, jmmMethod.name) && Objects.equals(returnType, jmmMethod.returnType) && Objects.equals(parameters, jmmMethod.parameters);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, returnType, parameters);
+    }
 }

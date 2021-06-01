@@ -151,6 +151,12 @@ public class JmmSymbolTable implements SymbolTable {
                 String[] parts2 = parts[i].split(":");
                 params.add(new Type(parts2[0], parts2[1].equals("true")));
             }
+        } else {
+            for (JmmMethod method : methods) {
+                if(method.getName().equals(methodName)) {
+                    return method.getReturnType();
+                }
+            }
         }
 
         for (JmmMethod method : methods) {

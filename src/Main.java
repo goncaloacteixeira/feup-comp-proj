@@ -37,8 +37,10 @@ public class Main implements JmmParser {
 			Files.createDirectory(path);
 		}
 		/* AST */
+		String defaultName = path + "/" + ollirResult.getSymbolTable().getClassName();
+
 		try {
-			FileWriter myWriter = new FileWriter(path + "/ast.json");
+			FileWriter myWriter = new FileWriter(defaultName + ".json");
 			myWriter.write(parserResult.toJson());
 			myWriter.close();
 		} catch (IOException e) {
@@ -46,9 +48,18 @@ public class Main implements JmmParser {
 			e.printStackTrace();
 		}
 
-		/* VARTABLE */
+		/* VARTABLE PROVIDED */
 		try {
-			FileWriter myWriter = new FileWriter(path + "/symboltable.txt");
+			FileWriter myWriter = new FileWriter(defaultName + ".symbols.txt");
+			myWriter.write(ollirResult.getSymbolTable().print());
+			myWriter.close();
+		} catch (IOException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+
+		try {
+			FileWriter myWriter = new FileWriter(defaultName + ".enhanced_symbols.txt");
 			myWriter.write(ollirResult.getSymbolTable().toString());
 			myWriter.close();
 		} catch (IOException e) {
@@ -58,7 +69,7 @@ public class Main implements JmmParser {
 
 		/* OLLIR CODE */
 		try {
-			FileWriter myWriter = new FileWriter(path + "/" + ollirResult.getSymbolTable().getClassName() + ".ollir");
+			FileWriter myWriter = new FileWriter(defaultName + ".ollir");
 			myWriter.write(ollirResult.getOllirCode());
 			myWriter.close();
 		} catch (IOException e) {
@@ -68,7 +79,7 @@ public class Main implements JmmParser {
 
 		/* Jasmin Code */
 		try {
-			FileWriter myWriter = new FileWriter(path + "/" + ollirResult.getSymbolTable().getClassName() + ".j");
+			FileWriter myWriter = new FileWriter(defaultName + ".j");
 			myWriter.write(jasminResult.getJasminCode());
 			myWriter.close();
 		} catch (IOException e) {

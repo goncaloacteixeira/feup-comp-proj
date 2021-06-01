@@ -11,11 +11,17 @@ GLOBAL Grade of the project: 18
 
 ## Summary
 
-This project's main goal was to apply the theoretical principals of the course Compilers. This was achieved by building a compiler for programs written in the Java-- language. The main parts of the project are Syntactic error controller, Semantic analysis, and Code generation.
+This project's main goal was to apply the theoretical principals of the course Compilers. This was achieved by building
+a compiler for programs written in the Java-- language. The main parts of the project are Syntactic error controller,
+Semantic analysis, and Code generation.
 
 ## Dealing with syntatic errors
 
-As requested in the project specification, we only recover from errors in the conditional statement of a while cycle. We keep a counter of the '(' encountered in the while conditional, decrementing everytime we encounter a ')', and if an error is found in the conditional statement of a while cycle, the compiler ignores every token until the next ')', while the counter is above 0 , showing an error message indicating which tokens were expected and the line and column where the error occurred.
+As requested in the project specification, we only recover from errors in the conditional statement of a while cycle. We
+keep a counter of the '(' encountered in the while conditional, decrementing everytime we encounter a ')', and if an
+error is found in the conditional statement of a while cycle, the compiler ignores every token until the next ')', while
+the counter is above 0 , showing an error message indicating which tokens were expected and the line and column where
+the error occurred.
 
 ## Semantic Analysis
 
@@ -34,17 +40,37 @@ As requested in the project specification, we only recover from errors in the co
 
 ### Method Verification
 
-- Check if the method "target" exists and if it contains the corresponding method (e.g. a.foo, check if 'a' exists and if it has a method 'foo')
-- Check if method exists in the declared class (e.g. a usar o this), else: error if no extends is declared, if extends assume that the method is from the super class
-- If the method is not from the declared class (meaning its from an imported class), assume that the method exists and assume the expected types (e.g. a = Foo.b(), if 'a' is an int, and 'Foo' an imported class, assume 'b' method as static, that has no arguments and returns an int)
-- Verify that the number of arguments in an invoke is the same as the number of parameters of the declaration (method overload)
+- Check if the method "target" exists and if it contains the corresponding method (e.g. a.foo, check if 'a' exists and
+  if it has a method 'foo')
+- Check if method exists in the declared class (e.g. a usar o this), else: error if no extends is declared, if extends
+  assume that the method is from the super class
+- If the method is not from the declared class (meaning its from an imported class), assume that the method exists and
+  assume the expected types (e.g. a = Foo.b(), if 'a' is an int, and 'Foo' an imported class, assume 'b' method as
+  static, that has no arguments and returns an int)
+- Verify that the number of arguments in an invoke is the same as the number of parameters of the declaration (method
+  overload)
 - Verify that the type of the parameters matches the type of the arguments (method overload)
+
+### Fields
+
+- Checks if the variable is initialized, throwing an error if the variable is used without being initialized;
+- The `initialized` flag is saved on the symbol table.
 
 ## Code Generation
 
-Starting with the Java-- code file, we developed a parser for this language, taking into account the furnished grammar. With the code exempt of lexical and syntactic errors, we perform the generation of the syntax tree while annotating some nodes and leafs with extra information. With this AST we can create the Symbol Table and perform a Semantic Analysis. The next step needed is to generate OLLIR code derived from the AST and Symbol table and the final step is to generate the set of JVM instructions to be accepted by jasmin.
+Starting with the Java-- code file, we developed a parser for this language, taking into account the furnished grammar.
+With the code exempt of lexical and syntactic errors, we perform the generation of the syntax tree while annotating some
+nodes and leafs with extra information. With this AST we can create the Symbol Table and perform a Semantic Analysis.
+The next step needed is to generate OLLIR code derived from the AST and Symbol table and the final step is to generate
+the set of JVM instructions to be accepted by jasmin.
 
-All the necessary code is generated in the Main and the AST, SymbolTable, OLLIR code, Jasmin code and class files are saved inside a folder in the root of the project with the name of the jmm file. The class file is also saved under test/fixtures/libs/compiled/ so that other files that extend those classes can use it. For example, running the HelloWorld.jmm will generate a HelloWorld folder in the root of the projct, and within that folder the ast.json, symboltable.txt, HelloWorld.ollir, HelloWorld.j and HelloWorld.class files.
+All the necessary code is generated in the Main and the AST, SymbolTable, OLLIR code, Jasmin code and class files are
+saved inside a folder in the root of the project with the name of the jmm file. The class file is also saved under
+test/fixtures/libs/compiled/ so that other files that extend those classes can use it. For example, running the
+HelloWorld.jmm will generate a HelloWorld folder in the root of the projct, and within that folder the HelloWorld.json,
+HelloWorld.symbols.txt, HelloWorld.ollir, HelloWorld.j, HelloWorld.class, and we went for the extra mile adding an
+"enhanced" symbol table, which features the method overloading, and every field regarding each method (fields will also
+be marked as initialized or not).
 
 ## Task Distribution
 
@@ -74,29 +100,32 @@ Sadly we didn't get to implement the optimizations, which would have made this a
 
 For this project, you need to [install Gradle](https://gradle.org/install/)
 
-Copy your ``.jjt`` file to the ``javacc`` folder. If you change any of the classes generated by ``jjtree`` or ``javacc``, you also need to copy them to the ``javacc`` folder.
+Copy your `.jjt` file to the `javacc` folder. If you change any of the classes generated by `jjtree` or `javacc`
+, you also need to copy them to the `javacc` folder.
 
-Copy your source files to the ``src`` folder, and your JUnit test files to the ``test`` folder.
+Copy your source files to the `src` folder, and your JUnit test files to the `test` folder.
 
 ## Compile
 
-To compile the program, run ``gradle build``. This will compile your classes to ``classes/main/java`` and copy the JAR file to the root directory. The JAR file will have the same name as the repository folder.
+To compile the program, run `gradle build`. This will compile your classes to `classes/main/java` and copy the JAR
+file to the root directory. The JAR file will have the same name as the repository folder.
 
 ### Run
 
-To run you have two options: Run the ``.class`` files or run the JAR.
+To run you have two options: Run the `.class` files or run the JAR.
 
-### Run ``.class``
+### Run `.class`
 
-To run the ``.class`` files, do the following:
+To run the `.class` files, do the following:
 
 ```cmd
 java -cp "./build/classes/java/main/" <class_name> <arguments>
 ```
 
-Where ``<class_name>`` is the name of the class you want to run and ``<arguments>`` are the arguments to be passed to ``main()``.
+Where `<class_name>` is the name of the class you want to run and `<arguments>` are the arguments to be passed
+to `main()`.
 
-### Run ``.jar``
+### Run `.jar`
 
 To run the JAR, do the following command:
 
@@ -104,13 +133,17 @@ To run the JAR, do the following command:
 java -jar <jar filename> <arguments>
 ```
 
-Where ``<jar filename>`` is the name of the JAR file that has been copied to the root folder, and ``<arguments>`` are the arguments to be passed to ``main()``.
+Where `<jar filename>` is the name of the JAR file that has been copied to the root folder, and `<arguments>` are
+the arguments to be passed to `main()`.
 
 ## Test
 
-To test the program, run ``gradle test``. This will execute the build, and run the JUnit tests in the ``test`` folder. If you want to see output printed during the tests, use the flag ``-i`` (i.e., ``gradle test -i``).
-You can also see a test report by opening ``build/reports/tests/test/index.html``.
+To test the program, run `gradle test`. This will execute the build, and run the JUnit tests in the `test` folder.
+If you want to see output printed during the tests, use the flag `-i` (i.e., `gradle test -i`). You can also see a
+test report by opening `build/reports/tests/test/index.html`.
 
 ### Custom tests
 
-We created tests that extend and import other classes, thus in order to run those tests you need to first compile the imported/extended classes. Afterwards all the class files should be under ``test/fixtures/libs/compiled/``directory and ready to run.
+We created tests that extend and import other classes, thus in order to run those tests you need to first compile the
+imported/extended classes. Afterwards all the class files should be under `test/fixtures/libs/compiled/`directory and
+ready to run.
